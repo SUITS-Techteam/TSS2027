@@ -1,7 +1,7 @@
-# 🚨 **Note:** This is not the final version of TSS 2026 but has most functional capabilities of the final version. More information can be found under [documents/updates/](./documents/updates/). 🚨
+# 🚨 **Note:** This is not the final version of TSS 2027 but has most functional capabilities of the final version. More information can be found under [documents/updates/](./documents/updates/). 🚨
 
 
-# TSS 2026
+# TSS 2027
 
 NASA Spacesuit User Interface Technologies for Students ([SUITS](https://www.nasa.gov/learning-resources/spacesuit-user-interface-technologies-for-students/)) is a design challenge in which college students from across the country help design user interface solutions for future spaceflight needs. The following is a web interface for the SUITS telemetry stream server designed and developed for the challenge.
 
@@ -34,7 +34,7 @@ TSS (telemetry stream server) is the centralized server for sending and receivin
 
 1. Clone the repository:
 ```
-git clone https://github.com/SUITS-Techteam/TSS2026.git
+git clone https://github.com/SUITS-Techteam/TSS2027.git
 ```
 
 2. Navigate into the root of the repository on your terminal of choice
