@@ -178,6 +178,13 @@
       "max_value": 10000.0,
       "start_value": 0.0,
       "rate": 1.0
+    },
+    "solar_array": {
+      "sun_target_azimuth": 180.0,
+      "panel_current_azimuth": 0.0,
+      "power_output_watts": 0.0,
+      "power_bus_locked": false,
+      "solar_status": 0
     }
   }
 }

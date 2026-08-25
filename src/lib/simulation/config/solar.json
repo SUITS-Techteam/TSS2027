@@ -1,0 +1,26 @@
+{
+  "component_name": "solar_array",
+  "fields": {
+    "sun_target_azimuth": {
+      "type": "float",
+      "algorithm": "external_value",
+      "file_path": "eva1.json",
+      "field_path": "solar_array.sun_target_azimuth"
+    },
+    "panel_current_azimuth": {
+      "type": "float",
+      "algorithm": "external_value",
+      "file_path": "eva1.json",
+      "field_path": "solar_array.panel_current_azimuth"
+    },
+    "angular_error": {
+      "type": "float",
+      "algorithm": "dependent_value",
+      "formula": "sun_target_azimuth - panel_current_azimuth",
+      "depends_on": [
+        "sun_target_azimuth",
+        "panel_current_azimuth"
+      ]
+    }
+  }
+}
