@@ -1,4 +1,4 @@
-# 🚨 **Note:** This is not the final version of TSS 2027 but has most functional capabilities of the final version. More information can be found under [documents/updates/](./documents/updates/). 🚨
+# 🚨 **Note:** This is not the final version of TSS 2027 but has most functional capabilities of the final version. 🚨
 
 
 # TSS 2027
