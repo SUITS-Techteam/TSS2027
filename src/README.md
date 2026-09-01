@@ -71,7 +71,7 @@ After fetching the data from the backend, we still need to take the fresh data a
 <div class="telemetry-value">
   <span
     class="telemetry-data"
-    data-path="eva.telemetry.eva1.scrubber_a_co2_storage"
+    data-path="eva.telemetry.scrubber_a_co2_storage"
     data-units="%"
   >
     ------
@@ -79,16 +79,14 @@ After fetching the data from the backend, we still need to take the fresh data a
 </div>
 ```
 
-The data path, in this instance `eva.telemetry.eva1.scrubber_a_co2_storage`, directly corresponds to a field in a resulting JSON file. For example this data path would be for the `EVA.json` file and uses a period as a delimeter to denote a field name. As a result, we could expect to find the value to update this HTML element in a JSON file structured like below:
+The data path, in this instance `eva.telemetry.scrubber_a_co2_storage`, directly corresponds to a field in a resulting JSON file. For example this data path would be for the `EVA.json` file and uses a period as a delimeter to denote a field name. As a result, we could expect to find the value to update this HTML element in a JSON file structured like below:
 
 `EVA.json`
 
 ```json
 {
   "telemetry": {
-    "eva1": {
-      "scrubber_a_co2_storage": "new value!"
-    }
+    "scrubber_a_co2_storage": "new value!"
   }
 }
 ```
@@ -144,13 +142,13 @@ The first three are quite basic and used for extremely simple time based telemet
 
 ### Configuration
 
-Instead of hardcoding every field that we wanted to simulate, we opted to create a format that was easily configurable. This took the form of JSON files that live within a <a href="/src/lib/simulation/config">config folder</a> in the root of the simulation library folder. Each file is representative of a single "component" that you want to simulate; in our case that would be `eva1` and `eva2`. Below is an example of a config file with some of the supported algorithms mentioned above:
+Instead of hardcoding every field that we wanted to simulate, we opted to create a format that was easily configurable. This took the form of JSON files that live within a <a href="/src/lib/simulation/config">config folder</a> in the root of the simulation library folder. Each file is representative of a single "component" that you want to simulate; in our case that would be `eva`. Below is an example of a config file with some of the supported algorithms mentioned above:
 
 NOTE: For custom algorithms, to support order of operations with parentheses, the parser was implemented with the expectation that everything would have a space in between it including parentheses. For example, you would write an equation like so: `( external_temp * 2 ) + 16
 
 ```json
 {
-  "component_name": "eva1",
+  "component_name": "eva",
   "fields": {
     "primary_battery_level": {
       "type": "float",

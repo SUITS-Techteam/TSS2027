@@ -25,7 +25,7 @@ function onload() {
 /**
  * Fetches the latest EVA  data and updates the DOM elements accordingly.
  * In the html, there is a data-path attribute on the elements that basically registers that field as needing to be updated with data from the server
- * The path specifies where in the JSON data the value can be found, e.g. "eva.telemetry.eva1.temperature"
+ * The path specifies where in the JSON data the value can be found, e.g. "eva.telemetry.temperature"
  *
  * Note: this is a bit of a hodgepodge to maintain backwards compatibility with the old system e.g. timers, boolean switches, etc
  */
@@ -125,7 +125,7 @@ async function fetchData() {
 /**
  * Updates the server with the new value for a specific field using data-path format
  *
- * @param path Data path (e.g., "eva.dcu.eva1.batt")
+ * @param path Data path (e.g., "eva.dcu.batt")
  * @param value New value for the field
  */
 async function updateServerData(path, value) {

@@ -87,8 +87,7 @@ bool sim_engine_load_predefined_configs(sim_engine_t* engine) {
     // Predefined list of configuration files to load
     // @TODO can generalize this more in some way?
     const char* config_files[] = {
-        SIM_CONFIG_ROOT "/eva1.json",
-        SIM_CONFIG_ROOT "/eva2.json"
+        SIM_CONFIG_ROOT "/eva.json"
     };
     const int config_count = sizeof(config_files) / sizeof(config_files[0]);
     
@@ -499,19 +498,19 @@ void sim_engine_update(sim_engine_t* engine, float delta_time) {
     }
     
     //determine if we need to throw additional errors
-    bool eva_control_started = sim_engine_is_component_running(engine, "eva1");
-    sim_component_t* eva1 = sim_engine_get_component(engine, "eva1");
+    bool eva_control_started = sim_engine_is_component_running(engine, "eva");
+    sim_component_t* eva = sim_engine_get_component(engine, "eva");
 
     if(eva_control_started) {
-        if(eva1 != NULL) {
-            if(engine->num_task_board_errors == 0 && eva1->simulation_time == (engine->time_to_complete_task_board + engine->error_time)) {
+        if(eva != NULL) {
+            if(engine->num_task_board_errors == 0 && eva->simulation_time == (engine->time_to_complete_task_board + engine->error_time)) {
                 throw_random_error(engine);
-                printf("Error thrown at simulation time: %.2f seconds\n", eva1->simulation_time);
-            } else if(eva1->simulation_time == (engine->time_to_complete_task_board + engine->error_time)) {
+                printf("Error thrown at simulation time: %.2f seconds\n", eva->simulation_time);
+            } else if(eva->simulation_time == (engine->time_to_complete_task_board + engine->error_time)) {
                 engine->time_to_complete_task_board = engine->time_to_complete_task_board+1;
             }
         } else {
-            printf("Simulation tried to access non-existent component 'eva1'\n");
+            printf("Simulation tried to access non-existent component 'eva'\n");
             exit(0);
         }
     }
@@ -563,7 +562,7 @@ void sim_engine_update(sim_engine_t* engine, float delta_time) {
  * Starts simulation updates for a specific component.
  *
  * @param engine Pointer to the simulation engine
- * @param component_name Name of the component to start (e.g., "eva1", "eva2")
+ * @param component_name Name of the component to start (e.g., "eva")
  */
 void sim_engine_start_component(sim_engine_t* engine, const char* component_name) {
     if (!engine || !engine->initialized || !component_name) return;
@@ -583,7 +582,7 @@ void sim_engine_start_component(sim_engine_t* engine, const char* component_name
  * Stops simulation updates for a specific component.
  *
  * @param engine Pointer to the simulation engine
- * @param component_name Name of the component to stop (e.g., "eva1", "eva2")
+ * @param component_name Name of the component to stop (e.g., "eva")
  */
 void sim_engine_stop_component(sim_engine_t* engine, const char* component_name) {
     if (!engine || !component_name) return;
@@ -604,7 +603,7 @@ void sim_engine_stop_component(sim_engine_t* engine, const char* component_name)
  * For external value fields with reset_value, calls the provided update_json function to update the data file.
  *
  * @param engine Pointer to the simulation engine
- * @param component_name Name of the component to reset (e.g., "eva1", "eva2")
+ * @param component_name Name of the component to reset (e.g., "eva")
  * @param update_json Function pointer to update JSON files (e.g., update_json_file from data.c)
  */
 void sim_engine_reset_component(sim_engine_t* engine, const char* component_name,

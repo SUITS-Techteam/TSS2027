@@ -238,7 +238,7 @@ sim_value_t sim_algo_external_value(sim_field_t* field, sim_engine_t* engine) {
         return result;
     }
 
-    // Navigate through field path using dot notation (e.g., "telemetry.eva1.temperature")
+    // Navigate through field path using dot notation (e.g., "telemetry.temperature")
     cJSON* current_obj = root;
     char* path_copy = strdup(field_path);
     char* token = strtok(path_copy, ".");

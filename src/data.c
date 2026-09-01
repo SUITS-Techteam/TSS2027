@@ -186,49 +186,49 @@ bool initialize_EVA_json_switch_states() {
     }
 
     //get eva1 object from dcu
-    cJSON* eva1_dcu = cJSON_GetObjectItem(dcu, "eva1");
-    if (!eva1_dcu) {
-        printf("Error: Failed to get eva1 from dcu in EVA config file in initialize_json_switch_states\n");
+    cJSON* eva_dcu = cJSON_GetObjectItem(dcu, "eva");
+    if (!eva_dcu) {
+        printf("Error: Failed to get eva from dcu in EVA config file in initialize_json_switch_states\n");
         cJSON_Delete(eva_json);
         return false;
     }
 
     //change oxy to false
-    cJSON_ReplaceItemInObject(eva1_dcu, "oxy", cJSON_CreateBool(0));
-    if (!cJSON_GetObjectItem(eva1_dcu, "oxy")) {
-        printf("Error: Failed to set eva1.oxy in EVA config file in initialize_json_switch_states\n");
+    cJSON_ReplaceItemInObject(eva_dcu, "oxy", cJSON_CreateBool(0));
+    if (!cJSON_GetObjectItem(eva_dcu, "oxy")) {
+        printf("Error: Failed to set eva.oxy in EVA config file in initialize_json_switch_states\n");
         cJSON_Delete(eva_json);
         return false;
     }
 
     //change fan to false
-    cJSON_ReplaceItemInObject(eva1_dcu, "fan", cJSON_CreateBool(0));
-    if (!cJSON_GetObjectItem(eva1_dcu, "fan")) {
-        printf("Error: Failed to set eva1.fan in EVA config file in initialize_json_switch_states\n");
+    cJSON_ReplaceItemInObject(eva_dcu, "fan", cJSON_CreateBool(0));
+    if (!cJSON_GetObjectItem(eva_dcu, "fan")) {
+        printf("Error: Failed to set eva.fan in EVA config file in initialize_json_switch_states\n");
         cJSON_Delete(eva_json);
         return false;
     }
 
     //change pump to false
-    cJSON_ReplaceItemInObject(eva1_dcu, "pump", cJSON_CreateBool(0));
-    if (!cJSON_GetObjectItem(eva1_dcu, "pump")) {
-        printf("Error: Failed to set eva1.pump in EVA config file in initialize_json_switch_states\n");
+    cJSON_ReplaceItemInObject(eva_dcu, "pump", cJSON_CreateBool(0));
+    if (!cJSON_GetObjectItem(eva_dcu, "pump")) {
+        printf("Error: Failed to set eva.pump in EVA config file in initialize_json_switch_states\n");
         cJSON_Delete(eva_json);
         return false;
     }
 
     //change co2 to false
-    cJSON_ReplaceItemInObject(eva1_dcu, "co2", cJSON_CreateBool(0));
-    if (!cJSON_GetObjectItem(eva1_dcu, "co2")) {
-        printf("Error: Failed to set eva1.co2 in EVA config file in initialize_json_switch_states\n");
+    cJSON_ReplaceItemInObject(eva_dcu, "co2", cJSON_CreateBool(0));
+    if (!cJSON_GetObjectItem(eva_dcu, "co2")) {
+        printf("Error: Failed to set eva.co2 in EVA config file in initialize_json_switch_states\n");
         cJSON_Delete(eva_json);
         return false;
     }
 
-    //get batt object from eva1_dcu
-    cJSON* batt_dcu = cJSON_GetObjectItem(eva1_dcu, "batt");
+    //get batt object from eva_dcu
+    cJSON* batt_dcu = cJSON_GetObjectItem(eva_dcu, "batt");
     if (!batt_dcu) {
-        printf("Error: Failed to get batt from eva1 in dcu in EVA config file in initialize_json_switch_states\n");
+        printf("Error: Failed to get batt from eva in dcu in EVA config file in initialize_json_switch_states\n");
         cJSON_Delete(eva_json);
         return false;
     }
@@ -236,7 +236,7 @@ bool initialize_EVA_json_switch_states() {
     //change lu to false
     cJSON_ReplaceItemInObject(batt_dcu, "lu", cJSON_CreateBool(0));
     if (!cJSON_GetObjectItem(batt_dcu, "lu")) {
-        printf("Error: Failed to set eva1.batt.lu in EVA config file in initialize_json_switch_states\n");
+        printf("Error: Failed to set dcu.batt.lu in EVA config file in initialize_json_switch_states\n");
         cJSON_Delete(eva_json);
         return false;
     }
@@ -244,7 +244,7 @@ bool initialize_EVA_json_switch_states() {
     //change ps to false
     cJSON_ReplaceItemInObject(batt_dcu, "ps", cJSON_CreateBool(0));
     if (!cJSON_GetObjectItem(batt_dcu, "ps")) {
-        printf("Error: Failed to set eva1.batt.ps in EVA config file in initialize_json_switch_states\n");
+        printf("Error: Failed to set dcu.batt.ps in EVA config file in initialize_json_switch_states\n");
         cJSON_Delete(eva_json);
         return false;
     }
@@ -335,34 +335,34 @@ void initialize_UIA_override_dependent_values(sim_engine_t* sim_engine) {
         return;
     }
 
-    // Get pointer to EVA1 component for easy access to its fields
-    sim_component_t* eva1 = sim_engine_get_component(sim_engine, "eva1");
+    // Get pointer to EVA component for easy access to its fields
+    sim_component_t* eva = sim_engine_get_component(sim_engine, "eva");
 
     //set eva.fields.coolant_storage to 0 at the start of the simulation and set algorithm to constant value to keep at 0 until ready to grow
-    sim_field_t* coolant_storage_field = sim_engine_find_field_within_component(eva1, "coolant_storage");
+    sim_field_t* coolant_storage_field = sim_engine_find_field_within_component(eva, "coolant_storage");
     if (coolant_storage_field) {
         coolant_storage_field->current_value.f = 0.0f;
         coolant_storage_field->algorithm = SIM_ALGO_CONSTANT_VALUE;
     } else {
-        printf("Simulation tried to access non-existent field 'eva1.coolant_storage' for UIA override initialization\n");
+        printf("Simulation tried to access non-existent field 'eva.coolant_storage' for UIA override initialization\n");
     }
 
-    //set eva1.suit_pressure_oxy to 0 to keep at 0 until ready to grow
-    sim_field_t* suit_pressure_oxy_field = sim_engine_find_field_within_component(eva1, "suit_pressure_oxy");
+    //set eva.suit_pressure_oxy to 0 to keep at 0 until ready to grow
+    sim_field_t* suit_pressure_oxy_field = sim_engine_find_field_within_component(eva, "suit_pressure_oxy");
     if (suit_pressure_oxy_field) {
         suit_pressure_oxy_field->current_value.f = 0.0f;
         suit_pressure_oxy_field->algorithm = SIM_ALGO_CONSTANT_VALUE;
     } else {
-        printf("Simulation tried to access non-existent field 'eva1.suit_pressure_oxy' for UIA override initialization\n");
+        printf("Simulation tried to access non-existent field 'eva.suit_pressure_oxy' for UIA override initialization\n");
     }
 
     //make sure that suit_pressure_co2 stays at 0 during the simulation to keep suit_pressure_total just = to suit_pressure_oxy
-    sim_field_t* suit_pressure_co2_field = sim_engine_find_field_within_component(eva1, "suit_pressure_co2");
+    sim_field_t* suit_pressure_co2_field = sim_engine_find_field_within_component(eva, "suit_pressure_co2");
     if (suit_pressure_co2_field) {
         suit_pressure_co2_field->current_value.f = 0.0f;
         suit_pressure_co2_field->algorithm = SIM_ALGO_CONSTANT_VALUE;
     } else {
-        printf("Simulation tried to access non-existent field 'eva1.suit_pressure_co2' for UIA override initialization\n");
+        printf("Simulation tried to access non-existent field 'eva.suit_pressure_co2' for UIA override initialization\n");
     }
 
 }
@@ -394,14 +394,14 @@ void update_fan_values(sim_engine_t* sim_engine) {
         return;
     }
 
-    sim_component_t* eva1 = sim_engine_get_component(sim_engine, "eva1");
-    if (eva1 == NULL) {
-        printf("Simulation tried to access non-existent component 'eva1' for fan value update\n");
+    sim_component_t* eva = sim_engine_get_component(sim_engine, "eva");
+    if (eva == NULL) {
+        printf("Simulation tried to access non-existent component 'eva' for fan value update\n");
         return;
     }
 
-    sim_field_t* fan_pri_rpm_field = sim_engine_find_field_within_component(eva1, "fan_pri_rpm");
-    sim_field_t* fan_sec_rpm_field = sim_engine_find_field_within_component(eva1, "fan_sec_rpm");
+    sim_field_t* fan_pri_rpm_field = sim_engine_find_field_within_component(eva, "fan_pri_rpm");
+    sim_field_t* fan_sec_rpm_field = sim_engine_find_field_within_component(eva, "fan_sec_rpm");
 
 
     //if in error state, need to store the last value
@@ -415,7 +415,7 @@ void update_fan_values(sim_engine_t* sim_engine) {
                 fan_sec_rpm_field->current_value.f = 30000.0f;
             }
         } else {
-            printf("Simulation tried to access non-existent field 'eva1.fan_pri_rpm' or 'eva1.fan_sec_rpm' for fan value update\n");
+            printf("Simulation tried to access non-existent field 'eva.fan_pri_rpm' or 'eva.fan_sec_rpm' for fan value update\n");
         }
     }
 
@@ -430,7 +430,7 @@ void update_fan_values(sim_engine_t* sim_engine) {
                 fan_sec_rpm_field->current_value.f = 30000.0f;
             }
         } else {
-            printf("Simulation tried to access non-existent field 'eva1.fan_pri_rpm' or 'eva1.fan_sec_rpm' for fan value update\n");
+            printf("Simulation tried to access non-existent field 'eva.fan_pri_rpm' or 'eva.fan_sec_rpm' for fan value update\n");
         }
     }
 }
@@ -501,19 +501,19 @@ void update_fan_values(sim_engine_t* sim_engine) {
         bool uia_oxy_vent_open = sim_engine->uia_field_settings->oxy_vent;
 
         if (uia_oxy_vent_open) {
-            sim_component_t* component = sim_engine_get_component(sim_engine, "eva1");
+            sim_component_t* component = sim_engine_get_component(sim_engine, "eva");
             sim_field_t* suit_pressure_oxy_field = sim_engine_find_field_within_component(component, "oxy_pri_storage");
             if (suit_pressure_oxy_field) {
                 suit_pressure_oxy_field->active = true; //make the field active so it starts updating based on the new algorithm
             } else {
-                printf("Simulation tried to access non-existent field 'eva1.oxy_pri_storage' for UIA override\n");
+                printf("Simulation tried to access non-existent field 'eva.oxy_pri_storage' for UIA override\n");
             }
 
             sim_field_t* suit_pressure_oxy_field2 = sim_engine_find_field_within_component(component, "oxy_sec_storage");
             if (suit_pressure_oxy_field2) {
                 suit_pressure_oxy_field2->active = true; //make the field active so it starts updating based on the new algorithm
             } else {
-                printf("Simulation tried to access non-existent field 'eva1.oxy_sec_storage' for UIA override\n");
+                printf("Simulation tried to access non-existent field 'eva.oxy_sec_storage' for UIA override\n");
             }
         }
     }
@@ -532,10 +532,10 @@ bool update_sim_UIA_connected(sim_engine_t* sim_engine) {
         return false;
     }
 
-    // Get pointer to EVA1 component for easy access to its fields
-    sim_component_t* eva1 = sim_engine_get_component(sim_engine, "eva1");
-    if (eva1 == NULL) {
-        printf("Simulation tried to access non-existent component 'eva1' for UIA override\n");
+    // Get pointer to EVA component for easy access to its fields
+    sim_component_t* eva = sim_engine_get_component(sim_engine, "eva");
+    if (eva == NULL) {
+        printf("Simulation tried to access non-existent component 'eva' for UIA override\n");
         return false;
     }
 
@@ -554,69 +554,69 @@ bool update_sim_UIA_connected(sim_engine_t* sim_engine) {
         bool dcu_using_secondary_oxygen = sim_engine->dcu_field_settings->o2 == false;
 
         if (uia_oxy_vent_open) {
-            sim_field_t* suit_pressure_oxy_field = sim_engine_find_field_within_component(eva1, "oxy_pri_storage");
+            sim_field_t* suit_pressure_oxy_field = sim_engine_find_field_within_component(eva, "oxy_pri_storage");
             if (suit_pressure_oxy_field) {
                 suit_pressure_oxy_field->active = true; //make the field active so it starts updating based on the new algorithm
                 suit_pressure_oxy_field->algorithm = SIM_ALGO_LINEAR_DECAY;
                 suit_pressure_oxy_field->rate.f = OXY_VENT_RATE; //set the rate of decay to 0.5 units per second when the vent is open
                 
             } else {
-                printf("Simulation tried to access non-existent field 'eva1.oxy_pri_storage' for UIA override\n");
+                printf("Simulation tried to access non-existent field '.oxy_pri_storage' for UIA override\n");
             }
 
-            sim_field_t* suit_pressure_oxy_field2 = sim_engine_find_field_within_component(eva1, "oxy_sec_storage");
+            sim_field_t* suit_pressure_oxy_field2 = sim_engine_find_field_within_component(eva, "oxy_sec_storage");
             if (suit_pressure_oxy_field2) {
                 suit_pressure_oxy_field2->active = true; //make the field active so it starts updating based on the new algorithm
                 suit_pressure_oxy_field2->algorithm = SIM_ALGO_LINEAR_DECAY;
                 suit_pressure_oxy_field2->rate.f = OXY_VENT_RATE; //set the rate of decay to 0.5 units per second when the vent is open
             } else {
-                printf("Simulation tried to access non-existent field 'eva1.oxy_sec_storage' for UIA override\n");
+                printf("Simulation tried to access non-existent field 'eva.oxy_sec_storage' for UIA override\n");
             }
 
         } else if(uia_oxy_vent_closed && uia_oxy_emu1_open) {
             //on primary oxygen
             if(dcu_using_primary_oxygen) {
-                sim_field_t* oxy_pri_storage = sim_engine_find_field_within_component(eva1, "oxy_pri_storage");
+                sim_field_t* oxy_pri_storage = sim_engine_find_field_within_component(eva, "oxy_pri_storage");
                 if (oxy_pri_storage) {
                     oxy_pri_storage->algorithm = SIM_ALGO_LINEAR_GROWTH;
                     oxy_pri_storage->rate.f = OXY_FILL_RATE;
                 } else {
-                    printf("Simulation tried to access non-existent field 'eva1.oxy_pri_storage' for UIA override\n");
+                    printf("Simulation tried to access non-existent field 'eva.oxy_pri_storage' for UIA override\n");
                 }
 
             //put secondary oxygen back on decay
-                sim_field_t* oxy_sec_storage = sim_engine_find_field_within_component(eva1, "oxy_sec_storage");
+                sim_field_t* oxy_sec_storage = sim_engine_find_field_within_component(eva, "oxy_sec_storage");
                     if (oxy_sec_storage) {
                         oxy_sec_storage->algorithm = SIM_ALGO_LINEAR_DECAY;
                         oxy_sec_storage->rate.f = OXY_RATE;
                     } else {
-                        printf("Simulation tried to access non-existent field 'eva1.oxy_sec_storage' for UIA override\n");
+                        printf("Simulation tried to access non-existent field 'eva.oxy_sec_storage' for UIA override\n");
                     }
             } 
 
             //on secondary oxygen
             if(dcu_using_secondary_oxygen) {
-                sim_field_t* oxy_sec_storage = sim_engine_find_field_within_component(eva1, "oxy_sec_storage");
+                sim_field_t* oxy_sec_storage = sim_engine_find_field_within_component(eva, "oxy_sec_storage");
                 if (oxy_sec_storage) {
                     oxy_sec_storage->algorithm = SIM_ALGO_LINEAR_GROWTH;
                     oxy_sec_storage->rate.f = OXY_FILL_RATE;
                 } else {
-                    printf("Simulation tried to access non-existent field 'eva1.oxy_sec_storage' for UIA override\n");
+                    printf("Simulation tried to access non-existent field 'eva.oxy_sec_storage' for UIA override\n");
                 }
 
                 //put primary oxygen back on decay
-                sim_field_t* oxy_pri_storage = sim_engine_find_field_within_component(eva1, "oxy_pri_storage");
+                sim_field_t* oxy_pri_storage = sim_engine_find_field_within_component(eva, "oxy_pri_storage");
                     if (oxy_pri_storage) {
                         oxy_pri_storage->algorithm = SIM_ALGO_LINEAR_DECAY;
                         oxy_pri_storage->rate.f = OXY_RATE;
                     } else {
-                        printf("Simulation tried to access non-existent field 'eva1.oxy_pri_storage' for UIA override\n");
+                        printf("Simulation tried to access non-existent field 'eva.oxy_pri_storage' for UIA override\n");
                     }
             }
         } else {
             //if vent is closed and oxygen EMU1 is closed, make sure that oxygen storage fields are not growing
-            sim_field_t* oxy_pri_storage = sim_engine_find_field_within_component(eva1, "oxy_pri_storage");
-            sim_field_t* oxy_sec_storage = sim_engine_find_field_within_component(eva1, "oxy_sec_storage");
+            sim_field_t* oxy_pri_storage = sim_engine_find_field_within_component(eva, "oxy_pri_storage");
+            sim_field_t* oxy_sec_storage = sim_engine_find_field_within_component(eva, "oxy_sec_storage");
             if (dcu_using_primary_oxygen && oxy_pri_storage && oxy_sec_storage) {
                     oxy_pri_storage->algorithm = SIM_ALGO_LINEAR_DECAY;
                     oxy_pri_storage->rate.f = OXY_RATE;
@@ -638,27 +638,27 @@ bool update_sim_UIA_connected(sim_engine_t* sim_engine) {
         float current_oxy_pressure = 0.0f;
         //check that current O2 pressure is above 2900 before filling to prevent filling when not supposed to due to a vent open command being sent while suit pressure is still high from a previous fill
         if(dcu_using_primary_oxygen) {
-            sim_field_t* oxy_pressure = sim_engine_find_field_within_component(eva1, "oxy_pri_pressure");
+            sim_field_t* oxy_pressure = sim_engine_find_field_within_component(eva, "oxy_pri_pressure");
             current_oxy_pressure = 0.0f;
             if (oxy_pressure) {
                 current_oxy_pressure = oxy_pressure->current_value.f;
             } else {
-                printf("Simulation tried to access non-existent field 'eva1.oxy_pri_pressure' for UIA override\n");
+                printf("Simulation tried to access non-existent field 'eva.oxy_pri_pressure' for UIA override\n");
             }
         } else {
-            sim_field_t* oxy_pressure = sim_engine_find_field_within_component(eva1, "oxy_sec_pressure");
+            sim_field_t* oxy_pressure = sim_engine_find_field_within_component(eva, "oxy_sec_pressure");
             current_oxy_pressure = 0.0f;
             if (oxy_pressure) {
                 current_oxy_pressure = oxy_pressure->current_value.f;
             } else {
-                printf("Simulation tried to access non-existent field 'eva1.oxy_sec_pressure' for UIA override\n");
+                printf("Simulation tried to access non-existent field 'eva.oxy_sec_pressure' for UIA override\n");
             }
         }
 
         //fill the suit pressures and O2 pressure until they are both 4
         //only do so if primary O2 pressure > 2900
         if(uia_oxy_vent_closed && uia_oxy_emu1_closed && dcu_using_primary_oxygen && current_oxy_pressure > 1000.0f) {
-            sim_field_t* suit_pressure_oxy_field = sim_engine_find_field_within_component(eva1, "suit_pressure_oxy");
+            sim_field_t* suit_pressure_oxy_field = sim_engine_find_field_within_component(eva, "suit_pressure_oxy");
             if (suit_pressure_oxy_field) {
                 if(suit_pressure_oxy_field->current_value.f < 4.0f ) {
                 suit_pressure_oxy_field->algorithm = SIM_ALGO_LINEAR_GROWTH;
@@ -667,17 +667,17 @@ bool update_sim_UIA_connected(sim_engine_t* sim_engine) {
                     suit_pressure_oxy_field->algorithm = SIM_ALGO_CONSTANT_VALUE;
                 }
             } else {
-                printf("Simulation tried to access non-existent field 'eva1.suit_pressure_oxy' for UIA override\n");
+                printf("Simulation tried to access non-existent field 'eva.suit_pressure_oxy' for UIA override\n");
             }
         }
 
         //make sure that suit_pressure_co2 stays at 0 during the simulation to keep suit_pressure_total just = to suit_pressure_oxy
-        sim_field_t* suit_pressure_co2_field = sim_engine_find_field_within_component(eva1, "suit_pressure_co2");
+        sim_field_t* suit_pressure_co2_field = sim_engine_find_field_within_component(eva, "suit_pressure_co2");
         if (suit_pressure_co2_field) {
             suit_pressure_co2_field->current_value.f = 0.0f;
             suit_pressure_co2_field->algorithm = SIM_ALGO_CONSTANT_VALUE;
         } else {
-            printf("Simulation tried to access non-existent field 'eva1.suit_pressure_co2' for UIA override initialization\n");
+            printf("Simulation tried to access non-existent field 'eva.suit_pressure_co2' for UIA override initialization\n");
         }
 
         //prep coolant tank
@@ -692,32 +692,32 @@ bool update_sim_UIA_connected(sim_engine_t* sim_engine) {
         
         //drain water tank
         if(dcu_pump_open && uia_supply_water_tank_valve_closed && uia_waste_water_tank_valve_open) {
-            sim_field_t* coolant_storage = sim_engine_find_field_within_component(eva1, "coolant_storage");
+            sim_field_t* coolant_storage = sim_engine_find_field_within_component(eva, "coolant_storage");
             if (coolant_storage) {
                 coolant_storage->algorithm = SIM_ALGO_LINEAR_DECAY;
                 coolant_storage->rate.f = COOLANT_DRAIN_RATE;
             } else {
-                printf("Simulation tried to access non-existent field 'eva1.coolant_storage' for UIA override\n");
+                printf("Simulation tried to access non-existent field 'eva.coolant_storage' for UIA override\n");
             }
         }
 
         //fill coolant tank
         else if(dcu_pump_open && uia_supply_water_tank_valve_open && uia_waste_water_tank_valve_closed) {
-            sim_field_t* coolant_storage = sim_engine_find_field_within_component(eva1, "coolant_storage");
+            sim_field_t* coolant_storage = sim_engine_find_field_within_component(eva, "coolant_storage");
             if (coolant_storage) {
                     coolant_storage->algorithm = SIM_ALGO_LINEAR_GROWTH;
                     coolant_storage->rate.f = COOLANT_FILL_RATE;
                 } else {
-                    printf("Simulation tried to access non-existent field 'eva1.coolant_storage' for UIA override\n");
+                    printf("Simulation tried to access non-existent field 'eva.coolant_storage' for UIA override\n");
                 }
         } else {
             //make coolant storage decrease normally
-            sim_field_t* coolant_storage = sim_engine_find_field_within_component(eva1, "coolant_storage");
+            sim_field_t* coolant_storage = sim_engine_find_field_within_component(eva, "coolant_storage");
             if (coolant_storage) {
                     coolant_storage->algorithm = SIM_ALGO_LINEAR_DECAY;
                     coolant_storage->rate.f = COOLANT_RATE;
             } else {
-                printf("Simulation tried to access non-existent field 'eva1.coolant_storage' for UIA override\n");
+                printf("Simulation tried to access non-existent field 'eva.coolant_storage' for UIA override\n");
             }
         }
 
@@ -789,14 +789,14 @@ void update_num_remaining_errors_LTV(sim_engine_t* engine) {
         }
     }
 
-    sim_component_t* eva1 = sim_engine_get_component(engine, "eva1");
-     if (eva1 == NULL) {
-        printf("Simulation tried to access non-existent component 'eva1' for updating remaining errors\n");
+    sim_component_t* eva = sim_engine_get_component(engine, "eva");
+     if (eva == NULL) {
+        printf("Simulation tried to access non-existent component 'eva' for updating remaining errors\n");
         cJSON_Delete(ltv_errors_json);
         return;
     }
-    if(remaining_errors == 0 && engine->time_to_complete_task_board == -10 && eva1->running == true) { //if all errors have been resolved, set time to complete task board to current simulation time to track how long it took to resolve all errors, but only if the task board is currently running and time to complete task board has not already been set
-        engine->time_to_complete_task_board = eva1->simulation_time; //set error time to current time when all errors have been resolved to track how long it took to resolve all errors
+    if(remaining_errors == 0 && engine->time_to_complete_task_board == -10 && eva->running == true) { //if all errors have been resolved, set time to complete task board to current simulation time to track how long it took to resolve all errors, but only if the task board is currently running and time to complete task board has not already been set
+        engine->time_to_complete_task_board = eva->simulation_time; //set error time to current time when all errors have been resolved to track how long it took to resolve all errors
     }
 
     engine->num_task_board_errors = remaining_errors;
@@ -893,13 +893,13 @@ void update_O2_error_state(sim_engine_t* sim_engine) {
     }
 
     //check if the O2 error is currently thrown by checking if the algorithm for the O2 storage field is set to linear decay
-    sim_component_t* eva1 = sim_engine_get_component(sim_engine, "eva1");
-    if (eva1 == NULL) {
-        printf("Simulation tried to access non-existent component 'eva1' for O2 error state update\n");
+    sim_component_t* eva = sim_engine_get_component(sim_engine, "eva");
+    if (eva == NULL) {
+        printf("Simulation tried to access non-existent component 'eva' for O2 error state update\n");
         return;
     }
 
-    sim_field_t* field = sim_engine_find_field_within_component(eva1, "suit_pressure_oxy");
+    sim_field_t* field = sim_engine_find_field_within_component(eva, "suit_pressure_oxy");
     if (field == NULL) {
         printf("Simulation tried to access non-existent field 'suit_pressure_oxy' for O2 error state update\n");
         return;
@@ -966,15 +966,15 @@ void update_scrubber_state_EVA(sim_engine_t* sim_engine) {
         return;
     }
 
-    sim_component_t* eva1 = sim_engine_get_component(sim_engine, "eva1");
-    if (eva1 == NULL) {
-        printf("Simulation tried to access non-existent component 'eva1' for scrubber error state update\n");
+    sim_component_t* eva = sim_engine_get_component(sim_engine, "eva");
+    if (eva == NULL) {
+        printf("Simulation tried to access non-existent component 'eva' for scrubber error state update\n");
         return;
     }
 
-    sim_field_t* scrubber_a_field = sim_engine_find_field_within_component(eva1, "scrubber_a_co2_storage");
-    sim_field_t* scrubber_b_field = sim_engine_find_field_within_component(eva1, "scrubber_b_co2_storage");
-    sim_field_t* suit_co2_pressure_field = sim_engine_find_field_within_component(eva1, "suit_pressure_co2");
+    sim_field_t* scrubber_a_field = sim_engine_find_field_within_component(eva, "scrubber_a_co2_storage");
+    sim_field_t* scrubber_b_field = sim_engine_find_field_within_component(eva, "scrubber_b_co2_storage");
+    sim_field_t* suit_co2_pressure_field = sim_engine_find_field_within_component(eva, "suit_pressure_co2");
 
     if (scrubber_a_field == NULL || scrubber_b_field == NULL || suit_co2_pressure_field == NULL) {
         printf("Simulation tried to access non-existent scrubber or suit pressure fields for scrubber error state update\n");
@@ -1020,18 +1020,18 @@ void update_fan_error_state(sim_engine_t* sim_engine) {
     }
 
     //check if the fan RPM is below 30000
-    sim_component_t* eva1 = sim_engine_get_component(sim_engine, "eva1");
-    if (eva1 == NULL) {
-        printf("Simulation tried to access non-existent component 'eva1' for fan error state update\n");
+    sim_component_t* eva = sim_engine_get_component(sim_engine, "eva");
+    if (eva == NULL) {
+        printf("Simulation tried to access non-existent component 'eva' for fan error state update\n");
         return;
     }
-    sim_field_t* field = sim_engine_find_field_within_component(eva1, "fan_pri_rpm");
+    sim_field_t* field = sim_engine_find_field_within_component(eva, "fan_pri_rpm");
     if (field == NULL) {
         printf("Simulation tried to access non-existent field 'fan_pri_rpm' for fan error state update\n");
         return;
     }
 
-    sim_field_t* field_helmet_pressure_co2 = sim_engine_find_field_within_component(eva1, "helmet_pressure_co2");
+    sim_field_t* field_helmet_pressure_co2 = sim_engine_find_field_within_component(eva, "helmet_pressure_co2");
     if (field_helmet_pressure_co2 == NULL) {
         printf("Simulation tried to access non-existent field 'helmet_pressure_co2' for fan error state update\n");
         return;
@@ -1074,13 +1074,13 @@ void update_power_error_state(sim_engine_t* sim_engine) {
     }
 
     //check if the power level is below the error threshold by checking the current value of the primary battery level field
-    sim_component_t* eva1 = sim_engine_get_component(sim_engine, "eva1");
-    if (eva1 == NULL) {
-        printf("Simulation tried to access non-existent component 'eva1' for power error state update\n");
+    sim_component_t* eva = sim_engine_get_component(sim_engine, "eva");
+    if (eva == NULL) {
+        printf("Simulation tried to access non-existent component 'eva' for power error state update\n");
         return;
     }
 
-    sim_field_t* field = sim_engine_find_field_within_component(eva1, "primary_battery_level");
+    sim_field_t* field = sim_engine_find_field_within_component(eva, "primary_battery_level");
     if (field == NULL) {
         printf("Simulation tried to access non-existent field 'primary_battery_level' for power error state update\n");
         return;
@@ -1366,7 +1366,7 @@ bool handle_udp_post_request(unsigned int command, unsigned char* data, struct b
  * 
  * @param filename Name of the JSON file to update (e.g., "EVA")
  * @param section Section within the JSON file to update (e.g., "telemetry")
- * @param field_path Field path within the section to update (e.g., "batt_time_left" or "eva1.batt")
+ * @param field_path Field path within the section to update (e.g., "batt_time_left" or "eva.batt")
  * @param new_value New value to set for the specified field
  */
 void update_json_file(const char* filename, const char* section, const char* field_path, char* new_value) {
@@ -1604,8 +1604,8 @@ void sync_simulation_to_json(struct backend_data_t* backend) {
         cJSON_AddItemToObject(root, "status", status);
     }
 
-    // Update existing started field (check if eva1 OR eva2 is running)
-    bool eva_running = sim_engine_is_component_running(engine, "eva1") || sim_engine_is_component_running(engine, "eva2");
+    // Update existing started field (check if eva is running)
+    bool eva_running = sim_engine_is_component_running(engine, "eva");
     cJSON* started_field = cJSON_GetObjectItemCaseSensitive(status, "started");
     if (started_field != NULL) {
         cJSON_SetBoolValue(started_field, eva_running);
@@ -1620,40 +1620,18 @@ void sync_simulation_to_json(struct backend_data_t* backend) {
         cJSON_AddItemToObject(root, "telemetry", telemetry);
     }
     
-    // Get or create eva1 and eva2 sections under telemetry
-    cJSON* eva1_section = cJSON_GetObjectItemCaseSensitive(telemetry, "eva1");
-    if (eva1_section == NULL) {
-        eva1_section = cJSON_CreateObject();
-        cJSON_AddItemToObject(telemetry, "eva1", eva1_section);
-    }
-    
-    cJSON* eva2_section = cJSON_GetObjectItemCaseSensitive(telemetry, "eva2");
-    if (eva2_section == NULL) {
-        eva2_section = cJSON_CreateObject();
-        cJSON_AddItemToObject(telemetry, "eva2", eva2_section);
-    }
-    
     // Update simulation fields in their respective sections
     for (int i = 0; i < engine->total_field_count; i++) {
         sim_field_t* field = engine->update_order[i];
         if (field != NULL) {
             double value = field->current_value.f;
-
-            // Determine target section based on component name
-            cJSON* target_section = NULL;
-            if (strcmp(field->component_name, "eva1") == 0) {
-                target_section = eva1_section;
-            } else if (strcmp(field->component_name, "eva2") == 0) {
-                target_section = eva2_section;
-            }
-    
-            if (target_section != NULL) {
+            if (telemetry != NULL) {
                 // Check if field already exists and replace it, otherwise add new
-                cJSON* existing_field = cJSON_GetObjectItemCaseSensitive(target_section, field->field_name);
+                cJSON* existing_field = cJSON_GetObjectItemCaseSensitive(telemetry, field->field_name);
                 if (existing_field != NULL) {
                     cJSON_SetNumberValue(existing_field, value);
                 } else {
-                    cJSON_AddNumberToObject(target_section, field->field_name, value);
+                    cJSON_AddNumberToObject(telemetry, field->field_name, value);
                 }
             }
         }
@@ -1778,13 +1756,11 @@ bool html_form_json_update(char* request_content, struct backend_data_t* backend
         if (strcmp(filename, "EVA") == 0 && strcmp(section, "status") == 0 && strcmp(field, "started") == 0) {
             if (backend->sim_engine) {
                 if (strcmp(value, "true") == 0) {
-                    sim_engine_start_component(backend->sim_engine, "eva1");
-                    sim_engine_start_component(backend->sim_engine, "eva2");
+                    sim_engine_start_component(backend->sim_engine, "eva");
                     printf("Started EVA simulation\n");
                 } else {
-                    sim_engine_reset_component(backend->sim_engine, "eva1", update_json_file);
+                    sim_engine_reset_component(backend->sim_engine, "eva", update_json_file);
                     backend->sim_engine->time_to_complete_task_board = -10;
-                    sim_engine_reset_component(backend->sim_engine, "eva2", update_json_file);
                     reset_eva_station_timing();
                     printf("Reset EVA simulation\n");
                 }
@@ -1874,22 +1850,22 @@ void update_sim_DCU_field_settings(sim_engine_t* sim_engine) {
     sim_DCU_field_settings_t* settings = sim_engine->dcu_field_settings;
 
     // Update battery_lu setting
-    settings->battery_lu = (get_field_from_json("EVA", "dcu.eva1.batt.lu", 0.0) == 1.0);
+    settings->battery_lu = (get_field_from_json("EVA", "dcu.batt.lu", 0.0) == 1.0);
 
     // Update battery_ps setting
-    settings->battery_ps = (get_field_from_json("EVA", "dcu.eva1.batt.ps", 0.0) == 1.0);
+    settings->battery_ps = (get_field_from_json("EVA", "dcu.batt.ps", 0.0) == 1.0);
 
     // Update fan setting
-    settings->fan = (get_field_from_json("EVA", "dcu.eva1.fan", 0.0) == 1.0);
+    settings->fan = (get_field_from_json("EVA", "dcu.fan", 0.0) == 1.0);
 
     // Update o2 setting
-    settings->o2 = (get_field_from_json("EVA", "dcu.eva1.oxy", 0.0) == 1.0);
+    settings->o2 = (get_field_from_json("EVA", "dcu.oxy", 0.0) == 1.0);
 
     //update pump setting
-    settings->pump = (get_field_from_json("EVA", "dcu.eva1.pump", 0.0) == 1.0);
+    settings->pump = (get_field_from_json("EVA", "dcu.pump", 0.0) == 1.0);
 
     //update co2 setting
-    settings->co2 = (get_field_from_json("EVA", "dcu.eva1.co2", 0.0) == 1.0);
+    settings->co2 = (get_field_from_json("EVA", "dcu.co2", 0.0) == 1.0);
 
 }
 
@@ -1898,7 +1874,7 @@ void update_sim_DCU_field_settings(sim_engine_t* sim_engine) {
  * Gets a field value from a JSON file using a dot-separated path
  *
  * @param filename Name of the JSON file (e.g. "EVA")
- * @param field_path Dot-separated path to the field (e.g., "pr_telemetry.brakes" or "telemetry.eva1.batt")
+ * @param field_path Dot-separated path to the field (e.g., "telemetry.batt")
  * @param default_value Default value to return if field is not found or invalid
  * @return Field value as double, or default_value if not found
  */

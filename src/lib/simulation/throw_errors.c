@@ -59,14 +59,14 @@ bool throw_random_error(sim_engine_t* engine) {
  * 
 */
 bool throw_O2_suit_pressure_low_error(sim_engine_t* engine) {
-    sim_component_t* eva1 = sim_engine_get_component(engine, "eva1");
-        if (eva1 == NULL) {
-            printf("Simulation tried to access non-existent component 'eva1' for O2 storage error\n");
+    sim_component_t* eva = sim_engine_get_component(engine, "eva");
+        if (eva == NULL) {
+            printf("Simulation tried to access non-existent component 'eva' for O2 storage error\n");
             return false;
         }
 
     //set the field algorithm to linear decrease
-    sim_field_t* field = sim_engine_find_field_within_component(eva1, "suit_pressure_oxy");
+    sim_field_t* field = sim_engine_find_field_within_component(eva, "suit_pressure_oxy");
     if (field) {
         if(engine->dcu_field_settings->o2 == true) {
             field->algorithm = SIM_ALGO_LINEAR_DECAY;
@@ -90,14 +90,14 @@ bool throw_O2_suit_pressure_low_error(sim_engine_t* engine) {
  * 
 */
 bool throw_O2_suit_pressure_high_error(sim_engine_t* engine) {
-    sim_component_t* eva1 = sim_engine_get_component(engine, "eva1");
-        if (eva1 == NULL) {
-            printf("Simulation tried to access non-existent component 'eva1' for O2 storage error\n");
+    sim_component_t* eva = sim_engine_get_component(engine, "eva");
+        if (eva == NULL) {
+            printf("Simulation tried to access non-existent component 'eva' for O2 storage error\n");
             return false;
         }
 
     //set the field algorithm to linear growth
-    sim_field_t* field = sim_engine_find_field_within_component(eva1, "suit_pressure_oxy");
+    sim_field_t* field = sim_engine_find_field_within_component(eva, "suit_pressure_oxy");
     if (field) {
         if(engine->dcu_field_settings->o2 == true) {
             field->algorithm = SIM_ALGO_LINEAR_GROWTH;
@@ -123,14 +123,14 @@ bool throw_O2_suit_pressure_high_error(sim_engine_t* engine) {
 */
 bool throw_fan_RPM_low_error(sim_engine_t* engine) {
 
-    sim_component_t* eva1 = sim_engine_get_component(engine, "eva1");
-    if (eva1 == NULL) {
-        printf("Simulation tried to access non-existent component 'eva1' for fan RPM low error\n");
+    sim_component_t* eva = sim_engine_get_component(engine, "eva");
+    if (eva == NULL) {
+        printf("Simulation tried to access non-existent component 'eva' for fan RPM low error\n");
         return false;
     }
 
     //set the field algorithm to linear decay
-    sim_field_t* field = sim_engine_find_field_within_component(eva1, "fan_pri_rpm");
+    sim_field_t* field = sim_engine_find_field_within_component(eva, "fan_pri_rpm");
     if (field) {
         field->algorithm = SIM_ALGO_LINEAR_DECAY;
     } else {
@@ -139,7 +139,7 @@ bool throw_fan_RPM_low_error(sim_engine_t* engine) {
     }
 
     //set the helmet co2 pressure to increase as well to simulate the effect of the fan malfunction on the suit environment
-    sim_field_t* field_helmet_pressure_co2 = sim_engine_find_field_within_component(eva1, "helmet_pressure_co2");
+    sim_field_t* field_helmet_pressure_co2 = sim_engine_find_field_within_component(eva, "helmet_pressure_co2");
     if (field_helmet_pressure_co2) {
         field_helmet_pressure_co2->algorithm = SIM_ALGO_LINEAR_GROWTH;
         field_helmet_pressure_co2->rate.f = CO2_RATE;

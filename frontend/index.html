@@ -190,7 +190,7 @@
                                         <div class="dcu_switch-container">
                                             <span class="dcu-label-left">LOCAL</span>
                                             <label class="switch">
-                                                <input type="checkbox" data-path="eva.dcu.eva1.batt.lu">
+                                                <input type="checkbox" data-path="eva.dcu.batt.lu">
                                                 <span class="slider round"></span>
                                             </label>
                                             <span class="dcu-label-right">UMB</span>
@@ -203,7 +203,7 @@
                                         <div class="dcu-switch-container">
                                             <span class="dcu-label-left">SEC</span>
                                             <label class="switch">
-                                                <input type="checkbox" data-path="eva.dcu.eva1.fan">
+                                                <input type="checkbox" data-path="eva.dcu.fan">
                                                 <span class="slider round"></span>
                                             </label>
                                             <span class="dcu-label-right">PRI</span>
@@ -220,7 +220,7 @@
                                         <div class="dcu-switch-container">
                                             <span class="dcu-label-left">SEC</span>
                                             <label class="switch">
-                                                <input type="checkbox" data-path="eva.dcu.eva1.oxy">
+                                                <input type="checkbox" data-path="eva.dcu.oxy">
                                                 <span class="slider round"></span>
                                             </label>
                                             <span class="dcu-label-right">PRI</span>
@@ -233,7 +233,7 @@
                                         <div class="dcu-switch-container">
                                             <span class="dcu-label-left">CLOSE</span>
                                             <label class="switch">
-                                                <input type="checkbox" data-path="eva.dcu.eva1.pump">
+                                                <input type="checkbox" data-path="eva.dcu.pump">
                                                 <span class="slider round"></span>
                                             </label>
                                             <span class="dcu-label-right">OPEN</span>
@@ -250,7 +250,7 @@
                                         <div class="dcu-switch-container">
                                             <span class="dcu-label-left">SEC</span>
                                             <label class="switch">
-                                                <input type="checkbox" data-path="eva.dcu.eva1.batt.ps">
+                                                <input type="checkbox" data-path="eva.dcu.batt.ps">
                                                 <span class="slider round"></span>
                                             </label>
                                             <span class="dcu-label-right">PRI</span>
@@ -263,7 +263,7 @@
                                         <div class="dcu-switch-container">
                                             <span class="dcu-label-left">SEC</span>
                                             <label class="switch">
-                                                <input type="checkbox" data-path="eva.dcu.eva1.co2">
+                                                <input type="checkbox" data-path="eva.dcu.co2">
                                                 <span class="slider round"></span>
                                             </label>
                                             <span class="dcu-label-right">PRI</span>
@@ -276,88 +276,9 @@
                             </div>
                         </div>
 
-                        <!-----------------------EVA Control---------------------------------------------------->
-
-                        <div class="card">
-                            <div class="card-header">
-                                <span class="card-title">
-                                    EVA CONTROL
-                                </span>
-                            </div>
-                                       <div class="card-subtitle">
-                                <span class="subtitle" data-path="eva.telemetry.eva1.eva_elapsed_time" data-format="time">00:00:00</span>
-                            </div>
-                            <div class="card-body">
-                                <button data-path="eva.status.started" data-action="start" class="btn-start">
-                                    <svg style="pointer-events: none;" data-testid="geist-icon" height="16" stroke-linejoin="round" viewBox="0 0 16 16" width="16" style="color: currentcolor;"><path fill-rule="evenodd" clip-rule="evenodd" d="M14.5528 7.77638C14.737 7.86851 14.737 8.13147 14.5528 8.2236L1.3618 14.8191C1.19558 14.9022 1 14.7813 1 14.5955L1 1.4045C1 1.21865 1.19558 1.09778 1.3618 1.18089L14.5528 7.77638Z" fill="currentColor"></path></svg>
-                                    START
-                                </button>
-                                <button data-path="eva.status.started" data-action="reset" class="btn-stop">
-                                    <svg style="pointer-events: none;" data-testid="geist-icon" height="16" stroke-linejoin="round" viewBox="0 0 16 16" width="16" style="color: currentcolor;"><path fill-rule="evenodd" clip-rule="evenodd" d="M8.00002 1.25C5.33749 1.25 3.02334 2.73677 1.84047 4.92183L1.48342 5.58138L2.80253 6.29548L3.15958 5.63592C4.09084 3.91566 5.90986 2.75 8.00002 2.75C10.4897 2.75 12.5941 4.40488 13.2713 6.67462H11.8243H11.0743V8.17462H11.8243H15.2489C15.6631 8.17462 15.9989 7.83883 15.9989 7.42462V4V3.25H14.4989V4V5.64468C13.4653 3.06882 10.9456 1.25 8.00002 1.25ZM1.50122 10.8555V12.5V13.25H0.0012207V12.5V9.07538C0.0012207 8.66117 0.337007 8.32538 0.751221 8.32538H4.17584H4.92584V9.82538H4.17584H2.72876C3.40596 12.0951 5.51032 13.75 8.00002 13.75C10.0799 13.75 11.8912 12.5958 12.8266 10.8895L13.1871 10.2318L14.5025 10.9529L14.142 11.6105C12.9539 13.7779 10.6494 15.25 8.00002 15.25C5.05453 15.25 2.53485 13.4313 1.50122 10.8555Z" fill="currentColor"></path></svg>
-                                    RESET
-                                </button>
-                            </div>
-                            <div class="card-subtitle">
-                                <span class="subtitle">
-                                    EVA ERROR SIMULATION
-                                </span>
-                            </div>
-                            <div class="card-body">
-                                <div class="card-content">
-                                    <div class="sensor-container">
-                                        <label class="switch">
-                                            <input type="checkbox" data-path="eva.error.oxy_error">
-                                            <span class="slider round"></span>
-                                        </label>
-                                    </div>
-                                    <div class="data-label">
-                                        <span class="value">
-                                            O2 Error
-                                        </span>
-                                    </div>
-                                    <div class="sensor-container">
-                                        <label class="switch">
-                                            <input type="checkbox" data-path="eva.error.fan_error">
-                                            <span class="slider round"></span>
-                                        </label>
-                                    </div>
-                                    <div class="data-label">
-                                        <span class="value">
-                                            Fan Error
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="card-content">
-                                    <div class="sensor-container">
-                                        <label class="switch">
-                                            <input type="checkbox" data-path="eva.error.scrubber_error">
-                                            <span class="slider round"></span>
-                                        </label>
-                                    </div>
-                                    <div class="data-label">
-                                        <span class="value">
-                                            Scrubber Error
-                                        </span>
-                                    </div>
-                                    <div class="sensor-container">
-                                        <label class="switch">
-                                            <input type="checkbox" data-path="eva.error.power_error">
-                                            <span class="slider round"></span>
-                                        </label>
-                                    </div>
-                                    <div class="data-label">
-                                        <span class="value">
-                                            Power Error
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
 
                         <!--------------------------------LTV ERRORS Section------------------------------------------------->
-                        <div class="card">
+                        <div class="card" style="border-bottom: 2px solid var(--sharp-blue);">
                             <div class="card-header">
                                 <span class="card-title">
                                     LTV ERRORS
@@ -475,11 +396,92 @@
                         </div>
                     </div>
                     <div class="column">
-                        <!------------------------------------------ EVA 1 Section ------------------------------------------>
+
+<!-----------------------EVA Control---------------------------------------------------->
+
                         <div class="card">
+                            <div class="card-header">
+                                <span class="card-title">
+                                    EVA CONTROL
+                                </span>
+                            </div>
+                                       <div class="card-subtitle">
+                                <span class="subtitle" data-path="eva.telemetry.eva_elapsed_time" data-format="time">00:00:00</span>
+                            </div>
+                            <div class="card-body">
+                                <button data-path="eva.status.started" data-action="start" class="btn-start">
+                                    <svg style="pointer-events: none;" data-testid="geist-icon" height="16" stroke-linejoin="round" viewBox="0 0 16 16" width="16" style="color: currentcolor;"><path fill-rule="evenodd" clip-rule="evenodd" d="M14.5528 7.77638C14.737 7.86851 14.737 8.13147 14.5528 8.2236L1.3618 14.8191C1.19558 14.9022 1 14.7813 1 14.5955L1 1.4045C1 1.21865 1.19558 1.09778 1.3618 1.18089L14.5528 7.77638Z" fill="currentColor"></path></svg>
+                                    START
+                                </button>
+                                <button data-path="eva.status.started" data-action="reset" class="btn-stop">
+                                    <svg style="pointer-events: none;" data-testid="geist-icon" height="16" stroke-linejoin="round" viewBox="0 0 16 16" width="16" style="color: currentcolor;"><path fill-rule="evenodd" clip-rule="evenodd" d="M8.00002 1.25C5.33749 1.25 3.02334 2.73677 1.84047 4.92183L1.48342 5.58138L2.80253 6.29548L3.15958 5.63592C4.09084 3.91566 5.90986 2.75 8.00002 2.75C10.4897 2.75 12.5941 4.40488 13.2713 6.67462H11.8243H11.0743V8.17462H11.8243H15.2489C15.6631 8.17462 15.9989 7.83883 15.9989 7.42462V4V3.25H14.4989V4V5.64468C13.4653 3.06882 10.9456 1.25 8.00002 1.25ZM1.50122 10.8555V12.5V13.25H0.0012207V12.5V9.07538C0.0012207 8.66117 0.337007 8.32538 0.751221 8.32538H4.17584H4.92584V9.82538H4.17584H2.72876C3.40596 12.0951 5.51032 13.75 8.00002 13.75C10.0799 13.75 11.8912 12.5958 12.8266 10.8895L13.1871 10.2318L14.5025 10.9529L14.142 11.6105C12.9539 13.7779 10.6494 15.25 8.00002 15.25C5.05453 15.25 2.53485 13.4313 1.50122 10.8555Z" fill="currentColor"></path></svg>
+                                    RESET
+                                </button>
+                            </div>
+                            <div class="card-subtitle">
+                                <span class="subtitle">
+                                    EVA ERROR SIMULATION
+                                </span>
+                            </div>
+                            <div class="card-body">
+                                <div class="card-content">
+                                    <div class="sensor-container">
+                                        <label class="switch">
+                                            <input type="checkbox" data-path="eva.error.oxy_error">
+                                            <span class="slider round"></span>
+                                        </label>
+                                    </div>
+                                    <div class="data-label">
+                                        <span class="value">
+                                            O2 Error
+                                        </span>
+                                    </div>
+                                    <div class="sensor-container">
+                                        <label class="switch">
+                                            <input type="checkbox" data-path="eva.error.fan_error">
+                                            <span class="slider round"></span>
+                                        </label>
+                                    </div>
+                                    <div class="data-label">
+                                        <span class="value">
+                                            Fan Error
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="card-content">
+                                    <div class="sensor-container">
+                                        <label class="switch">
+                                            <input type="checkbox" data-path="eva.error.scrubber_error">
+                                            <span class="slider round"></span>
+                                        </label>
+                                    </div>
+                                    <div class="data-label">
+                                        <span class="value">
+                                            Scrubber Error
+                                        </span>
+                                    </div>
+                                    <div class="sensor-container">
+                                        <label class="switch">
+                                            <input type="checkbox" data-path="eva.error.power_error">
+                                            <span class="slider round"></span>
+                                        </label>
+                                    </div>
+                                    <div class="data-label">
+                                        <span class="value">
+                                            Power Error
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!------------------------------------------ EVA Section ------------------------------------------>
+                        <div class="card" style="border-bottom: 2px solid var(--sharp-blue);">
                             <div class="card-header" style="justify-content: space-between;">
                                 <span class="card-title">
-                                    EVA 1
+                                    EVA
                                 </span>
 
                                 <a class="btn-video" onclick="alert('You will be able to access a live video feed for EVA 1 from a network address during test week in May. This is a good option to include in your interface design!')">
@@ -502,7 +504,7 @@
                                         </span>
                                     </div>
                                     <div class="telemetry-value">
-                                        <span class="telemetry-data" data-path="eva.telemetry.eva1.primary_battery_level" data-units="%">
+                                        <span class="telemetry-data" data-path="eva.telemetry.primary_battery_level" data-units="%">
                                             ------
                                         </span>
                                     </div>
@@ -512,7 +514,7 @@
                                         </span>
                                     </div>
                                     <div class="telemetry-value">
-                                        <span class="telemetry-data" data-path="eva.telemetry.eva1.secondary_battery_level" data-units="%">
+                                        <span class="telemetry-data" data-path="eva.telemetry.secondary_battery_level" data-units="%">
                                             ------
                                         </span>
                                     </div>
@@ -526,7 +528,7 @@
                                         </span>
                                     </div>
                                     <div class="telemetry-value">
-                                        <span class="telemetry-data" data-path="eva.telemetry.eva1.oxy_pri_storage" data-units="%">
+                                        <span class="telemetry-data" data-path="eva.telemetry.oxy_pri_storage" data-units="%">
                                             ------
                                         </span>
                                     </div>
@@ -536,7 +538,7 @@
                                         </span>
                                     </div>
                                     <div class="telemetry-value">
-                                        <span class="telemetry-data" data-path="eva.telemetry.eva1.oxy_sec_storage" data-units="%">
+                                        <span class="telemetry-data" data-path="eva.telemetry.oxy_sec_storage" data-units="%">
                                             ------
                                         </span>
                                     </div>
@@ -550,7 +552,7 @@
                                         </span>
                                     </div>
                                     <div class="telemetry-value">
-                                        <span class="telemetry-data" data-path="eva.telemetry.eva1.oxy_pri_pressure" data-units="psi">
+                                        <span class="telemetry-data" data-path="eva.telemetry.oxy_pri_pressure" data-units="psi">
                                             ------
                                         </span>
                                     </div>
@@ -560,7 +562,7 @@
                                         </span>
                                     </div>
                                     <div class="telemetry-value">
-                                        <span class="telemetry-data" data-path="eva.telemetry.eva1.oxy_sec_pressure" data-units="psi">
+                                        <span class="telemetry-data" data-path="eva.telemetry.oxy_sec_pressure" data-units="psi">
                                             ------
                                         </span>
                                     </div>
@@ -574,7 +576,7 @@
                                         </span>
                                     </div>
                                     <div class="telemetry-value">
-                                        <span class="telemetry-data" data-path="eva.telemetry.eva1.heart_rate" data-units="bpm">
+                                        <span class="telemetry-data" data-path="eva.telemetry.heart_rate" data-units="bpm">
                                             ------
                                         </span>
                                     </div>
@@ -584,7 +586,7 @@
                                         </span>
                                     </div>
                                     <div class="telemetry-value">
-                                        <span class="telemetry-data" data-path="eva.telemetry.eva1.oxy_consumption" data-units="psi/min">
+                                        <span class="telemetry-data" data-path="eva.telemetry.oxy_consumption" data-units="psi/min">
                                             ------
                                         </span>
                                     </div>
@@ -598,7 +600,7 @@
                                         </span>
                                     </div>
                                     <div class="telemetry-value">
-                                        <span class="telemetry-data" data-path="eva.telemetry.eva1.co2_production" data-units="psi/min">
+                                        <span class="telemetry-data" data-path="eva.telemetry.co2_production" data-units="psi/min">
                                             ------
                                         </span>
                                     </div>
@@ -608,7 +610,7 @@
                                         </span>
                                     </div>
                                     <div class="telemetry-value">
-                                        <span class="telemetry-data" data-path="eva.telemetry.eva1.suit_pressure_oxy" data-units="psi">
+                                        <span class="telemetry-data" data-path="eva.telemetry.suit_pressure_oxy" data-units="psi">
                                             ------
                                         </span>
                                     </div>
@@ -622,7 +624,7 @@
                                         </span>
                                     </div>
                                     <div class="telemetry-value">
-                                        <span class="telemetry-data" data-path="eva.telemetry.eva1.suit_pressure_co2" data-units="psi">
+                                        <span class="telemetry-data" data-path="eva.telemetry.suit_pressure_co2" data-units="psi">
                                             ------
                                         </span>
                                     </div>
@@ -632,7 +634,7 @@
                                         </span>
                                     </div>
                                     <div class="telemetry-value">
-                                        <span class="telemetry-data" data-path="eva.telemetry.eva1.suit_pressure_other" data-units="psi">
+                                        <span class="telemetry-data" data-path="eva.telemetry.suit_pressure_other" data-units="psi">
                                             ------
                                         </span>
                                     </div>
@@ -646,7 +648,7 @@
                                         </span>
                                     </div>
                                     <div class="telemetry-value">
-                                        <span class="telemetry-data" data-path="eva.telemetry.eva1.suit_pressure_total" data-units="psi">
+                                        <span class="telemetry-data" data-path="eva.telemetry.suit_pressure_total" data-units="psi">
                                             ------
                                         </span>
                                     </div>
@@ -656,7 +658,7 @@
                                         </span>
                                     </div>
                                     <div class="telemetry-value">
-                                        <span class="telemetry-data" data-path="eva.telemetry.eva1.helmet_pressure_co2" data-units="psi">
+                                        <span class="telemetry-data" data-path="eva.telemetry.helmet_pressure_co2" data-units="psi">
                                             ------
                                         </span>
                                     </div>
@@ -670,7 +672,7 @@
                                         </span>
                                     </div>
                                     <div class="telemetry-value">
-                                        <span class="telemetry-data" data-path="eva.telemetry.eva1.fan_pri_rpm" data-units="rpm">
+                                        <span class="telemetry-data" data-path="eva.telemetry.fan_pri_rpm" data-units="rpm">
                                             ------
                                         </span>
                                     </div>
@@ -680,7 +682,7 @@
                                         </span>
                                     </div>
                                     <div class="telemetry-value">
-                                        <span class="telemetry-data" data-path="eva.telemetry.eva1.fan_sec_rpm" data-units="rpm">
+                                        <span class="telemetry-data" data-path="eva.telemetry.fan_sec_rpm" data-units="rpm">
                                             ------
                                         </span>
                                     </div>
@@ -694,7 +696,7 @@
                                         </span>
                                     </div>
                                     <div class="telemetry-value">
-                                        <span class="telemetry-data" data-path="eva.telemetry.eva1.scrubber_a_co2_storage" data-units="%">
+                                        <span class="telemetry-data" data-path="eva.telemetry.scrubber_a_co2_storage" data-units="%">
                                             ------
                                         </span>
                                     </div>
@@ -704,7 +706,7 @@
                                         </span>
                                     </div>
                                     <div class="telemetry-value">
-                                        <span class="telemetry-data" data-path="eva.telemetry.eva1.scrubber_b_co2_storage" data-units="%">
+                                        <span class="telemetry-data" data-path="eva.telemetry.scrubber_b_co2_storage" data-units="%">
                                             ------
                                         </span>
                                     </div>
@@ -718,7 +720,7 @@
                                         </span>
                                     </div>
                                     <div class="telemetry-value">
-                                        <span class="telemetry-data" data-path="eva.telemetry.eva1.temperature" data-units="°C">
+                                        <span class="telemetry-data" data-path="eva.telemetry.temperature" data-units="°C">
                                             ------
                                         </span>
                                     </div>
@@ -728,7 +730,7 @@
                                         </span>
                                     </div>
                                     <div class="telemetry-value">
-                                        <span class="telemetry-data" data-path="eva.telemetry.eva1.coolant_liquid_pressure" data-units="psi">
+                                        <span class="telemetry-data" data-path="eva.telemetry.coolant_liquid_pressure" data-units="psi">
                                             ------
                                         </span>
                                     </div>
@@ -742,7 +744,7 @@
                                         </span>
                                     </div>
                                     <div class="telemetry-value">
-                                        <span class="telemetry-data" data-path="eva.telemetry.eva1.coolant_storage" data-units="%">
+                                        <span class="telemetry-data" data-path="eva.telemetry.coolant_storage" data-units="%">
                                             ------
                                         </span>
                                     </div>
@@ -752,7 +754,7 @@
                                         </span>
                                     </div>
                                     <div class="telemetry-value">
-                                        <span class="telemetry-data" data-path="eva.telemetry.eva1.coolant_gas_pressure" data-units="psi">
+                                        <span class="telemetry-data" data-path="eva.telemetry.coolant_gas_pressure" data-units="psi">
                                             ------
                                         </span>
                                     </div>
@@ -774,7 +776,7 @@
                                         </span>
                                     </div>
                                     <div class="data-value">
-                                        <span class="value" data-path="eva.imu.eva1.posx">
+                                        <span class="value" data-path="eva.imu.posx">
                                             ------
                                         </span>
                                     </div>
@@ -784,7 +786,7 @@
                                         </span>
                                     </div>
                                     <div class="data-value">
-                                        <span class="value" data-path="eva.imu.eva1.posy">
+                                        <span class="value" data-path="eva.imu.posy">
                                             ------
                                         </span>
                                     </div>
@@ -798,7 +800,7 @@
                                         </span>
                                     </div>
                                     <div class="data-value">
-                                        <span class="value" data-path="eva.imu.eva1.heading">
+                                        <span class="value" data-path="eva.imu.heading">
                                             ------
                                         </span>
                                     </div>
@@ -814,420 +816,6 @@
                                     </div>
                                 </div>
                             </div>
-
-                        <!------------------------------------------ EVA 2 Section ------------------------------------------>
-                        <div class="card"  style="border-bottom: 2px solid var(--sharp-blue);">
-                            <div class="card-header">
-                                <span class="card-title">
-                                    EVA 2
-                                </span>
-                            </div>
-
-
-                            <!-------------------------------------- TELEMETRY VALUES Section -------------------------------------->
-                            <div class="card-subtitle">
-                                <span class="subtitle">
-                                    TELEMETRY VALUES
-                                </span>
-                            </div>
-                            <div class="card-body">
-                                <div class="card-content">
-                                    <div class="telemetry-label">
-                                        <span class="telemetry-data">
-                                            Battery Level
-                                        </span>
-                                    </div>
-                                    <div class="telemetry-value">
-                                        <span class="telemetry-data" data-path="eva.telemetry.eva2.battery_level" data-units="%">
-                                            ------
-                                        </span>
-                                    </div>
-                                    <div class="telemetry-label">
-                                        <span class="telemetry-data">
-                                            Primary O2 Storage
-                                        </span>
-                                    </div>
-                                    <div class="telemetry-value">
-                                        <span class="telemetry-data" data-path="eva.telemetry.eva2.oxy_pri_storage" data-units="%">
-                                            ------
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="card-content">
-                                    <div class="telemetry-label">
-                                        <span class="telemetry-data">
-                                            Secondary O2 Storage
-                                        </span>
-                                    </div>
-                                    <div class="telemetry-value">
-                                        <span class="telemetry-data" data-path="eva.telemetry.eva2.oxy_sec_storage" data-units="%">
-                                            ------
-                                        </span>
-                                    </div>
-                                    <div class="telemetry-label">
-                                        <span class="telemetry-data">
-                                            Primary O2 Pressure
-                                        </span>
-                                    </div>
-                                    <div class="telemetry-value">
-                                        <span class="telemetry-data" data-path="eva.telemetry.eva2.oxy_pri_pressure" data-units="psi">
-                                            ------
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="card-content">
-                                    <div class="telemetry-label">
-                                        <span class="telemetry-data">
-                                            Secondary O2 Pressure
-                                        </span>
-                                    </div>
-                                    <div class="telemetry-value">
-                                        <span class="telemetry-data" data-path="eva.telemetry.eva2.oxy_sec_pressure" data-units="psi">
-                                            ------
-                                        </span>
-                                    </div>
-                                    <div class="telemetry-label">
-                                        <span class="telemetry-data">
-                                            Coolant Storage
-                                        </span>
-                                    </div>
-                                    <div class="telemetry-value">
-                                        <span class="telemetry-data" data-path="eva.telemetry.eva2.coolant_storage" data-units="%">
-                                            ------
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="card-content">
-                                    <div class="telemetry-label">
-                                        <span class="telemetry-data">
-                                            Heart Rate
-                                        </span>
-                                    </div>
-                                    <div class="telemetry-value">
-                                        <span class="telemetry-data" data-path="eva.telemetry.eva2.heart_rate" data-units="bpm">
-                                            ------
-                                        </span>
-                                    </div>
-                                    <div class="telemetry-label">
-                                        <span class="telemetry-data">
-                                            O2 Consumption
-                                        </span>
-                                    </div>
-                                    <div class="telemetry-value">
-                                        <span class="telemetry-data" data-path="eva.telemetry.eva2.oxy_consumption" data-units="psi/min">
-                                            ------
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="card-content">
-                                    <div class="telemetry-label">
-                                        <span class="telemetry-data">
-                                            CO2 Production
-                                        </span>
-                                    </div>
-                                    <div class="telemetry-value">
-                                        <span class="telemetry-data" data-path="eva.telemetry.eva2.co2_production" data-units="psi/min">
-                                            ------
-                                        </span>
-                                    </div>
-                                    <div class="telemetry-label">
-                                        <span class="telemetry-data">
-                                            Suit O2 Pressure
-                                        </span>
-                                    </div>
-                                    <div class="telemetry-value">
-                                        <span class="telemetry-data" data-path="eva.telemetry.eva2.suit_pressure_oxy" data-units="psi">
-                                            ------
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="card-content">
-                                    <div class="telemetry-label">
-                                        <span class="telemetry-data">
-                                            Suit CO2 Pressure
-                                        </span>
-                                    </div>
-                                    <div class="telemetry-value">
-                                        <span class="telemetry-data" data-path="eva.telemetry.eva2.suit_pressure_co2" data-units="psi">
-                                            ------
-                                        </span>
-                                    </div>
-                                    <div class="telemetry-label">
-                                        <span class="telemetry-data">
-                                            Suit Other Pressure
-                                        </span>
-                                    </div>
-                                    <div class="telemetry-value">
-                                        <span class="telemetry-data" data-path="eva.telemetry.eva2.suit_pressure_other" data-units="psi">
-                                            ------
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="card-content">
-                                    <div class="telemetry-label">
-                                        <span class="telemetry-data">
-                                            Suit Total Pressure
-                                        </span>
-                                    </div>
-                                    <div class="telemetry-value">
-                                        <span class="telemetry-data" data-path="eva.telemetry.eva2.suit_pressure_total" data-units="psi">
-                                            ------
-                                        </span>
-                                    </div>
-                                    <div class="telemetry-label">
-                                        <span class="telemetry-data">
-                                            Helmet CO2 Pressure
-                                        </span>
-                                    </div>
-                                    <div class="telemetry-value">
-                                        <span class="telemetry-data" data-path="eva.telemetry.eva2.helmet_pressure_co2" data-units="psi">
-                                            ------
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="card-content">
-                                    <div class="telemetry-label">
-                                        <span class="telemetry-data">
-                                            Primary Fan
-                                        </span>
-                                    </div>
-                                    <div class="telemetry-value">
-                                        <span class="telemetry-data" data-path="eva.telemetry.eva2.fan_pri_rpm" data-units="rpm">
-                                            ------
-                                        </span>
-                                    </div>
-                                    <div class="telemetry-label">
-                                        <span class="telemetry-data">
-                                            Secondary Fan
-                                        </span>
-                                    </div>
-                                    <div class="telemetry-value">
-                                        <span class="telemetry-data" data-path="eva.telemetry.eva2.fan_sec_rpm" data-units="rpm">
-                                            ------
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="card-content">
-                                    <div class="telemetry-label">
-                                        <span class="telemetry-data">
-                                            Scrubber Primary
-                                        </span>
-                                    </div>
-                                    <div class="telemetry-value">
-                                        <span class="telemetry-data" data-path="eva.telemetry.eva2.scrubber_a_co2_storage" data-units="%">
-                                            ------
-                                        </span>
-                                    </div>
-                                    <div class="telemetry-label">
-                                        <span class="telemetry-data">
-                                            Scrubber Secondary
-                                        </span>
-                                    </div>
-                                    <div class="telemetry-value">
-                                        <span class="telemetry-data" data-path="eva.telemetry.eva2.scrubber_b_co2_storage" data-units="%">
-                                            ------
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="card-content">
-                                    <div class="telemetry-label">
-                                        <span class="telemetry-data">
-                                            Temperature
-                                        </span>
-                                    </div>
-                                    <div class="telemetry-value">
-                                        <span class="telemetry-data" data-path="eva.telemetry.eva2.temperature" data-units="°C">
-                                            ------
-                                        </span>
-                                    </div>
-                                    <div class="telemetry-label">
-                                        <span class="telemetry-data">
-                                            Coolant Liquid Pressure
-                                        </span>
-                                    </div>
-                                    <div class="telemetry-value">
-                                        <span class="telemetry-data" data-path="eva.telemetry.eva2.coolant_liquid_pressure" data-units="psi">
-                                            ------
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="card-content">
-                                    <div class="telemetry-label">
-                                        <span class="telemetry-data">
-                                            Coolant Gas Pressure
-                                        </span>
-                                    </div>
-                                    <div class="telemetry-value">
-                                        <span class="telemetry-data" data-path="eva.telemetry.eva2.coolant_gas_pressure" data-units="psi">
-                                            ------
-                                        </span>
-                                    </div>
-                                <div class="telemetry-label">
-                                        <span class="telemetry-data">
-                                        </span>
-                                    </div>
-                                    <div class="telemetry-value">
-                                        <span id="scrubberBPressure2" class="telemetry-data">
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!------------------------------------------ Location Section ------------------------------------------>
-                            <div class="card-subtitle">
-                                <span class="subtitle">
-                                    LOCATION
-                                </span>
-                            </div>
-                            <div class="card-body">
-                                <div class="card-content">
-                                    <div class="data-label">
-                                        <span class="value">
-                                            X-Coordinate
-                                        </span>
-                                    </div>
-                                    <div class="data-value">
-                                        <span class="value" data-path="eva.imu.eva2.posx">
-                                            ------
-                                        </span>
-                                    </div>
-                                    <div class="data-label">
-                                        <span class="value">
-                                            Y-Coordinate
-                                        </span>
-                                    </div>
-                                    <div class="data-value">
-                                        <span class="value" data-path="eva.imu.eva2.posy">
-                                            ------
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="card-content">
-                                    <div class="data-label">
-                                        <span class="value">
-                                            Heading
-                                        </span>
-                                    </div>
-                                    <div class="data-value">
-                                        <span class="value" data-path="eva.imu.eva2.heading">
-                                            ------
-                                        </span>
-                                    </div>
-                                    <div class="data-label">
-                                        <span class="value">
-                                            
-                                        </span>
-                                    </div>
-                                    <div class="data-value">
-                                        <span class="value">
-                                            
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-
-                             <!------------------------------------------ DCU State Section ------------------------------------------>
-                             <!--
-                             EVA #2 DCU is not being used for the 2026 mission since we will only have one physical EVA the the second one will be simulated.
-                            <div class="card-subtitle">
-                                <span class="subtitle">
-                                    DCU State
-                                </span>
-                            </div>
-                            <div class="card-subtitle">
-                                <span class="subtitle">
-                                   NOT CONNECTED
-                                </span>
-                            </div>
-                            <div class="card-body">
-                                <div class="card-content">
-                                    <div class="sensor-container">
-                                        <div id="dcuEva2BatterySensor" class="sensor">
-                                        </div>
-                                    </div>
-                                    <div class="info-container">
-                                        <span class="info-text">
-                                            BATTERY
-                                        </span>
-                                    </div>
-                                    <div class="sensor-container">
-                                        <div id="dcuEva2FanSensor" class="sensor">
-                                        </div>
-                                    </div>
-                                    <div class="info-container">
-                                        <span class="info-text">
-                                            FAN
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="card-content">
-                                    <div class="sensor-container">
-                                        <div id="dcuEva2OxygenSensor" class="sensor">
-                                        </div>
-                                    </div>
-                                    <div class="info-container">
-                                        <span class="info-text">
-                                            OXYGEN
-                                        </span>
-                                    </div>
-                                    <div class="sensor-container">
-                                        <div id="dcuEva2PumpSensor" class="sensor">
-                                        </div>
-                                    </div>
-                                    <div class="info-container">
-                                        <span class="info-text">
-                                            PUMP
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="card-content">
-                                    <div class="sensor-container">
-                                        <div id="dcuEva2CommSensor" class="sensor">
-                                        </div>
-                                    </div>
-                                    <div class="info-container">
-                                        <span class="info-text">
-                                            COMMS
-                                        </span>
-                                    </div>
-                                    <div class="sensor-container">
-                                        <div id="dcuEva2Co2Sensor" class="sensor">
-                                        </div>
-                                    </div>
-                                    <div class="info-container">
-                                        <span class="info-text">
-                                            CO2
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            -->
                         </div>
                     </div>
                 </div>

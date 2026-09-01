@@ -89,20 +89,17 @@ static const udp_command_mapping_t udp_command_mappings[] = {
     {2010, "eva.uia.depress", "bool"},
 
     // DCU commands (sent from the peripheral device over UDP)
-    {2011, "eva.dcu.eva1.batt.lu", "bool"},
-    {2012, "eva.dcu.eva1.oxy", "bool"},
-    {2013, "eva.dcu.eva1.batt.ps", "bool"},
-    {2014, "eva.dcu.eva1.fan", "bool"},
-    {2015, "eva.dcu.eva1.pump", "bool"},
-    {2016, "eva.dcu.eva1.co2", "bool"},
+    {2011, "eva.dcu.batt.lu", "bool"},
+    {2012, "eva.dcu.oxy", "bool"},
+    {2013, "eva.dcu.batt.ps", "bool"},
+    {2014, "eva.dcu.fan", "bool"},
+    {2015, "eva.dcu.pump", "bool"},
+    {2016, "eva.dcu.co2", "bool"},
 
     // IMU position commands from the TSS-Location-App Python server
-    {2017, "eva.imu.eva1.posx", "float"},
-    {2018, "eva.imu.eva1.posy", "float"},
-    {2019, "eva.imu.eva1.heading", "float"},
-    {2020, "eva.imu.eva2.posx", "float"},
-    {2021, "eva.imu.eva2.posy", "float"},
-    {2022, "eva.imu.eva2.heading", "float"},
+    {2017, "eva.imu.posx", "float"},
+    {2018, "eva.imu.posy", "float"},
+    {2019, "eva.imu.heading", "float"},
 
     //LTV Error commands
     {2023, "ltv_errors.error_procedures.0.needs_resolved", "bool"},
