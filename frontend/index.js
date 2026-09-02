@@ -44,8 +44,8 @@ async function fetchData() {
 
     // Fetch EVA, and LTV data simultaneously
     const [evaResponse, ltvErrorsResponse] = await Promise.all([
-      fetch(`/data/EVA.json`, { signal: evaController.signal }),
-      fetch(`/data/LTV_ERRORS.json`, { signal: ltvErrorsController.signal }),
+      fetch(`/data/instances/0/EVA.json`, { signal: evaController.signal }),
+      fetch(`/data/instances/0/LTV_ERRORS.json`, { signal: ltvErrorsController.signal }),
     ]);
 
     // Clear timeouts on successful response

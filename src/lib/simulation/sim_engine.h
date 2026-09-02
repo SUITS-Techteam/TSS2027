@@ -143,8 +143,7 @@ bool sim_engine_initialize(sim_engine_t* engine);
 void sim_engine_update(sim_engine_t* engine, float delta_time);
 void sim_engine_start_component(sim_engine_t* engine, const char* component_name);
 void sim_engine_stop_component(sim_engine_t* engine, const char* component_name);
-void sim_engine_reset_component(sim_engine_t* engine, const char* component_name,
-                               void (*update_json)(const char*, const char*, const char*, char*));
+void sim_engine_reset_component(sim_engine_t* engine, const char* component_name);
 
 // Field access
 sim_value_t sim_engine_get_field_value(sim_engine_t* engine, const char* field_name);

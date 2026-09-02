@@ -600,14 +600,11 @@ void sim_engine_stop_component(sim_engine_t* engine, const char* component_name)
 
 /**
  * Resets all fields of a specific component to their initial state and stops the component.
- * For external value fields with reset_value, calls the provided update_json function to update the data file.
  *
  * @param engine Pointer to the simulation engine
  * @param component_name Name of the component to reset (e.g., "eva")
- * @param update_json Function pointer to update JSON files (e.g., update_json_file from data.c)
  */
-void sim_engine_reset_component(sim_engine_t* engine, const char* component_name,
-                               void (*update_json)(const char*, const char*, const char*, char*)) {
+void sim_engine_reset_component(sim_engine_t* engine, const char* component_name) {
     if (!engine || !engine->initialized || !component_name) return;
 
     engine->error_type = NUM_ERRORS; //reset error thrown

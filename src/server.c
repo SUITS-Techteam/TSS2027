@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
     udp_socket = create_udp_socket(hostname, port);
 
     // Initialize backend data system
-    struct backend_data_t *backend = init_backend();
+    struct backend_data_t *backend = init_backend(0);
     if (!backend) {
         fprintf(stderr, "Failed to initialize backend\n");
         return -1;

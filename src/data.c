@@ -21,15 +21,19 @@ bool o2_error_flag = false;
  *
  * @return Pointer to the initialized backend data structure
  */
-struct backend_data_t *init_backend() {
+struct backend_data_t *init_backend(int instanceIndex) {
     // Allocate memory for backend
     struct backend_data_t *backend = malloc(sizeof(struct backend_data_t));
     memset(backend, 0, sizeof(struct backend_data_t));
+    backend->instance_index = instanceIndex;
+    copy_data_file_to_instance(instanceIndex, "EVA.json");
+    copy_data_file_to_instance(instanceIndex, "LTV_ERRORS.json");
 
     //initialize the JSON files
-    if (!initialize_json_switch_states()) {
+    if (!initialize_json_switch_states(backend)) {
         printf("Warning: Failed to initialize JSON files\n");
     }
+
 
     // Set initial timing information
     backend->start_time = time(NULL);
@@ -51,7 +55,7 @@ struct backend_data_t *init_backend() {
         //if UIA is included, initialize the UIA override dependent values at the start of the simulation
         if(include_UIA_flag) {
             printf("UIA is included in this simulation run. Initializing dependent values...\n");
-            initialize_UIA_override_dependent_values(backend->sim_engine);
+            initialize_UIA_override_dependent_values(backend);
         } else {
             printf("UIA override is not included in this simulation run.\n");
         }
@@ -67,23 +71,66 @@ struct backend_data_t *init_backend() {
     return backend;
 }
 
-/** 
-* Initializes all the JSON switch states
-* @return true if initialization was successful, false otherwise
-*/
-bool initialize_json_switch_states() {
-    bool eva_init = initialize_EVA_json_switch_states();
-    bool ltv_errors_init = initialize_LTV_ERRORS_json_switch_states();
+/**
+ * Copies the given file from the data folder to it's given instance folder, creating everything if needed
+ * @param instance_index index of instance to copy to
+ * @param filename name of file to copy
+ * @return true if initialization was successful, false otherwise
+ */
+void copy_data_file_to_instance(int instance_index, const char* filename)
+{
+    char dst_dir[100];
+    snprintf(dst_dir, sizeof(dst_dir), "data/instances/%d", instance_index);
+    mkdir("data/instances", 0777);
+    mkdir(dst_dir, 0777);
+    char src_path[100];
+    snprintf(src_path, sizeof(src_path), "data/%s", filename);
+    char dst_path[100];
+    snprintf(dst_path, sizeof(dst_path), "data/instances/%d/%s", instance_index, filename);
+
+    FILE *src_fp = fopen(src_path, "rb");
+    FILE *dst_fp = fopen(dst_path, "wb");
+
+    if (!src_fp || !dst_fp) {
+        printf("Error writing to %s\n", dst_path);
+        return;
+    }
+     
+    char buffer[100000];
+    size_t bytes_read, bytes_written;
+
+    while ((bytes_read = fread(buffer, 1, sizeof(buffer), src_fp)) > 0) {
+        bytes_written = fwrite(buffer, 1, bytes_read, dst_fp);
+        if (bytes_written != bytes_read) {
+            printf("Error writing to %s\n", dst_path);
+
+            break;
+        }
+    }
+
+    fclose(src_fp);
+    fclose(dst_fp);
+}
+
+/**
+ * Initializes all the JSON switch states
+ * @param backend backend to update json switch states of
+ * @return true if initialization was successful, false otherwise
+ */
+bool initialize_json_switch_states(struct backend_data_t* backend) {
+    bool eva_init = initialize_EVA_json_switch_states(backend);
+    bool ltv_errors_init = initialize_LTV_ERRORS_json_switch_states(backend);
 
     return eva_init && ltv_errors_init;
 }
 
 /** 
 * Initializes JSON switch states in EVA.json file
+* @param backend pointer to backend to update
 * @return true if initialization was successful, false otherwise
 */
-bool initialize_EVA_json_switch_states() {
-    cJSON* eva_json = get_json_file("EVA");
+bool initialize_EVA_json_switch_states(struct backend_data_t* backend) {
+    cJSON* eva_json = get_json_file(backend, "EVA");
     if (!eva_json) {
         printf("Error: Failed to load EVA config file in initialize_json_switch_states\n");
         return false;
@@ -264,10 +311,11 @@ bool initialize_EVA_json_switch_states() {
 /**
 * Initializes JSON error states in LTV_ERRORS.json file
 * Sets all needs_resolved fields to true
+* @param backend pointer to backend to update
 * @return true if initialization was successful, false otherwise
 */
-bool initialize_LTV_ERRORS_json_switch_states() {
-    cJSON* errors_json = get_json_file("LTV_ERRORS");
+bool initialize_LTV_ERRORS_json_switch_states(struct backend_data_t* backend) {
+    cJSON* errors_json = get_json_file(backend, "LTV_ERRORS");
     if (!errors_json) {
         printf("Error: Failed to load LTV_ERRORS config file in initialize_LTV_ERRORS_json_switch_states\n");
         return false;
@@ -320,12 +368,13 @@ bool initialize_LTV_ERRORS_json_switch_states() {
 
 /**
 * initialize all values where initialization value depends on whether including UIA override
-* @param sim_engine Pointer to the simulation engine to update
+* @param backend Pointer to the backend to update
 */
-void initialize_UIA_override_dependent_values(sim_engine_t* sim_engine) {
-    if (!sim_engine) {
+void initialize_UIA_override_dependent_values(struct backend_data_t* backend) {
+    if (!backend || !backend->sim_engine) {
         return;
     }
+    sim_engine_t* sim_engine = backend->sim_engine;
 
     // Get pointer to EVA component for easy access to its fields
     sim_component_t* eva = sim_engine_get_component(sim_engine, "eva");
@@ -361,13 +410,14 @@ void initialize_UIA_override_dependent_values(sim_engine_t* sim_engine) {
 
 /**
 * Returns whether UIA is connected
-* @param sim_engine Pointer to the simulation engine to check
+* @param backend Pointer to the backend to check
 * @return true if UIA is connected, false otherwise
 */
-bool is_UIA_connected(sim_engine_t* sim_engine) {
-    if (!sim_engine) {
+bool is_UIA_connected(struct backend_data_t* backend) {
+    if (!backend || backend->sim_engine) {
         return false;
     }
+    sim_engine_t* sim_engine = backend->sim_engine;
 
     bool uia_power_supply_connected_eva1 = sim_engine->uia_field_settings->eva1_power;
     bool dcu_using_umbilical_power_eva1 = sim_engine->dcu_field_settings->battery_lu;
@@ -379,12 +429,13 @@ bool is_UIA_connected(sim_engine_t* sim_engine) {
 * Updates fan values if on or not based on DCU state
 * If the DCU command for the fan is set to true, the fan value will be set to 30000.0 when turned on.
 * If the DCU command for the fan is set to false, the fan value will be set to 0.0 when turned off.
-* @param sim_engine Pointer to the simulation engine to update
+* @param backend Pointer to the backend to update
 */
-void update_fan_values(sim_engine_t* sim_engine) {
-    if (!sim_engine) {
+void update_fan_values(struct backend_data_t* backend) {
+    if (!backend || backend->sim_engine) {
         return;
     }
+    sim_engine_t* sim_engine = backend->sim_engine;
 
     sim_component_t* eva = sim_engine_get_component(sim_engine, "eva");
     if (eva == NULL) {
@@ -429,13 +480,14 @@ void update_fan_values(sim_engine_t* sim_engine) {
 
 /**
 * Updates active states of all applicable fields based on whether UIA is connected and the current DCU command settings
-* @param sim_engine Pointer to the simulation engine to update
+* @param backend Pointer to the backend to update
  */
 
- void update_sim_active_states(sim_engine_t* sim_engine) {
-    if (!sim_engine) {
+ void update_sim_active_states(struct backend_data_t* backend) {
+    if (!backend || backend->sim_engine) {
         return;
     }
+    sim_engine_t* sim_engine = backend->sim_engine;
 
     //find all fields that are running
     for(int i = 0; i < sim_engine->total_field_count; i++) {
@@ -488,7 +540,7 @@ void update_fan_values(sim_engine_t* sim_engine) {
 
 
     //if UIA is connected, override active states based on UIA states
-    if(is_UIA_connected(sim_engine)) {
+    if(is_UIA_connected(backend)) {
         //check if o2 vent is open and make suit_pressure_oxy fields active if so
         bool uia_oxy_vent_open = sim_engine->uia_field_settings->oxy_vent;
 
@@ -515,14 +567,14 @@ void update_fan_values(sim_engine_t* sim_engine) {
 * UIA override function overrides EVA simulation values.
 * If the UIA is connected, the update will be based on 
 * ingress/egress procedures and UIA states.
-* @param sim_engine Pointer to the simulation engine to update
+* @param backend Pointer to the backend to update
 * @return true if the UIA is connected and overrides were applied, false otherwise
 */
-bool update_sim_UIA_connected(sim_engine_t* sim_engine) {
-
-    if (!sim_engine) {
+bool update_sim_UIA_connected(struct backend_data_t* backend) {
+    if (!backend || backend->sim_engine) {
         return false;
     }
+    sim_engine_t* sim_engine = backend->sim_engine;
 
     // Get pointer to EVA component for easy access to its fields
     sim_component_t* eva = sim_engine_get_component(sim_engine, "eva");
@@ -532,7 +584,7 @@ bool update_sim_UIA_connected(sim_engine_t* sim_engine) {
     }
 
     //check if UIA is connected by checking the DCU command for UIA connection
-    if (is_UIA_connected(sim_engine)) {
+    if (is_UIA_connected(backend)) {
         //check if o2 vent is open and drain o2 if so
         bool uia_oxy_vent_open = sim_engine->uia_field_settings->oxy_vent;
 
@@ -723,16 +775,17 @@ bool update_sim_UIA_connected(sim_engine_t* sim_engine) {
 * calls individual functions to update error states for each system based on the current DCU field settings. 
 * This function is called in data.c before sim_engine_update to ensure that error states are updated before each simulation update, 
 * allowing the simulation to reflect any changes in error conditions based on DCU commands.
-* @param sim_engine Pointer to the simulation engine to update
+* @param backend Pointer to the backend to update
  */
-void update_EVA_error_simulation_error_states(sim_engine_t* sim_engine) {
-    if (!sim_engine) {
+void update_EVA_error_simulation_error_states(struct backend_data_t* backend) {
+    if (!backend || backend->sim_engine) {
         return;
     }
+    sim_engine_t* sim_engine = backend->sim_engine;
 
-    update_O2_error_state(sim_engine);
-    update_fan_error_state(sim_engine);
-    update_power_error_state(sim_engine);
+    update_O2_error_state(backend);
+    update_fan_error_state(backend);
+    update_power_error_state(backend);
 
 }
 
@@ -741,15 +794,19 @@ void update_EVA_error_simulation_error_states(sim_engine_t* sim_engine) {
 * based on the LTV_ERRORS number of "needs_resolved" values still true in the JSON file. 
 * If there are no more "needs_resolved" values that are true, 
 * the number of remaining LTV errors will be set to 0.
-* @param engine Pointer to the simulation engine
+* @param bakend Pointer to the backend
 */
 
-void update_num_remaining_errors_LTV(sim_engine_t* engine) {
+void update_num_remaining_errors_LTV(struct backend_data_t* backend) {
+    if (!backend || backend->sim_engine) {
+        return;
+    }
+    sim_engine_t* sim_engine = backend->sim_engine;
     //check how many LTV errors still need to be resolved by checking the LTV_ERRORS JSON file for any "needs_resolved" values that are still true for LTV errors
     int remaining_errors = 0;
 
     //count the number of values in the LTV json file under "errors" that are set to true to indicate that those errors are still being thrown, and update the number of task board errors accordingly
-    cJSON* ltv_errors_json = get_json_file("LTV_ERRORS");
+    cJSON* ltv_errors_json = get_json_file(backend, "LTV_ERRORS");
     if (!ltv_errors_json) {
         printf("Error: Failed to load LTV_ERRORS config file in update_num_remaining_errors_LTV\n");
         return;
@@ -781,22 +838,22 @@ void update_num_remaining_errors_LTV(sim_engine_t* engine) {
         }
     }
 
-    sim_component_t* eva = sim_engine_get_component(engine, "eva");
+    sim_component_t* eva = sim_engine_get_component(sim_engine, "eva");
      if (eva == NULL) {
         printf("Simulation tried to access non-existent component 'eva' for updating remaining errors\n");
         cJSON_Delete(ltv_errors_json);
         return;
     }
-    if(remaining_errors == 0 && engine->time_to_complete_task_board == -10 && eva->running == true) { //if all errors have been resolved, set time to complete task board to current simulation time to track how long it took to resolve all errors, but only if the task board is currently running and time to complete task board has not already been set
-        engine->time_to_complete_task_board = eva->simulation_time; //set error time to current time when all errors have been resolved to track how long it took to resolve all errors
+    if(remaining_errors == 0 && sim_engine->time_to_complete_task_board == -10 && eva->running == true) { //if all errors have been resolved, set time to complete task board to current simulation time to track how long it took to resolve all errors, but only if the task board is currently running and time to complete task board has not already been set
+        sim_engine->time_to_complete_task_board = eva->simulation_time; //set error time to current time when all errors have been resolved to track how long it took to resolve all errors
     }
 
-    engine->num_task_board_errors = remaining_errors;
+    sim_engine->num_task_board_errors = remaining_errors;
     cJSON_Delete(ltv_errors_json);
 }
 
-void update_ltv_error_dependencies() {
-    cJSON* root = get_json_file("LTV_ERRORS");
+void update_ltv_error_dependencies(struct backend_data_t* backend) {
+    cJSON* root = get_json_file(backend, "LTV_ERRORS");
     if (!root) return;
 
     cJSON* arr = cJSON_GetObjectItem(root, "error_procedures");
@@ -877,12 +934,13 @@ void update_ltv_error_dependencies() {
 * If the DCU command for O2 is set to false, the O2 error state will be set to false (no error).
 * If the O2 error is thrown and the DCU command for O2 is set to true, the O2 error state will be set to true (error present).
 * The function also updates the algorithm and rate for the suit_pressure_oxy field to simulate the consequences of the O2 error based on the current DCU command.
-* @param sim_engine Pointer to the simulation engine to update
+* @param backend Pointer to the backend instance to update
 */
-void update_O2_error_state(sim_engine_t* sim_engine) {
-    if (!sim_engine) {
+void update_O2_error_state(struct backend_data_t* backend) {
+    if (!backend || backend->sim_engine) {
         return;
     }
+    sim_engine_t* sim_engine = backend->sim_engine;
 
     //check if the O2 error is currently thrown by checking if the algorithm for the O2 storage field is set to linear decay
     sim_component_t* eva = sim_engine_get_component(sim_engine, "eva");
@@ -904,7 +962,7 @@ void update_O2_error_state(sim_engine_t* sim_engine) {
     //update the oxy_error state and equation in the JSON file based on the current error state and DCU command
     if (sim_engine->dcu_field_settings->o2 == false) { //on secondary oxygen
         o2_error_flag = true;
-        update_json_file("EVA", "error", "oxy_error", "false");
+        update_json_file(backend, "EVA", "error", "oxy_error", "false");
         if(o2_low_error_thrown) {
             field->algorithm = SIM_ALGO_LINEAR_GROWTH;
             field->rate.f = OXY_RATE;
@@ -918,7 +976,7 @@ void update_O2_error_state(sim_engine_t* sim_engine) {
         }
 
     } else if (o2_error_thrown && sim_engine->dcu_field_settings->o2 == true) {
-        update_json_file("EVA", "error", "oxy_error", "true");
+        update_json_file(backend, "EVA", "error", "oxy_error", "true");
         //rethrow the error if switched back to primary oxygen while an O2 error is still thrown to simulate the consequences of switching back to primary oxygen with an unresolved O2 error
         if(o2_low_error_thrown) {
             field->algorithm = SIM_ALGO_LINEAR_DECAY;
@@ -940,7 +998,7 @@ void update_O2_error_state(sim_engine_t* sim_engine) {
             }
         }
     } else { 
-        update_json_file("EVA", "error", "oxy_error", "false");
+        update_json_file(backend, "EVA", "error", "oxy_error", "false");
     }
 }
 
@@ -951,12 +1009,13 @@ void update_O2_error_state(sim_engine_t* sim_engine) {
 * If the DCU command for CO2 scrubber is set to false, scrubber_a_co2_storage will be set to linear_decay and scrubber_b_co2_storage will be set to linear_growth.
 * If the increasing scrubber co2 storage value is above 30, the suit_pressure_co2 field will be set to linear_growth, simulating a buildup of CO2 in the suit due to poor scrubber performance. 
 * If the increasing scrubber co2 storage value is below 30, the suit_pressure_co2 field will be set to linear_decay, simulating effective CO2 scrubbing and a decrease in suit CO2 pressure.
-* @param sim_engine Pointer to the simulation engine to update
+* @param backend Pointer to the backend instance to update
 */
-void update_scrubber_state_EVA(sim_engine_t* sim_engine) {
-    if (!sim_engine) {
+void update_scrubber_state_EVA(struct backend_data_t* backend) {
+    if (!backend || backend->sim_engine) {
         return;
     }
+    sim_engine_t* sim_engine = backend->sim_engine;
 
     sim_component_t* eva = sim_engine_get_component(sim_engine, "eva");
     if (eva == NULL) {
@@ -992,9 +1051,9 @@ void update_scrubber_state_EVA(sim_engine_t* sim_engine) {
 
     //update scrubber_error state in JSON file based on scrubber performance
     if ((scrubber_a_field->current_value.f > 60.0f && sim_engine->dcu_field_settings->co2 == true) || (scrubber_b_field->current_value.f > 60.0f && sim_engine->dcu_field_settings->co2 == false)) {
-        update_json_file("EVA", "error", "scrubber_error", "true");
+        update_json_file(backend, "EVA", "error", "scrubber_error", "true");
     } else {
-        update_json_file("EVA", "error", "scrubber_error", "false");
+        update_json_file(backend, "EVA", "error", "scrubber_error", "false");
     }
 }
 
@@ -1004,12 +1063,13 @@ void update_scrubber_state_EVA(sim_engine_t* sim_engine) {
 * If the fan RPM high error is thrown and the DCU command for the fan is set to true, the fan RPM error state will be set to true (error present).
 * If the fan RPM low error is thrown and the DCU command for the fan is set to true, the fan RPM error state will be set to true (error present).
 * The helmet_pressure_CO2 value will build up upon fan error and go back to normal upon fan error resolution
-* @param sim_engine Pointer to the simulation engine to update
+* @param backend Pointer to the backend to update
 */
-void update_fan_error_state(sim_engine_t* sim_engine) {
-    if (!sim_engine) {
+void update_fan_error_state(struct backend_data_t* backend) {
+    if (!backend || backend->sim_engine) {
         return;
     }
+    sim_engine_t* sim_engine = backend->sim_engine;
 
     //check if the fan RPM is below 30000
     sim_component_t* eva = sim_engine_get_component(sim_engine, "eva");
@@ -1035,13 +1095,13 @@ void update_fan_error_state(sim_engine_t* sim_engine) {
     //update the fan_error state in the JSON file based on the current error state and DCU command
     if (sim_engine->dcu_field_settings->fan == false) { //on backup fan
         fan_error_flag = false; //reset fan error flag when switching to backup fan to allow errors to be thrown again if switch back to primary fan with an error condition
-        update_json_file("EVA", "error", "fan_error", "false");
+        update_json_file(backend, "EVA", "error", "fan_error", "false");
         if(fan_error_thrown) {
             field_helmet_pressure_co2->algorithm = SIM_ALGO_LINEAR_DECAY;
             field_helmet_pressure_co2->rate.f = 1000.0;
         }
     } else if (fan_error_thrown && sim_engine->dcu_field_settings->fan == true) {
-        update_json_file("EVA", "error", "fan_error", "true");
+        update_json_file(backend, "EVA", "error", "fan_error", "true");
         if(fan_error_thrown) {
             if(fan_error_flag == true) {
                 throw_fan_RPM_low_error(sim_engine);
@@ -1050,7 +1110,7 @@ void update_fan_error_state(sim_engine_t* sim_engine) {
         }
 
     } else {
-        update_json_file("EVA", "error", "fan_error", "false");
+        update_json_file(backend, "EVA", "error", "fan_error", "false");
     }
 }
 
@@ -1058,12 +1118,13 @@ void update_fan_error_state(sim_engine_t* sim_engine) {
 * updates the power error state based on the current DCU field settings and battery values.
 * If the DCU command for the battery.lu is set to true or battery.ps is set to false, the power error state will be set to false (no error).
 * If the power error is thrown and the DCU command for battery.lu is set to false and battery.ps is set to true, the power error state will be set to true (error present).
-* @param sim_engine Pointer to the simulation engine to update
+* @param backend Pointer to the backend to update
  */
-void update_power_error_state(sim_engine_t* sim_engine) {
-    if (!sim_engine) {
+void update_power_error_state(struct backend_data_t* backend) {
+    if (!backend || backend->sim_engine) {
         return;
     }
+    sim_engine_t* sim_engine = backend->sim_engine;
 
     //check if the power level is below the error threshold by checking the current value of the primary battery level field
     sim_component_t* eva = sim_engine_get_component(sim_engine, "eva");
@@ -1082,11 +1143,11 @@ void update_power_error_state(sim_engine_t* sim_engine) {
 
     //update the power_error state in the JSON file based on the current error state and DCU commands
     if (sim_engine->dcu_field_settings->battery_lu == true || sim_engine->dcu_field_settings->battery_ps == false) {
-        update_json_file("EVA", "error", "power_error", "false");
+        update_json_file(backend, "EVA", "error", "power_error", "false");
     } else if (power_error_thrown && sim_engine->dcu_field_settings->battery_lu == false && sim_engine->dcu_field_settings->battery_ps == true) {
-        update_json_file("EVA", "error", "power_error", "true");
+        update_json_file(backend, "EVA", "error", "power_error", "true");
     } else {
-        update_json_file("EVA", "error", "power_error", "false");
+        update_json_file(backend, "EVA", "error", "power_error", "false");
     }
 }
 
@@ -1095,12 +1156,11 @@ void update_power_error_state(sim_engine_t* sim_engine) {
  * For example, if a certain error condition is met in the simulation engine, it can update the corresponding field in the JSON file to reflect that error, and vice versa. This function acts as a bridge to keep the simulation engine and JSON data in sync regarding error states.
  * This function is called before each simulation update to ensure the engine reflects the latest error conditions
  *
- * @param sim_engine Pointer to the simulation engine to update
+ * @param backend Pointer to the backend to update
  */
-void update_error_states(sim_engine_t* sim_engine) {
-
-    update_EVA_error_simulation_error_states(sim_engine);
-    update_scrubber_state_EVA(sim_engine);
+void update_error_states(struct backend_data_t* backend) {
+    update_EVA_error_simulation_error_states(backend);
+    update_scrubber_state_EVA(backend);
 }
 
 /**
@@ -1129,19 +1189,19 @@ void increment_simulation(struct backend_data_t *backend) {
 
             //update simulation engine DCU field settings based on the new values received from UDP commands
             
-            update_sim_DCU_field_settings(backend->sim_engine);
-            update_sim_UIA_field_settings(backend->sim_engine);
-            update_sim_active_states(backend->sim_engine);
-            update_error_states(backend->sim_engine);
-            update_fan_values(backend->sim_engine);
-            update_sim_UIA_connected(backend->sim_engine);
+            update_sim_DCU_field_settings(backend);
+            update_sim_UIA_field_settings(backend);
+            update_sim_active_states(backend);
+            update_error_states(backend);
+            update_fan_values(backend);
+            update_sim_UIA_connected(backend);
             sim_engine_update(backend->sim_engine, delta_time);
-            update_ltv_error_dependencies();
-            update_num_remaining_errors_LTV(backend->sim_engine);
+            update_ltv_error_dependencies(backend);
+            update_num_remaining_errors_LTV(backend);
             
 
             // Update EVA station timing
-            update_eva_station_timing();
+            update_eva_station_timing(backend);
         }
     }
 }
@@ -1168,8 +1228,8 @@ void cleanup_backend(struct backend_data_t *backend) {
 * If the recovery mode is resolved, the function will return true, allowing the LTV_ERRORS data to be sent in response to UDP GET requests.
 * If the recovery mode is not resolved, the function will return false, preventing the LTV_ERRORS data from being sent in response to UDP GET requests
 */
-bool is_recovery_mode_resolved() {
-    cJSON* ltv_errors_json = get_json_file("LTV_ERRORS");
+bool is_recovery_mode_resolved(struct backend_data_t* backend) {
+    cJSON* ltv_errors_json = get_json_file(backend, "LTV_ERRORS");
     if (!ltv_errors_json) return false;
 
     bool result = false;
@@ -1203,12 +1263,13 @@ bool is_recovery_mode_resolved() {
 
 /**
  * Just send JSON file recovery mode information part
+ * @param backend Pointer to backend to update
  * @param filename Name of file with the recovery mode information
  * @param data Response buffer to populate with requested data
  */
-void send_recovery_mode_json_file(const char* filename, unsigned char* data) {
+void send_recovery_mode_json_file(struct backend_data_t* backend, const char* filename, unsigned char* data) {
     // Load full JSON as cJSON object
-    cJSON* json = get_json_file(filename);
+    cJSON* json = get_json_file(backend, filename);
     if (json == NULL) {
         printf("Error: Could not load JSON file %s\n", filename);
         return;
@@ -1273,15 +1334,15 @@ void handle_udp_get_request(unsigned int command, unsigned char* data, struct ba
     switch (command) {
         case 0: // EVA telemetry
             printf("Getting EVA telemetry data.\n");
-            send_json_file("EVA", data);
+            send_json_file(backend, "EVA", data);
             break;
         case 1: //LTV_ERRORS data
             //only print this data if the Recovery Mode is resolved
-            if(is_recovery_mode_resolved()) {
+            if(is_recovery_mode_resolved(backend)) {
                 printf("Getting LTV error data.\n");
-                send_json_file("LTV_ERRORS", data);
+                send_json_file(backend, "LTV_ERRORS", data);
             } else {
-                send_recovery_mode_json_file("LTV_ERRORS", data);
+                send_recovery_mode_json_file(backend, "LTV_ERRORS", data);
             }
             break;
 
@@ -1356,14 +1417,18 @@ bool handle_udp_post_request(unsigned int command, unsigned char* data, struct b
 /**
  * Updates a field within the specified JSON file (supports both simple and nested field paths)
  * 
+ * @param backend The pointer to the backend instance we are updating the file in
  * @param filename Name of the JSON file to update (e.g., "EVA")
  * @param section Section within the JSON file to update (e.g., "telemetry")
  * @param field_path Field path within the section to update (e.g., "batt_time_left" or "eva.batt")
  * @param new_value New value to set for the specified field
  */
-void update_json_file(const char* filename, const char* section, const char* field_path, char* new_value) {
+void update_json_file(struct backend_data_t* backend, const char* filename, const char* section, const char* field_path, char* new_value) {
+    if (!backend) {
+        printf("Error: No backend instanece provided for updating %s\n", filename);
+    }
     char file_path[100];
-    snprintf(file_path, sizeof(file_path), "data/%s.json", filename);
+    snprintf(file_path, sizeof(file_path), "data/instances/%d/%s.json", backend->instance_index, filename);
 
     FILE *fp = fopen(file_path, "r");
     if (!fp) {
@@ -1501,13 +1566,14 @@ void update_json_file(const char* filename, const char* section, const char* fie
 /**
  * Loads and returns a cJSON object from the specified JSON file
  *
+ * @param backend The backend to read the json file from
  * @param filename Name of the JSON file to load (e.g., "EVA")
  * @return Pointer to the cJSON object representing the file content, or NULL on failure
  */
-cJSON* get_json_file(const char* filename) {
+cJSON *get_json_file(struct backend_data_t *backend, const char *filename) {
     // Construct the file path
     char file_path[100];
-    snprintf(file_path, sizeof(file_path), "data/%s.json", filename);
+    snprintf(file_path, sizeof(file_path), "data/instances/%d/%s.json", backend->instance_index, filename);
 
     // Read existing JSON file
     FILE *fp = fopen(file_path, "r");
@@ -1540,11 +1606,12 @@ cJSON* get_json_file(const char* filename) {
 /**
  * Sends the entire JSON file content as response data
  *
+ * @param backend Pointer of backend to read from
  * @param filename Name of the JSON file (e.g., "EVA")
  * @param data Response buffer to populate with JSON string
  */
-void send_json_file(const char* filename, unsigned char* data) {
-    cJSON* json = get_json_file(filename);
+void send_json_file(struct backend_data_t* backend, const char* filename, unsigned char* data) {
+    cJSON* json = get_json_file(backend, filename);
     if (json == NULL) {
         printf("Error: Could not load JSON file %s\n", filename);
         return;
@@ -1583,7 +1650,7 @@ void sync_simulation_to_json(struct backend_data_t* backend) {
     }
 
     // Load EVA JSON file
-    cJSON* root = get_json_file("EVA");
+    cJSON* root = get_json_file(backend, "EVA");
     if (root == NULL) {
         printf("Error: Could not load EVA.json\n");
         return;
@@ -1631,7 +1698,7 @@ void sync_simulation_to_json(struct backend_data_t* backend) {
     
     // Write EVA file
     char filepath[100];
-    snprintf(filepath, sizeof(filepath), "data/EVA.json");
+    snprintf(filepath, sizeof(filepath), "data/instances/%d/EVA.json", backend->instance_index);
     
     char* json_str = cJSON_Print(root);
     FILE* fp = fopen(filepath, "w");
@@ -1647,12 +1714,12 @@ void sync_simulation_to_json(struct backend_data_t* backend) {
 void backend_reset_errors(void* ctx) {
     struct backend_data_t* backend = ctx;
 
-    update_json_file("LTV_ERRORS", "error_procedures", "0.needs_resolved", "true");
-    update_json_file("LTV_ERRORS", "error_procedures", "1.needs_resolved", "true");
-    update_json_file("LTV_ERRORS", "error_procedures", "2.needs_resolved", "true");
-    update_json_file("LTV_ERRORS", "error_procedures", "3.needs_resolved", "true");
-    update_json_file("LTV_ERRORS", "error_procedures", "4.needs_resolved", "false");
-    update_json_file("LTV_ERRORS", "error_procedures", "5.needs_resolved", "false");
+    update_json_file(backend, "LTV_ERRORS", "error_procedures", "0.needs_resolved", "true");
+    update_json_file(backend, "LTV_ERRORS", "error_procedures", "1.needs_resolved", "true");
+    update_json_file(backend, "LTV_ERRORS", "error_procedures", "2.needs_resolved", "true");
+    update_json_file(backend, "LTV_ERRORS", "error_procedures", "3.needs_resolved", "true");
+    update_json_file(backend, "LTV_ERRORS", "error_procedures", "4.needs_resolved", "false");
+    update_json_file(backend, "LTV_ERRORS", "error_procedures", "5.needs_resolved", "false");
     //update_json_file("LTV_ERRORS", "error_procedures", "6.needs_resolved", "true");
     //update_json_file("LTV_ERRORS", "error_procedures", "7.needs_resolved", "true");
 
@@ -1726,13 +1793,11 @@ bool html_form_json_update(char* request_content, struct backend_data_t* backend
     const char* filename = NULL;
     if (strcmp(route_parts[0], "eva") == 0) {
         filename = "EVA";
-    } else if (strcmp(route_parts[0], "ltv") == 0) {
-        filename = "LTV";
-    } else if (strcmp(route_parts[0], "ltv_errors") == 0) {
+    }  else if (strcmp(route_parts[0], "ltv_errors") == 0) {
         filename = "LTV_ERRORS";
     } 
     else {
-        printf("Error: Unsupported file type '%s'. Use 'eva', 'ltv_errors', or 'ltv'\n", route_parts[0]);
+        printf("Error: Unsupported file type '%s'. Use 'eva' or 'ltv_errors' \n", route_parts[0]);
         return false;
     }
     
@@ -1743,7 +1808,7 @@ bool html_form_json_update(char* request_content, struct backend_data_t* backend
         const char* section = route_parts[1];
         const char* field = route_parts[2];
         
-        update_json_file(filename, section, field, value);
+        update_json_file(backend, filename, section, field, value);
 
         if (strcmp(filename, "EVA") == 0 && strcmp(section, "status") == 0 && strcmp(field, "started") == 0) {
             if (backend->sim_engine) {
@@ -1751,9 +1816,10 @@ bool html_form_json_update(char* request_content, struct backend_data_t* backend
                     sim_engine_start_component(backend->sim_engine, "eva");
                     printf("Started EVA simulation\n");
                 } else {
-                    sim_engine_reset_component(backend->sim_engine, "eva", update_json_file);
+                    sim_engine_reset_component(backend->sim_engine, "eva");
+                    
                     backend->sim_engine->time_to_complete_task_board = -10;
-                    reset_eva_station_timing();
+                    reset_eva_station_timing(backend);
                     printf("Reset EVA simulation\n");
                 }
             }
@@ -1775,7 +1841,7 @@ bool html_form_json_update(char* request_content, struct backend_data_t* backend
         
         // For now, handle nested updates by directly updating the JSON
         // This requires extending update_json_file to handle nested paths
-        update_json_file(filename, section, nested_field, value);
+        update_json_file(backend, filename, section, nested_field, value);
 
         return true;
     } else {
@@ -1786,78 +1852,78 @@ bool html_form_json_update(char* request_content, struct backend_data_t* backend
 
 /**
 * Updates sim_UIA_field_settings based on the current state of the UIA station
-* @param sim_engine Pointer to the simulation engine
+* @param backend Pointer to the backend
 */
-void update_sim_UIA_field_settings(sim_engine_t* sim_engine) {
-    if (!sim_engine || !sim_engine->uia_field_settings) {
+void update_sim_UIA_field_settings(struct backend_data_t* backend) {
+    if (!backend || !backend->sim_engine || !backend->sim_engine->uia_field_settings) {
         return;
     }
+
+    sim_engine_t* sim_engine = backend->sim_engine;
 
     sim_UIA_field_settings_t* settings = sim_engine->uia_field_settings;
 
     // Update eva1_power setting
-    settings->eva1_power = (get_field_from_json("EVA", "uia.eva1_power", 0.0) == 1.0);
+    settings->eva1_power = (get_field_from_json(backend, "EVA", "uia.eva1_power", 0.0) == 1.0);
 
     // Update eva2_power setting
-    settings->eva2_power = (get_field_from_json("EVA", "uia.eva2_power", 0.0) == 1.0);
+    settings->eva2_power = (get_field_from_json(backend, "EVA", "uia.eva2_power", 0.0) == 1.0);
 
     // Update eva1_oxy setting
-    settings->eva1_oxy = (get_field_from_json("EVA", "uia.eva1_oxy", 0.0) == 1.0);
+    settings->eva1_oxy = (get_field_from_json(backend, "EVA", "uia.eva1_oxy", 0.0) == 1.0);
 
     // Update eva2_oxy setting
-    settings->eva2_oxy = (get_field_from_json("EVA", "uia.eva2_oxy", 0.0) == 1.0);
+    settings->eva2_oxy = (get_field_from_json(backend, "EVA", "uia.eva2_oxy", 0.0) == 1.0);
 
     // Update eva1_water_supply setting
-    settings->eva1_water_supply = (get_field_from_json("EVA", "uia.eva1_water_supply", 0.0) == 1.0);
+    settings->eva1_water_supply = (get_field_from_json(backend, "EVA", "uia.eva1_water_supply", 0.0) == 1.0);
 
     // Update eva2_water_supply setting
-    settings->eva2_water_supply = (get_field_from_json("EVA", "uia.eva2_water_supply", 0.0) == 1.0);
+    settings->eva2_water_supply = (get_field_from_json(backend, "EVA", "uia.eva2_water_supply", 0.0) == 1.0);
 
     // Update eva1_water_waste setting
-    settings->eva1_water_waste = (get_field_from_json("EVA", "uia.eva1_water_waste", 0.0) == 1.0);
+    settings->eva1_water_waste = (get_field_from_json(backend, "EVA", "uia.eva1_water_waste", 0.0) == 1.0);
 
     // Update eva2_water_waste setting
-    settings->eva2_water_waste = (get_field_from_json("EVA", "uia.eva2_water_waste", 0.0) == 1.0);
+    settings->eva2_water_waste = (get_field_from_json(backend, "EVA", "uia.eva2_water_waste", 0.0) == 1.0);
 
     // Update oxy_vent setting
-    settings->oxy_vent = (get_field_from_json("EVA", "uia.oxy_vent", 0.0) == 1.0);
+    settings->oxy_vent = (get_field_from_json(backend, "EVA", "uia.oxy_vent", 0.0) == 1.0);
 
     //Update depress setting
-    settings->depress = (get_field_from_json("EVA", "uia.depress", 0.0) == 1.0);
-
-
-
-    
+    settings->depress = (get_field_from_json(backend, "EVA", "uia.depress", 0.0) == 1.0);
 }
 
 /**
 * Updates sim_DCU_field_settings based on the current state of the DCU station
-* @param sim_engine Pointer to the simulation engine
+* @param backend Pointer to the backend to update
 */
-void update_sim_DCU_field_settings(sim_engine_t* sim_engine) {
-    if (!sim_engine || !sim_engine->dcu_field_settings) {
+void update_sim_DCU_field_settings(struct backend_data_t* backend) {
+    if (!backend || !backend->sim_engine || !backend->sim_engine->dcu_field_settings) {
         return;
     }
+
+    sim_engine_t* sim_engine = backend->sim_engine;
 
     sim_DCU_field_settings_t* settings = sim_engine->dcu_field_settings;
 
     // Update battery_lu setting
-    settings->battery_lu = (get_field_from_json("EVA", "dcu.batt.lu", 0.0) == 1.0);
+    settings->battery_lu = (get_field_from_json(backend, "EVA", "dcu.batt.lu", 0.0) == 1.0);
 
     // Update battery_ps setting
-    settings->battery_ps = (get_field_from_json("EVA", "dcu.batt.ps", 0.0) == 1.0);
+    settings->battery_ps = (get_field_from_json(backend, "EVA", "dcu.batt.ps", 0.0) == 1.0);
 
     // Update fan setting
-    settings->fan = (get_field_from_json("EVA", "dcu.fan", 0.0) == 1.0);
+    settings->fan = (get_field_from_json(backend, "EVA", "dcu.fan", 0.0) == 1.0);
 
     // Update o2 setting
-    settings->o2 = (get_field_from_json("EVA", "dcu.oxy", 0.0) == 1.0);
+    settings->o2 = (get_field_from_json(backend, "EVA", "dcu.oxy", 0.0) == 1.0);
 
     //update pump setting
-    settings->pump = (get_field_from_json("EVA", "dcu.pump", 0.0) == 1.0);
+    settings->pump = (get_field_from_json(backend, "EVA", "dcu.pump", 0.0) == 1.0);
 
     //update co2 setting
-    settings->co2 = (get_field_from_json("EVA", "dcu.co2", 0.0) == 1.0);
+    settings->co2 = (get_field_from_json(backend, "EVA", "dcu.co2", 0.0) == 1.0);
 
 }
 
@@ -1865,13 +1931,14 @@ void update_sim_DCU_field_settings(sim_engine_t* sim_engine) {
 /**
  * Gets a field value from a JSON file using a dot-separated path
  *
+ * @param backend Pointer to backend to get data from
  * @param filename Name of the JSON file (e.g. "EVA")
  * @param field_path Dot-separated path to the field (e.g., "telemetry.batt")
  * @param default_value Default value to return if field is not found or invalid
  * @return Field value as double, or default_value if not found
  */
-double get_field_from_json(const char* filename, const char* field_path, double default_value) {
-    cJSON* json = get_json_file(filename);
+double get_field_from_json(struct backend_data_t* backend, char* filename, const char* field_path, double default_value) {
+    cJSON* json = get_json_file(backend, filename);
     if (json == NULL) {
         return default_value;
     }
@@ -1923,11 +1990,12 @@ double get_field_from_json(const char* filename, const char* field_path, double 
 
 /**
  * Updates EVA station timing based on started states
+ * @param backend pointer to backend to update
  * Increments time for stations that are started and marks completed when stopped
  */
-void update_eva_station_timing(void) {
+void update_eva_station_timing(struct backend_data_t* backend) {
     // Load current EVA JSON data
-    cJSON* eva_json = get_json_file("EVA");
+    cJSON* eva_json = get_json_file(backend, "EVA");
     if (eva_json == NULL) {
         return;
     }
@@ -1999,9 +2067,9 @@ void update_eva_station_timing(void) {
 /**
  * Resets EVA station timing by setting all station times to 0 and completed status to false
  */
-void reset_eva_station_timing(void) {
+void reset_eva_station_timing(struct backend_data_t* backend) {
     // Load current EVA JSON data
-    cJSON* eva_json = get_json_file("EVA");
+    cJSON* eva_json = get_json_file(backend, "EVA");
     if (eva_json == NULL) {
         return;
     }

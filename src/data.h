@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <time.h>
 #include <stdint.h>
+#include <sys/stat.h>
 #include "lib/cjson/cJSON.h"
 #include "lib/simulation/sim_engine.h"
 #include <stdlib.h>
@@ -22,12 +23,14 @@ struct backend_data_t {
     uint32_t server_up_time;
     uint32_t time_since_last_ping;
 
+    int instance_index;
+
     // Simulation engine
     sim_engine_t* sim_engine;
 };
 
 // Backend Lifecycle Functions
-struct backend_data_t* init_backend();
+struct backend_data_t* init_backend(int instanceIndex);
 void increment_simulation(struct backend_data_t* backend);
 void cleanup_backend(struct backend_data_t*  backend);
 
@@ -36,38 +39,39 @@ void handle_udp_get_request(unsigned int command, unsigned char* data, struct ba
 bool handle_udp_post_request(unsigned int command, unsigned char* data, struct backend_data_t* backend);
 
 // Data management
-bool initialize_json_switch_states(void);
-bool initialize_EVA_json_switch_states(void);
-bool initialize_LTV_ERRORS_json_switch_states(void);
-void update_json_file(const char* filename, const char* section, const char* field_path, char* new_value);
+void copy_data_file_to_instance(int instance_index, const char* filename);
+bool initialize_json_switch_states(struct backend_data_t* backend);
+bool initialize_EVA_json_switch_states(struct backend_data_t* backend);
+bool initialize_LTV_ERRORS_json_switch_states(struct backend_data_t* backend);
+void update_json_file(struct backend_data_t* backend, const char* filename, const char* section, const char* field_path, char* new_value);
 void sync_simulation_to_json(struct backend_data_t* backend);
-cJSON* get_json_file(const char* filename);
-void send_json_file(const char* filename, unsigned char* data);
-void send_recovery_mode_json_file(const char* filename, unsigned char* data);
-void update_eva_station_timing(void);
-void reset_eva_station_timing(void);
+cJSON* get_json_file(struct backend_data_t* backend, const char* filename);
+void send_json_file(struct backend_data_t* backend, const char* filename, unsigned char* data);
+void send_recovery_mode_json_file(struct backend_data_t* backend, const char* filename, unsigned char* data);
+void update_eva_station_timing(struct backend_data_t* backend);
+void reset_eva_station_timing(struct backend_data_t* backend);
 void backend_reset_errors(void* ctx);
-void update_sim_DCU_field_settings(sim_engine_t* sim_engine);
-void update_error_states(sim_engine_t* sim_engine);
-void update_EVA_error_simulation_error_states(sim_engine_t* sim_engine);
-void update_O2_error_state(sim_engine_t* sim_engine);
-void update_fan_error_state(sim_engine_t* sim_engine);
-void update_power_error_state(sim_engine_t* sim_engine);
-void update_scrubber_state_EVA(sim_engine_t* sim_engine);
-void update_num_remaining_errors_LTV(sim_engine_t* engine);
-void update_ltv_error_dependencies();
+void update_sim_DCU_field_settings(struct backend_data_t* backend);
+void update_error_states(struct backend_data_t* backend);
+void update_EVA_error_simulation_error_states(struct backend_data_t* backend);
+void update_O2_error_state(struct backend_data_t* backend);
+void update_fan_error_state(struct backend_data_t* backend);
+void update_power_error_state(struct backend_data_t* backend);
+void update_scrubber_state_EVA(struct backend_data_t* backend);
+void update_num_remaining_errors_LTV(struct backend_data_t* backend);
+void update_ltv_error_dependencies(struct backend_data_t* backend);
 
 //UIA related functions
-void update_sim_UIA_field_settings(sim_engine_t* sim_engine);
-bool update_sim_UIA_connected(sim_engine_t* sim_engine);
-void update_sim_active_states(sim_engine_t* sim_engine);
-void initialize_UIA_override_dependent_values(sim_engine_t* sim_engine);
+void update_sim_UIA_field_settings(struct backend_data_t* backend);
+bool update_sim_UIA_connected(struct backend_data_t* backend);
+void update_sim_active_states(struct backend_data_t* backend);
+void initialize_UIA_override_dependent_values(struct backend_data_t* backend);
 
 // Helper functions
 void reverse_bytes(unsigned char* bytes);
 bool big_endian();
 bool html_form_json_update(char* request_content, struct backend_data_t* backend);
-double get_field_from_json(const char* filename, const char* field_path, double default_value);
+double get_field_from_json(struct backend_data_t* backend, char* filename, const char* field_path, double default_value);
 
 // UDP data extraction helpers
 bool extract_bool_value(unsigned char* data);
