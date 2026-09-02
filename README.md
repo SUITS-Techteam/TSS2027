@@ -22,7 +22,7 @@ TSS (telemetry stream server) is the centralized server for sending and receivin
 
 ### Helpful Links
 
-- [Mission Description](https://www.nasa.gov/wp-content/uploads/2025/09/fy26-suits-mission-description.pdf?emrc=345f62?emrc=345f62)
+- [Mission Description](https://www.nasa.gov/wp-content/uploads/2026/08/fy27-nasa-suits-mission-description.pdf?emrc=d6c427?emr)
 - <a href="/documents/mission_description/mission-description.pdf">Acronym List</a>
 - <a href="/documents/maps/">Rock Yard maps</a>
 - <a href="/documents/3d-scans/">Rock Yard 3D Scans</a>
