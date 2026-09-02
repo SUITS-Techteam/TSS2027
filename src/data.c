@@ -185,48 +185,40 @@ bool initialize_EVA_json_switch_states() {
         return false;
     }
 
-    //get eva1 object from dcu
-    cJSON* eva_dcu = cJSON_GetObjectItem(dcu, "eva");
-    if (!eva_dcu) {
-        printf("Error: Failed to get eva from dcu in EVA config file in initialize_json_switch_states\n");
-        cJSON_Delete(eva_json);
-        return false;
-    }
-
     //change oxy to false
-    cJSON_ReplaceItemInObject(eva_dcu, "oxy", cJSON_CreateBool(0));
-    if (!cJSON_GetObjectItem(eva_dcu, "oxy")) {
+    cJSON_ReplaceItemInObject(dcu, "oxy", cJSON_CreateBool(0));
+    if (!cJSON_GetObjectItem(dcu, "oxy")) {
         printf("Error: Failed to set eva.oxy in EVA config file in initialize_json_switch_states\n");
         cJSON_Delete(eva_json);
         return false;
     }
 
     //change fan to false
-    cJSON_ReplaceItemInObject(eva_dcu, "fan", cJSON_CreateBool(0));
-    if (!cJSON_GetObjectItem(eva_dcu, "fan")) {
+    cJSON_ReplaceItemInObject(dcu, "fan", cJSON_CreateBool(0));
+    if (!cJSON_GetObjectItem(dcu, "fan")) {
         printf("Error: Failed to set eva.fan in EVA config file in initialize_json_switch_states\n");
         cJSON_Delete(eva_json);
         return false;
     }
 
     //change pump to false
-    cJSON_ReplaceItemInObject(eva_dcu, "pump", cJSON_CreateBool(0));
-    if (!cJSON_GetObjectItem(eva_dcu, "pump")) {
+    cJSON_ReplaceItemInObject(dcu, "pump", cJSON_CreateBool(0));
+    if (!cJSON_GetObjectItem(dcu, "pump")) {
         printf("Error: Failed to set eva.pump in EVA config file in initialize_json_switch_states\n");
         cJSON_Delete(eva_json);
         return false;
     }
 
     //change co2 to false
-    cJSON_ReplaceItemInObject(eva_dcu, "co2", cJSON_CreateBool(0));
-    if (!cJSON_GetObjectItem(eva_dcu, "co2")) {
+    cJSON_ReplaceItemInObject(dcu, "co2", cJSON_CreateBool(0));
+    if (!cJSON_GetObjectItem(dcu, "co2")) {
         printf("Error: Failed to set eva.co2 in EVA config file in initialize_json_switch_states\n");
         cJSON_Delete(eva_json);
         return false;
     }
 
-    //get batt object from eva_dcu
-    cJSON* batt_dcu = cJSON_GetObjectItem(eva_dcu, "batt");
+    //get batt object from dcu
+    cJSON* batt_dcu = cJSON_GetObjectItem(dcu, "batt");
     if (!batt_dcu) {
         printf("Error: Failed to get batt from eva in dcu in EVA config file in initialize_json_switch_states\n");
         cJSON_Delete(eva_json);
