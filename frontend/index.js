@@ -30,30 +30,29 @@ function onload() {
  * Note: this is a bit of a hodgepodge to maintain backwards compatibility with the old system e.g. timers, boolean switches, etc
  */
 async function fetchData() {
-  let evaData, ltvErrorsData;
+  let evaData;
 
   try {
     // Create abort controllers with 1 second timeout
     const evaController = new AbortController();
-    const ltvErrorsController = new AbortController();
 
     const timeoutIds = [
-      setTimeout(() => evaController.abort(), 2000),
-      setTimeout(() => ltvErrorsController.abort(), 2000),
+      setTimeout(() => evaController.abort(), 2000)
     ];
 
-    // Fetch EVA, and LTV data simultaneously
-    const [evaResponse, ltvErrorsResponse] = await Promise.all([
-      fetch(`/data/instances/0/EVA.json`, { signal: evaController.signal }),
-      fetch(`/data/instances/0/LTV_ERRORS.json`, { signal: ltvErrorsController.signal }),
+    // Fetch EVA data
+    const teamSelect = document.getElementById('team');
+    const teamIndex = teamSelect.value;
+
+    const [evaResponse] = await Promise.all([
+      fetch(`/data/instances/${teamIndex}/EVA.json`, { signal: evaController.signal })
     ]);
 
     // Clear timeouts on successful response
     timeoutIds.forEach((id) => clearTimeout(id));
 
-    [evaData, ltvErrorsData] = await Promise.all([
-      evaResponse.json(),
-      ltvErrorsResponse.json(),
+    [evaData] = await Promise.all([
+      evaResponse.json()
     ]);
 
     //check if telemetry component has been started by seeing if EVA.status.started is true
@@ -130,9 +129,11 @@ async function fetchData() {
  */
 async function updateServerData(path, value) {
   try {
-    const params = new URLSearchParams();
-    params.append(path, value);
+    const teamSelect = document.getElementById('team');
 
+    const params = new URLSearchParams();
+    params.append("team", teamSelect.value);
+    params.append(path, value);
     const response = await fetch(`/`, {
       method: "POST",
       headers: {
@@ -155,14 +156,6 @@ async function setupEventListeners() {
 
   for (const switchEl of switches) {
     const path = switchEl.getAttribute("data-path");
-
-    // Load initial value from server
-    try {
-      const value = await getServerData(path);
-      switchEl.checked = value;
-    } catch (err) {
-      console.error("Failed to load value for", path, err);
-    }
 
     // Listen for changes
     switchEl.addEventListener("change", (event) => {

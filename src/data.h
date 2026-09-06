@@ -42,7 +42,6 @@ bool handle_udp_post_request(unsigned int command, unsigned char* data, struct b
 void copy_data_file_to_instance(int instance_index, const char* filename);
 bool initialize_json_switch_states(struct backend_data_t* backend);
 bool initialize_EVA_json_switch_states(struct backend_data_t* backend);
-bool initialize_LTV_ERRORS_json_switch_states(struct backend_data_t* backend);
 void update_json_file(struct backend_data_t* backend, const char* filename, const char* section, const char* field_path, char* new_value);
 void sync_simulation_to_json(struct backend_data_t* backend);
 cJSON* get_json_file(struct backend_data_t* backend, const char* filename);
@@ -58,8 +57,6 @@ void update_O2_error_state(struct backend_data_t* backend);
 void update_fan_error_state(struct backend_data_t* backend);
 void update_power_error_state(struct backend_data_t* backend);
 void update_scrubber_state_EVA(struct backend_data_t* backend);
-void update_num_remaining_errors_LTV(struct backend_data_t* backend);
-void update_ltv_error_dependencies(struct backend_data_t* backend);
 
 //UIA related functions
 void update_sim_UIA_field_settings(struct backend_data_t* backend);
@@ -104,16 +101,6 @@ static const udp_command_mapping_t udp_command_mappings[] = {
     {2017, "eva.imu.posx", "float"},
     {2018, "eva.imu.posy", "float"},
     {2019, "eva.imu.heading", "float"},
-
-    //LTV Error commands
-    {2023, "ltv_errors.error_procedures.0.needs_resolved", "bool"},
-    {2024, "ltv_errors.error_procedures.1.needs_resolved", "bool"},
-    {2025, "ltv_errors.error_procedures.2.needs_resolved", "bool"},
-    {2026, "ltv_errors.error_procedures.3.needs_resolved", "bool"},
-    {2027, "ltv_errors.error_procedures.4.needs_resolved", "bool"},
-    {2028, "ltv_errors.error_procedures.5.needs_resolved", "bool"},
-    {2029, "ltv_errors.error_procedures.6.needs_resolved", "bool"},
-    {2030, "ltv_errors.error_procedures.7.needs_resolved", "bool"},
 
     {0, NULL, NULL} // Sentinel
 };

@@ -27,7 +27,6 @@ struct backend_data_t *init_backend(int instanceIndex) {
     memset(backend, 0, sizeof(struct backend_data_t));
     backend->instance_index = instanceIndex;
     copy_data_file_to_instance(instanceIndex, "EVA.json");
-    copy_data_file_to_instance(instanceIndex, "LTV_ERRORS.json");
 
     //initialize the JSON files
     if (!initialize_json_switch_states(backend)) {
@@ -119,9 +118,7 @@ void copy_data_file_to_instance(int instance_index, const char* filename)
  */
 bool initialize_json_switch_states(struct backend_data_t* backend) {
     bool eva_init = initialize_EVA_json_switch_states(backend);
-    bool ltv_errors_init = initialize_LTV_ERRORS_json_switch_states(backend);
-
-    return eva_init && ltv_errors_init;
+    return eva_init;
 }
 
 /** 
@@ -304,64 +301,6 @@ bool initialize_EVA_json_switch_states(struct backend_data_t* backend) {
 
     free(json_string);
     cJSON_Delete(eva_json);
-
-    return true;
-}
-
-/**
-* Initializes JSON error states in LTV_ERRORS.json file
-* Sets all needs_resolved fields to true
-* @param backend pointer to backend to update
-* @return true if initialization was successful, false otherwise
-*/
-bool initialize_LTV_ERRORS_json_switch_states(struct backend_data_t* backend) {
-    cJSON* errors_json = get_json_file(backend, "LTV_ERRORS");
-    if (!errors_json) {
-        printf("Error: Failed to load LTV_ERRORS config file in initialize_LTV_ERRORS_json_switch_states\n");
-        return false;
-    }
-
-    cJSON* error_procedures = cJSON_GetObjectItem(errors_json, "error_procedures");
-    if (!error_procedures || !cJSON_IsArray(error_procedures)) {
-        printf("Error: Failed to get error_procedures array from LTV_ERRORS config file\n");
-        cJSON_Delete(errors_json);
-        return false;
-    }
-
-    cJSON* error = NULL;
-    int index = 0;
-
-    cJSON_ArrayForEach(error, error_procedures) {
-
-        // Set index 4 and 5 to false, everything else true
-        int value = (index == 4 || index == 5) ? 0 : 1;
-
-        cJSON_ReplaceItemInObject(error, "needs_resolved", cJSON_CreateBool(value));
-
-        if (!cJSON_GetObjectItem(error, "needs_resolved")) {
-            printf("Error: Failed to set needs_resolved in LTV_ERRORS config file\n");
-            cJSON_Delete(errors_json);
-            return false;
-        }
-
-        index++;
-    }
-
-    char *json_string = cJSON_Print(errors_json);
-
-    FILE *file = fopen("data/LTV_ERRORS.json", "w");
-    if (!file) {
-        printf("Error opening LTV_ERRORS.json for writing\n");
-        free(json_string);
-        cJSON_Delete(errors_json);
-        return false;
-    }
-
-    fprintf(file, "%s", json_string);
-    fclose(file);
-
-    free(json_string);
-    cJSON_Delete(errors_json);
 
     return true;
 }
@@ -790,146 +729,6 @@ void update_EVA_error_simulation_error_states(struct backend_data_t* backend) {
 }
 
 /**
-* Update the number of LTV errors still thrown
-* based on the LTV_ERRORS number of "needs_resolved" values still true in the JSON file. 
-* If there are no more "needs_resolved" values that are true, 
-* the number of remaining LTV errors will be set to 0.
-* @param bakend Pointer to the backend
-*/
-
-void update_num_remaining_errors_LTV(struct backend_data_t* backend) {
-    if (!backend || backend->sim_engine) {
-        return;
-    }
-    sim_engine_t* sim_engine = backend->sim_engine;
-    //check how many LTV errors still need to be resolved by checking the LTV_ERRORS JSON file for any "needs_resolved" values that are still true for LTV errors
-    int remaining_errors = 0;
-
-    //count the number of values in the LTV json file under "errors" that are set to true to indicate that those errors are still being thrown, and update the number of task board errors accordingly
-    cJSON* ltv_errors_json = get_json_file(backend, "LTV_ERRORS");
-    if (!ltv_errors_json) {
-        printf("Error: Failed to load LTV_ERRORS config file in update_num_remaining_errors_LTV\n");
-        return;
-    }
-
-    cJSON* error_array = cJSON_GetObjectItem(ltv_errors_json, "error_procedures");
-    if (error_array == NULL) {
-        printf("Failed to get 'errors' array from LTV_ERRORS JSON file for updating remaining errors\n");
-        cJSON_Delete(ltv_errors_json);
-        return;
-    }
-
-    int error_count = cJSON_GetArraySize(error_array);
-    for (int i = 0; i < error_count; i++) {
-        cJSON* error_item = cJSON_GetArrayItem(error_array, i);
-        if (error_item == NULL) {
-            printf("Failed to get error item from LTV_ERRORS JSON file for updating remaining errors\n");
-            continue;
-        }
-
-        cJSON* needs_resolved = cJSON_GetObjectItem(error_item, "needs_resolved");
-        if (needs_resolved == NULL) {
-            printf("Failed to get 'needs_resolved' from error item in LTV_ERRORS JSON file for updating remaining errors\n");
-            continue;
-        }
-
-        if (cJSON_IsTrue(needs_resolved)) {
-            remaining_errors++;
-        }
-    }
-
-    sim_component_t* eva = sim_engine_get_component(sim_engine, "eva");
-     if (eva == NULL) {
-        printf("Simulation tried to access non-existent component 'eva' for updating remaining errors\n");
-        cJSON_Delete(ltv_errors_json);
-        return;
-    }
-    if(remaining_errors == 0 && sim_engine->time_to_complete_task_board == -10 && eva->running == true) { //if all errors have been resolved, set time to complete task board to current simulation time to track how long it took to resolve all errors, but only if the task board is currently running and time to complete task board has not already been set
-        sim_engine->time_to_complete_task_board = eva->simulation_time; //set error time to current time when all errors have been resolved to track how long it took to resolve all errors
-    }
-
-    sim_engine->num_task_board_errors = remaining_errors;
-    cJSON_Delete(ltv_errors_json);
-}
-
-void update_ltv_error_dependencies(struct backend_data_t* backend) {
-    cJSON* root = get_json_file(backend, "LTV_ERRORS");
-    if (!root) return;
-
-    cJSON* arr = cJSON_GetObjectItem(root, "error_procedures");
-    if (!cJSON_IsArray(arr)) {
-        cJSON_Delete(root);
-        return;
-    }
-
-    cJSON* poor_comms = NULL;     // 3452
-    cJSON* comms_reboot = NULL;   // 2441
-    cJSON* subsystem_bus = NULL;  // 4968
-
-    // Find the relevant errors by code
-    cJSON* item = NULL;
-    cJSON_ArrayForEach(item, arr) {
-        cJSON* code = cJSON_GetObjectItem(item, "code");
-        if (!cJSON_IsString(code)) continue;
-
-        if (strcmp(code->valuestring, "3452") == 0) {
-            poor_comms = item;
-        } else if (strcmp(code->valuestring, "2441") == 0) {
-            comms_reboot = item;
-        } else if (strcmp(code->valuestring, "4968") == 0) {
-            subsystem_bus = item;
-        }
-    }
-
-    if (!poor_comms || !comms_reboot || !subsystem_bus) {
-        printf("Error: Missing required error codes\n");
-        cJSON_Delete(root);
-        return;
-    }
-
-    cJSON* poor_val = cJSON_GetObjectItem(poor_comms, "needs_resolved");
-    cJSON* reboot_val = cJSON_GetObjectItem(comms_reboot, "needs_resolved");
-
-    if (!cJSON_IsBool(poor_val) || !cJSON_IsBool(reboot_val)) {
-        cJSON_Delete(root);
-        return;
-    }
-
-
-    bool poor_resolved = !cJSON_IsTrue(poor_val);
-    bool reboot_resolved = !cJSON_IsTrue(reboot_val);
-
-    static bool poor_resolved_previous = 0;
-    static bool reboot_resolved_previous = 1;
-
-    if ((poor_resolved && poor_resolved_previous!=poor_resolved) || (reboot_resolved && reboot_resolved_previous!=reboot_resolved)) {
-        // Turn ON subsystem power bus error (needs_resolved = true)
-        cJSON_ReplaceItemInObject(subsystem_bus, "needs_resolved", cJSON_CreateBool(1));
-        printf("Subsystem Power Bus Error triggered due to dependencies\n");
-    }
-
-    if ((!poor_resolved && poor_resolved_previous!=poor_resolved) || (!reboot_resolved && reboot_resolved_previous!=reboot_resolved)) {
-        // Turn ON subsystem power bus error (needs_resolved = true)
-        cJSON_ReplaceItemInObject(subsystem_bus, "needs_resolved", cJSON_CreateBool(0));
-        printf("Subsystem Power Bus Error untriggered due to dependencies\n");
-    }
-
-    poor_resolved_previous = poor_resolved;
-    reboot_resolved_previous = reboot_resolved;
-
-    // Write back to file
-    char* out = cJSON_Print(root);
-    FILE* fp = fopen("data/LTV_ERRORS.json", "w");
-    if (fp) {
-        fputs(out, fp);
-        fclose(fp);
-    }
-
-    free(out);
-    cJSON_Delete(root);
-}
-
-/**
 * updates the O2 error state based on the current DCU field settings and o2 value.
 * If the DCU command for O2 is set to false, the O2 error state will be set to false (no error).
 * If the O2 error is thrown and the DCU command for O2 is set to true, the O2 error state will be set to true (error present).
@@ -1195,10 +994,7 @@ void increment_simulation(struct backend_data_t *backend) {
             update_error_states(backend);
             update_fan_values(backend);
             update_sim_UIA_connected(backend);
-            sim_engine_update(backend->sim_engine, delta_time);
-            update_ltv_error_dependencies(backend);
-            update_num_remaining_errors_LTV(backend);
-            
+            sim_engine_update(backend->sim_engine, delta_time);            
 
             // Update EVA station timing
             update_eva_station_timing(backend);
@@ -1223,100 +1019,6 @@ void cleanup_backend(struct backend_data_t *backend) {
     free(backend);
 }
 
-/** 
-* checks if recovery mode is resolved by checking the LTV_ERRORS JSON file for needs_resolved value under Recovery Mode
-* If the recovery mode is resolved, the function will return true, allowing the LTV_ERRORS data to be sent in response to UDP GET requests.
-* If the recovery mode is not resolved, the function will return false, preventing the LTV_ERRORS data from being sent in response to UDP GET requests
-*/
-bool is_recovery_mode_resolved(struct backend_data_t* backend) {
-    cJSON* ltv_errors_json = get_json_file(backend, "LTV_ERRORS");
-    if (!ltv_errors_json) return false;
-
-    bool result = false;
-    cJSON* error_array = cJSON_GetObjectItem(ltv_errors_json, "error_procedures");
-    
-    if (cJSON_IsArray(error_array)) {
-        int count = cJSON_GetArraySize(error_array);
-        for (int i = 0; i < count; i++) {
-            cJSON* error_item = cJSON_GetArrayItem(error_array, i);
-            if (!error_item) continue;
-
-            cJSON* desc_obj = cJSON_GetObjectItem(error_item, "description");
-            
-            // Explicit check to ensure valuestring exists
-            if (cJSON_IsString(desc_obj) && desc_obj->valuestring != NULL) {
-                if (strcmp(desc_obj->valuestring, "Exit Recovery Mode (ERM)") == 0) {
-                    cJSON* needs_resolved = cJSON_GetObjectItem(error_item, "needs_resolved");
-                    if (cJSON_IsBool(needs_resolved)) {
-                        result = !cJSON_IsTrue(needs_resolved);
-                    }
-                    break; 
-                }
-            }
-        }
-    }
-
-    cJSON_Delete(ltv_errors_json);
-    return result;
-}
-
-
-/**
- * Just send JSON file recovery mode information part
- * @param backend Pointer to backend to update
- * @param filename Name of file with the recovery mode information
- * @param data Response buffer to populate with requested data
- */
-void send_recovery_mode_json_file(struct backend_data_t* backend, const char* filename, unsigned char* data) {
-    // Load full JSON as cJSON object
-    cJSON* json = get_json_file(backend, filename);
-    if (json == NULL) {
-        printf("Error: Could not load JSON file %s\n", filename);
-        return;
-    }
-
-    // Get the error_procedures array directly
-    cJSON* error_array = cJSON_GetObjectItem(json, "error_procedures");
-    if (!error_array || !cJSON_IsArray(error_array)) {
-        printf("Error: error_procedures not found or is not an array\n");
-        cJSON_Delete(json);
-        return;
-    }
-
-    // Get the first object in the array (Recovery Mode)
-    cJSON* first_error = cJSON_GetArrayItem(error_array, 0);
-    if (!first_error) {
-        printf("Error: error_procedures array is empty\n");
-        cJSON_Delete(json);
-        return;
-    }
-
-    // Create a new JSON object with only the first error
-    cJSON* send_json = cJSON_CreateObject();
-    cJSON* new_array = cJSON_CreateArray();
-    cJSON_AddItemToArray(new_array, cJSON_Duplicate(first_error, 1)); // deep copy
-    cJSON_AddItemToObject(send_json, "error_procedures", new_array);
-
-    // Convert new JSON object to string
-    char* json_str = cJSON_Print(send_json);
-    if (json_str == NULL) {
-        printf("Error: Failed to convert JSON to string\n");
-        cJSON_Delete(send_json);
-        cJSON_Delete(json);
-        return;
-    }
-
-    // Copy JSON string to data buffer
-    size_t json_len = strlen(json_str);
-    memcpy(data, json_str, json_len);
-    data[json_len] = '\0'; // Null terminate
-
-    // Cleanup
-    free(json_str);
-    cJSON_Delete(send_json);
-    cJSON_Delete(json);
-}
-
 ///////////////////////////////////////////////////////////////////////////////////
 //                             UDP Request Handlers
 ///////////////////////////////////////////////////////////////////////////////////
@@ -1336,17 +1038,6 @@ void handle_udp_get_request(unsigned int command, unsigned char* data, struct ba
             printf("Getting EVA telemetry data.\n");
             send_json_file(backend, "EVA", data);
             break;
-        case 1: //LTV_ERRORS data
-            //only print this data if the Recovery Mode is resolved
-            if(is_recovery_mode_resolved(backend)) {
-                printf("Getting LTV error data.\n");
-                send_json_file(backend, "LTV_ERRORS", data);
-            } else {
-                send_recovery_mode_json_file(backend, "LTV_ERRORS", data);
-            }
-            break;
-
-
         default:
             printf("Invalid GET command: %u\n", command);
             break;
@@ -1711,21 +1402,6 @@ void sync_simulation_to_json(struct backend_data_t* backend) {
     cJSON_Delete(root);
 }
 
-void backend_reset_errors(void* ctx) {
-    struct backend_data_t* backend = ctx;
-
-    update_json_file(backend, "LTV_ERRORS", "error_procedures", "0.needs_resolved", "true");
-    update_json_file(backend, "LTV_ERRORS", "error_procedures", "1.needs_resolved", "true");
-    update_json_file(backend, "LTV_ERRORS", "error_procedures", "2.needs_resolved", "true");
-    update_json_file(backend, "LTV_ERRORS", "error_procedures", "3.needs_resolved", "true");
-    update_json_file(backend, "LTV_ERRORS", "error_procedures", "4.needs_resolved", "false");
-    update_json_file(backend, "LTV_ERRORS", "error_procedures", "5.needs_resolved", "false");
-    //update_json_file("LTV_ERRORS", "error_procedures", "6.needs_resolved", "true");
-    //update_json_file("LTV_ERRORS", "error_procedures", "7.needs_resolved", "true");
-
-    printf("LTV errors reset via update_json_file\n");
-}
-
 /**
  * Updates a field in a JSON file based on a route-style request (for example, "eva.error.fan_error=true") from a HTML form submission
  * The request content is parsed and matched to the appropriate JSON file and field.
@@ -1793,11 +1469,9 @@ bool html_form_json_update(char* request_content, struct backend_data_t* backend
     const char* filename = NULL;
     if (strcmp(route_parts[0], "eva") == 0) {
         filename = "EVA";
-    }  else if (strcmp(route_parts[0], "ltv_errors") == 0) {
-        filename = "LTV_ERRORS";
-    } 
+    }
     else {
-        printf("Error: Unsupported file type '%s'. Use 'eva' or 'ltv_errors' \n", route_parts[0]);
+        printf("Error: Unsupported file type '%s'. Use 'eva' \n", route_parts[0]);
         return false;
     }
     
@@ -1807,7 +1481,6 @@ bool html_form_json_update(char* request_content, struct backend_data_t* backend
         // Simple case: file.section.field
         const char* section = route_parts[1];
         const char* field = route_parts[2];
-        
         update_json_file(backend, filename, section, field, value);
 
         if (strcmp(filename, "EVA") == 0 && strcmp(section, "status") == 0 && strcmp(field, "started") == 0) {
@@ -1817,8 +1490,6 @@ bool html_form_json_update(char* request_content, struct backend_data_t* backend
                     printf("Started EVA simulation\n");
                 } else {
                     sim_engine_reset_component(backend->sim_engine, "eva");
-                    
-                    backend->sim_engine->time_to_complete_task_board = -10;
                     reset_eva_station_timing(backend);
                     printf("Reset EVA simulation\n");
                 }

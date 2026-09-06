@@ -38,6 +38,35 @@
                 <div class="row-container">
                     <!------------------------------------------ EVA PANEL Section ------------------------------------------>
                     <div class="column">
+                        <!------------------------------------------ Team Select Section ------------------------------------------>
+                        <div class="card">
+                            <div class="card-header">
+                                <span class="card-title">
+                                    Teams Select
+                                </span>
+                            </div>
+                            <div class="card-body"> 
+                                <div class="info-container">
+                                    <span class="info-text">
+                                        Team number: 
+                                    </span>
+
+                                    <select name="team" id="team">
+                                        <option value="0">0</option>
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                        <option value="4">4</option>
+                                        <option value="5">5</option>
+                                        <option value="6">6</option>
+                                        <option value="7">7</option>
+                                        <option value="8">8</option>
+                                        <option value="9">9</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
                         <!------------------------------------------ UIA State Section ------------------------------------------>
                         <div class="card">
                             <div class="card-header">
@@ -178,7 +207,7 @@
                         </div>
 
                         <!--------------------------------DCU State Section-------------------------------------------------->
-                            <div class="card">
+                            <div class="card" style="border-bottom: 2px solid var(--sharp-blue);">
                                 <div class="card-header">
                                     <span class="card-title">
                                         DCU
@@ -271,125 +300,6 @@
                                         <div class="dcu-control-label">
                                             <span class="info-text">CO2</span>
                                         </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-
-                        <!--------------------------------LTV ERRORS Section------------------------------------------------->
-                        <div class="card" style="border-bottom: 2px solid var(--sharp-blue);">
-                            <div class="card-header">
-                                <span class="card-title">
-                                    LTV ERRORS
-                                </span>
-                            </div>
-                            <div class="card-subtitle">
-                                <span class="subtitle">
-                                    LTV ERRORS
-                                </span>
-                            </div>
-                            <div class="card-body">
-                                <div class="card-content">
-                                    <div class="sensor-container">
-                                        <label class="switch">
-                                            <input type="checkbox" data-path="ltv_errors.error_procedures.0.needs_resolved">
-                                            <span class="slider round"></span>
-                                        </label>
-                                    </div>
-                                    <div class="data-label">
-                                        <span class="value">
-                                            Exit Recovery Mode (ERM)
-                                        </span>
-                                    </div>
-                                    <div class="sensor-container">
-                                        <label class="switch">
-                                            <input type="checkbox" data-path="ltv_errors.error_procedures.1.needs_resolved">
-                                            <span class="slider round"></span>
-                                        </label>
-                                    </div>
-                                    <div class="data-label">
-                                        <span class="value">
-                                            NAV Restart & Manual Return to Home 
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="card-content">
-                                    <div class="sensor-container">
-                                        <label class="switch">
-                                            <input type="checkbox" data-path="ltv_errors.error_procedures.2.needs_resolved">
-                                            <span class="slider round"></span>
-                                        </label>
-                                    </div>
-                                    <div class="data-label">
-                                        <span class="value">
-                                            Backup Fuse Error
-                                        </span>
-                                    </div>
-                                    <div class="sensor-container">
-                                        <label class="switch">
-                                            <input type="checkbox" data-path="ltv_errors.error_procedures.3.needs_resolved">
-                                            <span class="slider round"></span>
-                                        </label>
-                                    </div>
-                                    <div class="data-label">
-                                        <span class="value">
-                                            Poor Comms RSSI
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="card-content">
-                                    <div class="sensor-container">
-                                        <label class="switch">
-                                            <input type="checkbox" data-path="ltv_errors.error_procedures.4.needs_resolved">
-                                            <span class="slider round"></span>
-                                        </label>
-                                    </div>
-                                    <div class="data-label">
-                                        <span class="value">
-                                            Subsystem Power Bus Error
-                                        </span>
-                                    </div>
-                                    <div class="sensor-container">
-                                        <label class="switch">
-                                            <input type="checkbox" data-path="ltv_errors.error_procedures.5.needs_resolved">
-                                            <span class="slider round"></span>
-                                        </label>
-                                    </div>
-                                    <div class="data-label">
-                                        <span class="value">
-                                            Comms Reboot Required
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="card-content">
-                                    <div class="sensor-container">
-                                        <label class="switch">
-                                            <input type="checkbox" data-path="ltv_errors.error_procedures.6.needs_resolved">
-                                            <span class="slider round"></span>
-                                        </label>
-                                    </div>
-                                    <div class="data-label">
-                                        <span class="value">
-                                            Dust Sensor Error
-                                        </span>
-                                    </div>
-                                    <div class="sensor-container">
-                                        <label class="switch">
-                                            <input type="checkbox" data-path="ltv_errors.error_procedures.7.needs_resolved">
-                                            <span class="slider round"></span>
-                                        </label>
-                                    </div>
-                                    <div class="data-label">
-                                        <span class="value">
-                                            Scientific Power Distribution Error
-                                        </span>
                                     </div>
                                 </div>
                             </div>

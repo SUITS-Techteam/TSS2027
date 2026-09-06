@@ -25,7 +25,6 @@ int time_to_throw_error() {
         srand(time(NULL));
 
     int random_value = rand() % 10+1; // Random time between 1 and 10 * delta_time
-    printf("Random time to throw error (in seconds): Task Board completion time + %d seconds\n", random_value);
     return random_value;
 }
 
