@@ -109,11 +109,6 @@ The display and control unit (DCU) used for this challenge is a component that a
 | PUMP    | OPEN       | CLOSED          | Describes if the coolant pump for the suit is open or closed (allows water to be flushed or supplied) |
 | CO2     | Scrubber A | Scrubber B      | Describes which scrubber is currently filling with CO2 (other is venting)                             |
 
-### LTV Task Board
- NASA SUITS aims to have a physical activity box with various panels and mock sensors for the EV to troubleshoot and repair. This physical box is representative of the Lunar Terrain Vehicle (LTV) External Control Panel and will be referred to as the `LTV Task Board`. Each item within the LTV Task Board will have a unique procedure for troubleshooting and repair. These procedures may be found in [documents/procedures/ltv-repair-procedures.pdf](documents/procedures/ltv-repair-procedures.pdf).
-
- Later on, we intend to release high definitions pictures of the LTV Task Board for teams pursuing computer vision solutions.
-
 
 ### Connecting to the simulator
 
@@ -147,9 +142,6 @@ These are the commands you can send to the server to fetch the telemetry data as
 | Command number | Referenced .json file          |
 | -------------- | ------------------------------ |
 | 0              | [EVA.json](/data/EVA.json)     |
-| 1              | [LTV_ERRORS.json](data/LTV_ERRORS.json) |
-
-<mark>NOTE on the LTV_ERRORS.json file: you will not be able to access any error codes nor procedures besides the Recovery Mode error code and procedures until the Recovery Mode error is resolved. Once the Recovery Mode error is resolved, you can see the Recovery Mode error code and procedures as well as other error codes and procedures. Be sure to keep polling for errors as other error codes and procedures may arise once others are resolved.</mark>
 
 When fetching data, we recommend doing so in one second intervals. Telemetry data is calculated and updated in one second increments, so increasing the request rate in your programs will not make any difference.
 

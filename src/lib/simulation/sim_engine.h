@@ -15,8 +15,6 @@
 #define SIM_DATA_ROOT "data"
 #define SIM_CONFIG_ROOT "src/lib/simulation/config"
 
-#define INITIAL_NUM_TASK_BOARD_ERRORS 4
-
 ///////////////////////////////////////////////////////////////////////////////////
 //                                  Data Types
 ///////////////////////////////////////////////////////////////////////////////////
@@ -37,10 +35,6 @@ typedef enum {
 typedef union {
     float f;
 } sim_value_t;
-
-//typedef for ltv reset function
-typedef void (*ltv_reset_fn)(void* ctx);
-typedef void (*sim_reset_errors_fn)(void* ctx);
 
 typedef struct {
     char* field_name;
@@ -107,21 +101,10 @@ typedef struct {
 
     sim_field_t** update_order;  // Fields sorted by dependencies
     int total_field_count;
-
-    //error throwing variables
-    int num_task_board_errors;
-    int time_to_complete_task_board;
-    int error_time;
     int error_type;
 
     sim_DCU_field_settings_t* dcu_field_settings;
     sim_UIA_field_settings_t* uia_field_settings;
-
-    ltv_reset_fn ltv_reset;
-    void* ltv_ctx;
-
-    sim_reset_errors_fn reset_errors;
-    void* reset_ctx;
 
     bool initialized;
 } sim_engine_t;
@@ -143,8 +126,7 @@ bool sim_engine_initialize(sim_engine_t* engine);
 void sim_engine_update(sim_engine_t* engine, float delta_time);
 void sim_engine_start_component(sim_engine_t* engine, const char* component_name);
 void sim_engine_stop_component(sim_engine_t* engine, const char* component_name);
-void sim_engine_reset_component(sim_engine_t* engine, const char* component_name,
-                               void (*update_json)(const char*, const char*, const char*, char*));
+void sim_engine_reset_component(sim_engine_t* engine, const char* component_name);
 
 // Field access
 sim_value_t sim_engine_get_field_value(sim_engine_t* engine, const char* field_name);

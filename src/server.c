@@ -7,10 +7,6 @@ static bool debug_mode = false;
 static bool continue_server(void);
 static void get_contents(char *buffer, unsigned int *time, unsigned int *command,
                          unsigned char *data, int packet_size);
-void tss_to_ltv(SOCKET socket, struct sockaddr_in address, socklen_t len,
-                          struct backend_data_t *backend);
-void tss_to_ltv_error(SOCKET socket, struct sockaddr_in address, socklen_t len, struct backend_data_t *backend, unsigned int error_index, unsigned int resolved);
-void server_send_ltv_reset(void* ctx);
 
 int main(int argc, char *argv[]) {
 
@@ -49,32 +45,24 @@ int main(int argc, char *argv[]) {
 
     // Create TCP and UDP sockets for serving the website and handling UDP data requests
     SOCKET server;
-    SOCKET udp_socket;
-
-    struct sockaddr_in ltv_addr;
-    struct sockaddr_in *ltv_addr_ptr;
-    socklen_t ltv_addr_len;
+    SOCKET main_udp_socket;
 
     server = create_tcp_socket(hostname, port);
-    udp_socket = create_udp_socket(hostname, port);
+    main_udp_socket = create_udp_socket(hostname, port);
 
-    // Initialize backend data system
-    struct backend_data_t *backend = init_backend();
-    if (!backend) {
-        fprintf(stderr, "Failed to initialize backend\n");
-        return -1;
+    SOCKET* udp_sockets = malloc(sizeof(SOCKET) * NUM_TEAMS);
+    // Initialize backends data system
+    struct backend_data_t **backends = malloc(sizeof(struct backend_data_t*) * NUM_TEAMS);
+    for (int i = 0; i < 10; i++) {
+        int port = 14141 + 1 + i;
+        char char_port[10];
+
+        sprintf(char_port, "%d", port);
+        udp_sockets[i] = create_tcp_socket(hostname, char_port);
+        backends[i] = init_backend(i);
     }
 
-    server_context_t server_ctx;
-    server_ctx.udp_socket = udp_socket;
-    server_ctx.ltv_addr_len = 0;
-    server_ctx.backend = backend;
 
-    backend->sim_engine->ltv_reset = server_send_ltv_reset;
-    backend->sim_engine->ltv_ctx = &server_ctx;
-
-    backend->sim_engine->reset_errors = backend_reset_errors;
-    backend->sim_engine->reset_ctx = backend;
 
     // Initialize client connection list
     struct client_info_t *clients = NULL;
@@ -82,9 +70,10 @@ int main(int argc, char *argv[]) {
     // Main server loop
     while (true) {
         fd_set reads;
-        reads = wait_on_clients(clients, server, udp_socket);
 
         // Handle new TCP client connections
+        reads = wait_on_clients(clients, server, main_udp_socket);
+
         if (FD_ISSET(server, &reads)) {
             struct client_info_t *client = get_client(&clients, -1);
             if (!client) {
@@ -102,100 +91,7 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        // Handle UDP datagram packets
-        if (FD_ISSET(udp_socket, &reads)) {
-            struct client_info_t *udp_clients = NULL;
-            struct client_info_t *client = get_client(&udp_clients, -1);
-            if (!client) {
-                fprintf(stderr, "Failed to allocate memory for UDP client\n");
-                continue;
-            }
-
-            int received_bytes =
-                recvfrom(udp_socket, client->udp_request, MAX_UDP_REQUEST_SIZE, 0,
-                         (struct sockaddr *)&client->udp_addr, &client->address_length);
-
-
-            // Always interpret UDP packets as big-endian
-            if (!big_endian()) {
-                // System is little-endian, so convert big-endian UDP to little-endian
-                reverse_bytes(client->udp_request);     // timestamp (bytes 0-3)
-                reverse_bytes(client->udp_request + 4); // command (bytes 4-7)
-
-                // Only convert value bytes if this is a POST request (12 bytes)
-                if (received_bytes >= 12) {
-                    reverse_bytes(client->udp_request + 8); // value (bytes 8-11)
-                }
-            }
-
-            unsigned int time = 0;
-            unsigned int command = 0;
-            char data[4] = {0};
-
-            get_contents(client->udp_request, &time, &command, data, received_bytes);
-
-            // @TODO the code below could definitely be simplified further, although for the sake of clarity it's left as is for now
-
-            // Process UDP command based on command range
-            if (command < 1000) {  // GET requests
-                unsigned char *response_buffer;
-                int buffer_size = 0;
-
-                // Allocate buffer for JSON response (8 bytes header + JSON data)
-                char json_data[20000] = {0};  // Buffer for JSON content
-                handle_udp_get_request(command, (unsigned char *)json_data, backend);
-
-                size_t json_len = strlen(json_data);
-                buffer_size = json_len;
-                response_buffer = malloc(buffer_size);
-                if (!response_buffer) {
-                    fprintf(stderr, "Failed to allocate memory for GET response\n");
-                    drop_udp_client(&udp_clients, client);
-                    continue;
-                }
-
-                // Prepare response packet with JSON data content
-                memcpy(response_buffer, json_data, json_len);
-
-                // Send response
-                int bytes_sent =
-                    sendto(udp_socket, response_buffer, buffer_size, 0,
-                           (struct sockaddr *)&client->udp_addr, client->address_length);
-
-
-                // UDP requests are one-off, so drop client after the response
-                drop_udp_client(&udp_clients, client);
-                free(response_buffer);
-            } else if (command < 3000) {  // POST requests, primarily the TSS peripherals
-                bool result = handle_udp_post_request(command, (unsigned char *)data, backend);
-                
-                //send false if pinged too early
-                if(command == 2050 && backend->time_since_last_ping <20) {
-                    result = 0;
-                }
-                // Send status of POST request back to client with just boolean response flag
-                unsigned char response_buffer[4];
-                unsigned int status = result ? 1 : 0;
-                memcpy(response_buffer, &status, 4);
-                sendto(udp_socket, response_buffer, sizeof(response_buffer), 0,
-                       (struct sockaddr *)&client->udp_addr, client->address_length);
-
-                drop_udp_client(&udp_clients, client);
-            } else if (command == 4000) {  // LTV Task Board registration
-                server_ctx.ltv_addr = client->udp_addr;
-                server_ctx.ltv_addr_len = client->address_length;
-
-                printf("LTV Address updated to: %s:%d\n",
-                    inet_ntoa(server_ctx.ltv_addr.sin_addr),
-                    ntohs(server_ctx.ltv_addr.sin_port));
-
-                drop_udp_client(&udp_clients, client);
-            } else {  // Unknown command
-                drop_udp_client(&udp_clients, client);
-            }
-        }
-
-        // Handle existing TCP client requests
+         // Handle existing TCP client requests
         struct client_info_t *client = clients;
 
         while (client) {
@@ -214,7 +110,7 @@ int main(int argc, char *argv[]) {
 
                 // Read incoming data from client
                 int bytes_received = recv(client->socket, client->request + client->received,
-                                          MAX_REQUEST_SIZE - client->received, 0);
+                                        MAX_REQUEST_SIZE - client->received, 0);
 
                 if (bytes_received < 1) {
                     // Connection closed or error
@@ -261,34 +157,21 @@ int main(int argc, char *argv[]) {
                                 // Complete POST request received
                                 char *request_content = strstr(client->request, "\r\n\r\n");
                                 request_content += 4;  // Skip past header delimiter
+                                //get team index
+                                while (*request_content != '=') {
+                                    request_content++;
+                                }
+                                request_content++;
+                                //Only handles single digit team numbers
+                                int instance_index = *request_content - '0';
+                                request_content += 2;
 
                                 if (!request_content) {
                                     send_400(client);
                                     drop_tcp_client(&clients, client);
                                 } else {
-                                    if (html_form_json_update(request_content, backend)) {
-                                        
-                                        if (strstr(request_content, "ltv_errors.error_procedures.")) {
-                                            unsigned int index = 0;
-                                            unsigned int resolved = 0;
-
-                                            sscanf(
-                                                request_content,
-                                                "ltv_errors.error_procedures.%u.needs_resolved=%u",
-                                                &index,
-                                                &resolved
-                                            );
-
-                                            tss_to_ltv_error(
-                                                server_ctx.udp_socket,
-                                                server_ctx.ltv_addr,
-                                                server_ctx.ltv_addr_len,
-                                                backend,
-                                                index,
-                                                resolved
-                                            );
-                                        }
-                                        
+                                    printf("%s\n", request_content);
+                                    if (html_form_json_update(request_content, backends[instance_index])) {
                                         send_304(client);
                                     } else {
                                         send_400(client);
@@ -309,21 +192,109 @@ int main(int argc, char *argv[]) {
             client = next_client;
         }
 
+        // Handle UDP datagram packets
+        for (int i = 0; i < NUM_TEAMS; i++) {
+            if (FD_ISSET(udp_sockets[i], &reads)) {
+                struct client_info_t *udp_clients = NULL;
+                struct client_info_t *client = get_client(&udp_clients, -1);
+                if (!client) {
+                    fprintf(stderr, "Failed to allocate memory for UDP client\n");
+                    continue;
+                }
+
+                int received_bytes =
+                    recvfrom(udp_sockets[i], client->udp_request, MAX_UDP_REQUEST_SIZE, 0,
+                            (struct sockaddr *)&client->udp_addr, &client->address_length);
+
+
+                // Always interpret UDP packets as big-endian
+                if (!big_endian()) {
+                    // System is little-endian, so convert big-endian UDP to little-endian
+                    reverse_bytes(client->udp_request);     // timestamp (bytes 0-3)
+                    reverse_bytes(client->udp_request + 4); // command (bytes 4-7)
+
+                    // Only convert value bytes if this is a POST request (12 bytes)
+                    if (received_bytes >= 12) {
+                        reverse_bytes(client->udp_request + 8); // value (bytes 8-11)
+                    }
+                }
+
+                unsigned int time = 0;
+                unsigned int command = 0;
+                char data[4] = {0};
+
+                get_contents(client->udp_request, &time, &command, data, received_bytes);
+
+                // @TODO the code below could definitely be simplified further, although for the sake of clarity it's left as is for now
+
+                // Process UDP command based on command range
+                if (command < 1000) {  // GET requests
+                    unsigned char *response_buffer;
+                    int buffer_size = 0;
+
+                    // Allocate buffer for JSON response (8 bytes header + JSON data)
+                    char json_data[20000] = {0};  // Buffer for JSON content
+                    handle_udp_get_request(command, (unsigned char *)json_data, backends[i]);
+
+                    size_t json_len = strlen(json_data);
+                    buffer_size = json_len;
+                    response_buffer = malloc(buffer_size);
+                    if (!response_buffer) {
+                        fprintf(stderr, "Failed to allocate memory for GET response\n");
+                        drop_udp_client(&udp_clients, client);
+                        continue;
+                    }
+
+                    // Prepare response packet with JSON data content
+                    memcpy(response_buffer, json_data, json_len);
+
+                    // Send response
+                    int bytes_sent =
+                        sendto(udp_sockets[i], response_buffer, buffer_size, 0,
+                            (struct sockaddr *)&client->udp_addr, client->address_length);
+
+
+                    // UDP requests are one-off, so drop client after the response
+                    drop_udp_client(&udp_clients, client);
+                    free(response_buffer);
+                } else if (command < 3000) {  // POST requests, primarily the TSS peripherals
+                    //TODO: Move all post commands to the main_udp_socket and use perphial mapping to control which backend to send data to
+                    bool result = handle_udp_post_request(command, (unsigned char *)data, backends[i]);
+                
+                    // Send status of POST request back to client with just boolean response flag
+                    unsigned char response_buffer[4];
+                    unsigned int status = result ? 1 : 0;
+                    memcpy(response_buffer, &status, 4);
+                    sendto(udp_sockets[i], response_buffer, sizeof(response_buffer), 0,
+                        (struct sockaddr *)&client->udp_addr, client->address_length);
+
+                    drop_udp_client(&udp_clients, client);
+                } else {  // Unknown command
+                    drop_udp_client(&udp_clients, client);
+                }
+            }
+        }
+
         // Check if user requested server shutdown by pressing ENTER
         if (!continue_server()) {
             break;
         }
 
-        // Update simulation state based on the elapsed time
-        increment_simulation(backend);
+        for (int i = 0; i < NUM_TEAMS; i++) {
+            // Update simulation state based on the elapsed time
+            increment_simulation(backends[i]);
 
-        // Sync simulation data to JSON files
-        sync_simulation_to_json(backend);
+            // Sync simulation data to JSON files
+            sync_simulation_to_json(backends[i]);
+        }
     }
 
     // Cleanup phase - shutdown server gracefully
     printf("Clean up Database...\n");
-    cleanup_backend(backend);
+    for (int i = 0; i < NUM_TEAMS; i++) {
+        cleanup_backend(backends[i]);
+        CLOSESOCKET(udp_sockets[i]);
+    }
 
     printf("Closing Sockets...\n");
     CLOSESOCKET(server);
@@ -331,7 +302,9 @@ int main(int argc, char *argv[]) {
     // Windows specific socket close
     #if defined(_WIN32)
     #else
-        close(udp_socket);
+        for (int i = 0; i < NUM_TEAMS; i++) {
+            close(udp_sockets[i]);
+        }
     #endif
 
     printf("Cleaned up server listen sockets\n");
@@ -398,103 +371,4 @@ static void get_contents(char *buffer, unsigned int *time, unsigned int *command
         // For GET requests, clear the data buffer
         memset(data, 0, 4);
     }
-}
-
-void server_send_ltv_reset(void* ctx) {
-    server_context_t* s = (server_context_t*)ctx;
-
-    tss_to_ltv(
-        s->udp_socket,
-        s->ltv_addr,
-        s->ltv_addr_len,
-        s->backend
-    );
-
-    printf("sent ltv reset.\n");
-
-    printf("=== LTV CONTEXT DEBUG ===\n");
-
-printf("udp_socket: %d\n", s->udp_socket);
-
-printf("ltv_addr_len: %d\n", s->ltv_addr_len);
-
-printf("ltv_addr.sin_family: %d\n", s->ltv_addr.sin_family);
-
-printf("ltv_addr.sin_port (raw): %d\n", ntohs(s->ltv_addr.sin_port));
-
-printf("ltv_addr.sin_addr (raw): %s\n", inet_ntoa(s->ltv_addr.sin_addr));
-
-printf("=========================\n");
-}
-
-void tss_to_ltv_error(
-    SOCKET socket,
-    struct sockaddr_in address,
-    socklen_t len,
-    struct backend_data_t *backend,
-    unsigned int error_index,
-    unsigned int resolved
-)
-{
-    unsigned char buffer[12] = {0};
-
-    unsigned int time_be = htonl(backend->server_up_time);
-
-    // Example command mapping
-    unsigned int command = 5000 + error_index;
-
-    unsigned int command_be = htonl(command);
-
-    unsigned int resolved_be = htonl(resolved);
-
-    memcpy(buffer, &time_be, 4);
-    memcpy(buffer + 4, &command_be, 4);
-    memcpy(buffer + 8, &resolved_be, 4);
-
-    sendto(
-        socket,
-        buffer,
-        sizeof(buffer),
-        0,
-        (struct sockaddr *)&address,
-        len
-    );
-
-    printf(
-        "Sent LTV error command %u resolved=%u\n",
-        command,
-        resolved
-    );
-}
-
-/**
- * Sends reset message to LTV Task Board via a UDP Message
- * 
- * @param socket UDP socket for transmission
- * @param address Task Board's network address
- * @param len Length of address structure
- * @param backend Backend data containing task board state
- */
-void tss_to_ltv(SOCKET socket, struct sockaddr_in address, socklen_t len,
-                          struct backend_data_t *backend) {
-    
-    unsigned char buffer[12] = {0};
-    unsigned int time = backend->server_up_time;
-
-    // Send reset command
-    unsigned int command = TSS_TO_LTV_RESET_COMMAND;
-
-    // Convert values to Network Byte Order (Big-Endian)
-    unsigned int time_be = htonl(backend->server_up_time);
-    unsigned int command_be = htonl(TSS_TO_LTV_RESET_COMMAND);
-    unsigned int zero = 0;
-
-    memcpy(buffer, &time_be, 4);
-    memcpy(buffer + 4, &command_be, 4);
-    memcpy(buffer + 8, &zero, 4);
-    sendto(socket, buffer, sizeof(buffer), 0, (struct sockaddr *)&address, len);
-
-    printf("Address: %s:%d\n",
-       inet_ntoa(address.sin_addr),
-       ntohs(address.sin_port));
 }

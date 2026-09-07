@@ -1,4 +1,5 @@
 /.vscode/*
+/data/instances/*
 *.exe
 *.lib
 *.exp

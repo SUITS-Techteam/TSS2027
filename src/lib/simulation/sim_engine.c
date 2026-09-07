@@ -396,12 +396,6 @@ bool sim_engine_initialize(sim_engine_t* engine) {
         engine->uia_field_settings->oxy_vent = false;
         engine->uia_field_settings->depress = false;
         printf("UIA field settings initialized\n");
-
-        engine->error_time = time_to_throw_error();
-        engine->num_task_board_errors = INITIAL_NUM_TASK_BOARD_ERRORS; //initialize number of task board errors to 0 at the start of each simulation run
-        engine->time_to_complete_task_board = -10; //unreachable value
-        engine->error_type = NUM_ERRORS; // set to NUM_ERRORS to signify no error, will be set to 0,1,2..NUM_ERRORS-1 to signify different errors when it's time to throw an error
-    
     
         // Initialize all fields
     for (int i = 0; i < engine->total_field_count; i++) {
@@ -501,21 +495,6 @@ void sim_engine_update(sim_engine_t* engine, float delta_time) {
     bool eva_control_started = sim_engine_is_component_running(engine, "eva");
     sim_component_t* eva = sim_engine_get_component(engine, "eva");
 
-    if(eva_control_started) {
-        if(eva != NULL) {
-            if(engine->num_task_board_errors == 0 && eva->simulation_time == (engine->time_to_complete_task_board + engine->error_time)) {
-                throw_random_error(engine);
-                printf("Error thrown at simulation time: %.2f seconds\n", eva->simulation_time);
-            } else if(eva->simulation_time == (engine->time_to_complete_task_board + engine->error_time)) {
-                engine->time_to_complete_task_board = engine->time_to_complete_task_board+1;
-            }
-        } else {
-            printf("Simulation tried to access non-existent component 'eva'\n");
-            exit(0);
-        }
-    }
-
-    
 
     // Update all fields in dependency order (only for running components)
     for (int i = 0; i < engine->total_field_count; i++) {
@@ -600,16 +579,12 @@ void sim_engine_stop_component(sim_engine_t* engine, const char* component_name)
 
 /**
  * Resets all fields of a specific component to their initial state and stops the component.
- * For external value fields with reset_value, calls the provided update_json function to update the data file.
  *
  * @param engine Pointer to the simulation engine
  * @param component_name Name of the component to reset (e.g., "eva")
- * @param update_json Function pointer to update JSON files (e.g., update_json_file from data.c)
  */
-void sim_engine_reset_component(sim_engine_t* engine, const char* component_name,
-                               void (*update_json)(const char*, const char*, const char*, char*)) {
+void sim_engine_reset_component(sim_engine_t* engine, const char* component_name) {
     if (!engine || !engine->initialized || !component_name) return;
-
     engine->error_type = NUM_ERRORS; //reset error thrown
 
     // Find and stop the component
@@ -628,7 +603,6 @@ void sim_engine_reset_component(sim_engine_t* engine, const char* component_name
         return;
     }
 
-
     //Reset all fields of the component to their initial state
     for (int j = 0; j < target_component->field_count; j++) {
         sim_field_t* field = &target_component->fields[j];
@@ -636,16 +610,6 @@ void sim_engine_reset_component(sim_engine_t* engine, const char* component_name
         field->rate = field->starting_rate;
         field->current_value.f = field->start_value.f; // Reset to starting value
         field->phase_acc.f = 0;
-    }
-
-    //send reset command to LTV
-    if (engine->ltv_reset) {
-        engine->ltv_reset(engine->ltv_ctx);
-    }
-
-    //also reset errors on our end just in case LTV isn't connected
-    if (engine->reset_errors) {
-        engine->reset_errors(engine->reset_ctx);
     }
 
     printf("Reset component '%s' simulation\n", component_name);

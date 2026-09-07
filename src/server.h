@@ -10,16 +10,7 @@
 #include "network.h"
 #include "data.h"
 
-//LTV Communication Command
-#define TSS_TO_LTV_RESET_COMMAND 4001
-
+#define NUM_TEAMS 10
 extern struct profile_context_t profile_context;
-
-typedef struct server_context_t {
-    SOCKET udp_socket;
-    struct sockaddr_in ltv_addr;
-    socklen_t ltv_addr_len;
-    struct backend_data_t *backend;
-} server_context_t; 
 
 #endif // SERVER_H
