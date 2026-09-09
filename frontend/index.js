@@ -36,10 +36,6 @@ async function fetchData() {
     // Create abort controllers with 1 second timeout
     const evaController = new AbortController();
 
-    const timeoutIds = [
-      setTimeout(() => evaController.abort(), 2000)
-    ];
-
     // Fetch EVA data
     const teamSelect = document.getElementById('team');
     const teamIndex = teamSelect.value;
@@ -47,9 +43,6 @@ async function fetchData() {
     const [evaResponse] = await Promise.all([
       fetch(`/data/instances/${teamIndex}/EVA.json`, { signal: evaController.signal })
     ]);
-
-    // Clear timeouts on successful response
-    timeoutIds.forEach((id) => clearTimeout(id));
 
     [evaData] = await Promise.all([
       evaResponse.json()
