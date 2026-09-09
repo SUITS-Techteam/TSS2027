@@ -381,7 +381,6 @@ bool sim_engine_initialize(sim_engine_t* engine) {
         engine->dcu_field_settings->o2 = false;
         engine->dcu_field_settings->pump = false;
         engine->dcu_field_settings->co2 = false;
-        printf("DCU field settings initialized\n");
 
     //initilize the UIA field settings
         engine->uia_field_settings = malloc(sizeof(sim_UIA_field_settings_t));
@@ -395,7 +394,6 @@ bool sim_engine_initialize(sim_engine_t* engine) {
         engine->uia_field_settings->eva2_water_waste = false;
         engine->uia_field_settings->oxy_vent = false;
         engine->uia_field_settings->depress = false;
-        printf("UIA field settings initialized\n");
     
         // Initialize all fields
     for (int i = 0; i < engine->total_field_count; i++) {

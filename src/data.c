@@ -55,17 +55,12 @@ struct backend_data_t *init_backend(int instanceIndex) {
         if(include_UIA_flag) {
             printf("UIA is included in this simulation run. Initializing dependent values...\n");
             initialize_UIA_override_dependent_values(backend);
-        } else {
-            printf("UIA override is not included in this simulation run.\n");
         }
 
     } else {
         printf("Warning: Failed to create simulation engine\n");
     }
 
-    
-
-    printf("Backend and simulation engine initialized successfully\n");
 
     return backend;
 }

@@ -72,7 +72,7 @@ void drop_udp_client(struct client_info_t** clients, struct client_info_t* clien
 void drop_tcp_client(struct client_info_t** clients, struct client_info_t* client);
 const char* get_client_address(struct client_info_t* client);
 const char* get_client_udp_address(struct client_info_t* client);
-fd_set wait_on_clients(struct client_info_t* clients, SOCKET server, SOCKET udp_socket);
+fd_set wait_on_clients(struct client_info_t* clients, SOCKET socket);
 void send_400(struct client_info_t* client);
 void send_404(struct client_info_t* client);
 void send_201(struct client_info_t* client);

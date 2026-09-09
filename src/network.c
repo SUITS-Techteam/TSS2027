@@ -183,8 +183,6 @@ SOCKET create_udp_socket(char *hostname, char *port) {
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = inet_addr(hostname);
     server_addr.sin_port = htons(atoi(port));
-
-    printf("Creating UDP Socket...\n");
     SOCKET server_socket = socket(AF_INET, SOCK_DGRAM, 0);
     if (server_socket == -1) {
         perror("Failed to create socket.");
@@ -192,7 +190,6 @@ SOCKET create_udp_socket(char *hostname, char *port) {
         return -1;
     }
 
-    printf("Binding UDP Socket...\n");
     int bind_result = bind(server_socket, (struct sockaddr *)&server_addr, sizeof(server_addr));
     if (bind_result == -1) {
         perror("Failed to bind...");
@@ -200,7 +197,6 @@ SOCKET create_udp_socket(char *hostname, char *port) {
         return -1;
     }
 
-    printf("Listening to UDP Socket...\n");
 
     return server_socket;
 }
@@ -387,11 +383,10 @@ const char *get_client_udp_address(struct client_info_t *client) {
  * Monitors the server listening socket, UDP socket, and all client connections.
  * 
  * @param clients Linked list of active clients
- * @param server TCP listening socket
- * @param udp_socket UDP socket for datagram communication
+ * @param server listening socket
  * @return File descriptor set with sockets ready for I/O
  */
-fd_set wait_on_clients(struct client_info_t *clients, SOCKET server, SOCKET udp_socket) {
+fd_set wait_on_clients(struct client_info_t *clients, SOCKET socket) {
     // Non-blocking select with 100ms timeout for responsive server loop
     struct timeval select_wait;
     select_wait.tv_sec = 0;
@@ -399,9 +394,8 @@ fd_set wait_on_clients(struct client_info_t *clients, SOCKET server, SOCKET udp_
 
     fd_set reads;
     FD_ZERO(&reads);
-    FD_SET(server, &reads);
-    FD_SET(udp_socket, &reads);
-    SOCKET max_socket = server > udp_socket ? server : udp_socket;
+    FD_SET(socket, &reads);
+    SOCKET max_socket = socket;
 
     struct client_info_t *client = clients;
     while (client) {

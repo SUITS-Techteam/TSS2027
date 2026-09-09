@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
         char char_port[10];
 
         sprintf(char_port, "%d", port);
-        udp_sockets[i] = create_tcp_socket(hostname, char_port);
+        udp_sockets[i] = create_udp_socket(hostname, char_port);
         backends[i] = init_backend(i);
     }
 
@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
         fd_set reads;
 
         // Handle new TCP client connections
-        reads = wait_on_clients(clients, server, main_udp_socket);
+        reads = wait_on_clients(clients, server);
 
         if (FD_ISSET(server, &reads)) {
             struct client_info_t *client = get_client(&clients, -1);
@@ -194,6 +194,7 @@ int main(int argc, char *argv[]) {
 
         // Handle UDP datagram packets
         for (int i = 0; i < NUM_TEAMS; i++) {
+            reads = wait_on_clients(clients, udp_sockets[i]);
             if (FD_ISSET(udp_sockets[i], &reads)) {
                 struct client_info_t *udp_clients = NULL;
                 struct client_info_t *client = get_client(&udp_clients, -1);
@@ -201,7 +202,7 @@ int main(int argc, char *argv[]) {
                     fprintf(stderr, "Failed to allocate memory for UDP client\n");
                     continue;
                 }
-
+                
                 int received_bytes =
                     recvfrom(udp_sockets[i], client->udp_request, MAX_UDP_REQUEST_SIZE, 0,
                             (struct sockaddr *)&client->udp_addr, &client->address_length);
