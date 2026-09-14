@@ -59,5 +59,10 @@
 		"eva2_water_waste":	false,
 		"oxy_vent":	false,
 		"depress":	false
+	},
+	"ssu":	{
+		"power":	false,
+		"booting":	false,
+		"ready":	false
 	}
 }

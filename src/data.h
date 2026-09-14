@@ -24,6 +24,7 @@ struct backend_data_t {
     uint32_t time_since_last_ping;
 
     int instance_index;
+	int ssu_boot_time;
 
     // Simulation engine
     sim_engine_t* sim_engine;
@@ -101,6 +102,13 @@ static const udp_command_mapping_t udp_command_mappings[] = {
     {2017, "eva.imu.posx", "float"},
     {2018, "eva.imu.posy", "float"},
     {2019, "eva.imu.heading", "float"},
+
+	// (TODO: 2020 for SPEC UDP rewrite)
+
+	// SEISMO commands (sent from the peripheral device over UDP)
+	{2021, "eva.ssu.power", "bool"},
+	{2022, "eva.ssu.booting", "bool"},
+	{2023, "eva.ssu.ready", "bool"},
 
     {0, NULL, NULL} // Sentinel
 };

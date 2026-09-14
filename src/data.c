@@ -279,6 +279,34 @@ bool initialize_EVA_json_switch_states(struct backend_data_t* backend) {
         cJSON_Delete(eva_json);
         return false;
     }
+	
+	cJSON* ssu = cJSON_GetObjectItem(eva_json, "ssu");
+    if (!dcu) {
+        printf("Error: Failed to get SSU from EVA config file in initialize_json_switch_states\n");
+        cJSON_Delete(eva_json);
+        return false;
+    }
+
+	cJSON_ReplaceItemInObject(ssu, "power",cJSON_CreateBool(0));
+	if (!cJSON_GetObjectItem(ssu, "power")) {
+		printf("Error: Failed to set eva.ssu.power in EVA config file in initialize_json_switch_states\n");
+		cJSON_Delete(eva_json);
+		return false;
+	}
+
+	cJSON_ReplaceItemInObject(ssu, "booting",cJSON_CreateBool(0));
+	if (!cJSON_GetObjectItem(ssu, "booting")) {
+		printf("Error: Failed to set eva.ssu.booting in EVA config file in initialize_json_switch_states\n");
+		cJSON_Delete(eva_json);
+		return false;
+	}
+
+	cJSON_ReplaceItemInObject(ssu, "ready",cJSON_CreateBool(0));
+	if (!cJSON_GetObjectItem(ssu, "ready")) {
+		printf("Error: Failed to set eva.ssu.ready in EVA config file in initialize_json_switch_states\n");
+		cJSON_Delete(eva_json);
+		return false;
+	}
 
     //write to JSON file
     char *json_string = cJSON_Print(eva_json);
@@ -957,6 +985,54 @@ void update_error_states(struct backend_data_t* backend) {
     update_scrubber_state_EVA(backend);
 }
 
+
+void update_ssu_simulation(struct backend_data_t *backend){
+	cJSON* eva_json = get_json_file(backend, "EVA");
+	if (!eva_json) return;
+
+	cJSON* ssu = cJSON_GetObjectItemCaseSensitive(eva_json, "ssu");
+	if(!ssu){
+		cJSON_Delete(eva_json);
+		return;
+	}
+
+	bool power = cJSON_GetObjectItemCaseSensitive(ssu, "power")->valueint;
+	bool booting = cJSON_GetObjectItemCaseSensitive(ssu, "booting")->valueint;
+	bool ready = cJSON_GetObjectItemCaseSensitive(ssu, "ready")->valueint;
+
+	// initial power
+	if (power && !booting && !ready){
+		cJSON_ReplaceItemInObject(ssu, "booting", cJSON_CreateBool(true));
+		backend->ssu_boot_time = backend->server_up_time;
+		printf("Starting boot sequence\n");
+	}
+
+	// boot sequence (5 seconds)
+	if (booting) {
+		int elapsed = backend->server_up_time - backend->ssu_boot_time;
+
+		printf("Booting\n");
+		if (elapsed >= 5) {
+			cJSON_ReplaceItemInObject(ssu, "booting", cJSON_CreateBool(false));
+			cJSON_ReplaceItemInObject(ssu, "ready", cJSON_CreateBool(true));
+			printf("System Ready\n");
+		}
+	}
+
+	char filepath[100];
+	snprintf(filepath, sizeof(filepath), "data/instances/%d/EVA.json", backend->instance_index);
+
+	char* json_str = cJSON_Print(eva_json);
+	FILE* fp = fopen(filepath, "w");
+	if (fp) {
+		fputs(json_str, fp);
+		fclose(fp);
+	}
+	free(json_str);
+	cJSON_Delete(eva_json);
+}
+
+
 /**
  * Calls the simulation engine to update all telemetry data based on elapsed time
  *
@@ -971,8 +1047,6 @@ void increment_simulation(struct backend_data_t *backend) {
         time_incremented = true;
     }
 
-    
-
     // Update simulation engine once per second
     if (time_incremented) {
 
@@ -982,17 +1056,19 @@ void increment_simulation(struct backend_data_t *backend) {
             float delta_time = 1.0f;  // 1 second per update
 
             //update simulation engine DCU field settings based on the new values received from UDP commands
-            
             update_sim_DCU_field_settings(backend);
             update_sim_UIA_field_settings(backend);
             update_sim_active_states(backend);
             update_error_states(backend);
             update_fan_values(backend);
             update_sim_UIA_connected(backend);
-            sim_engine_update(backend->sim_engine, delta_time);            
+            sim_engine_update(backend->sim_engine, delta_time);
 
             // Update EVA station timing
             update_eva_station_timing(backend);
+
+			// Update SSU simulation
+			update_ssu_simulation(backend);
         }
     }
 }
