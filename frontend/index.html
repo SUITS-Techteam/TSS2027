@@ -305,30 +305,53 @@
                             </div>	
                         </div>
 						<!-----------------------SEISMO Control---------------------------------------------------->
-	                         <div class="card" style="border-bottom: 2px solid var(--sharp-blue);">
+	                         	<div class="card" style="border-bottom: 2px solid var(--sharp-blue);">
 	                                    <div class="card-header">
 	                                        <span class="card-title">
 	                                            SSU
 	                                        </span>
 	                                    </div>
-	                                <div class="card-body">
-	                                    <div class="card-content">
-	                                        <div class="dcu-control-row">
-	                                            <div class="dcu_switch-container">
-	                                                <span class="dcu-label-left">OFF</span>
+	                                	<div class="card-body">
+	                                    	<div class="card-content">
+	                                        	<div class="sensor-container">
 	                                                <label class="switch">
 	                                                    <input type="checkbox" data-path="eva.ssu.power">
 	                                                    <span class="slider round"></span>
 	                                                </label>
-	                                                <span class="dcu-label-right">ON</span>
 	                                            </div>
-	                                            <div class="dcu-control-label">
+	                                            <div class="info-container">
 	                                                <span class="info-text">POWER</span>
 	                                            </div>
 	                                        </div>
 										</div>
-	                                </div>
-	                        </div>
+										<div class="card-body">
+											<div class="card-content">	
+												<div class="telemetry-label">
+			                                        <span class="telemetry-data">
+			                                            Status
+			                                        </span>
+			                                    </div>
+			                                    <div class="telemetry-value">
+													<span data-path="eva.ssu.booting" style="display:none"></span>
+													<span data-path="eva.ssu.ready" style="display:none"></span>
+			                                        <span class="telemetry-data" id="ssu-status">
+			                                            OFF
+			                                        </span>
+			                                    </div>
+												<div class="telemetry-label">
+													<span class="telemetry-data">
+															Placeholder
+													</span>
+												</div>
+												<div class="telemetry-value">
+			                                        <span class="telemetry-data" id="ssu-placeholder" data-path="eva.ssu.booting">
+			                                            OFF
+			                                        </span>
+			                                    </div>
+											</div>
+										</div>
+
+	                        	</div>
                     </div>
 				
                     <div class="column">

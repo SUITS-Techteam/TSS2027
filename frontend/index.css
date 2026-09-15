@@ -544,3 +544,18 @@ input:checked + .slider:before {
   gap: 0.5rem;
 }
 
+
+.ssu-ready {
+	color: #00cc00;
+	font-weight: bold;
+}
+
+.ssu-booting {
+	color: #ff3333;
+	font-weight; bold;
+}
+
+.ssu-off {
+	color: #ff3333;
+	font-weight; bold;
+}

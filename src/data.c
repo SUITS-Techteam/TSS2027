@@ -89,7 +89,7 @@ void copy_data_file_to_instance(int instance_index, const char* filename)
         printf("Error writing to %s\n", dst_path);
         return;
     }
-     
+
     char buffer[100000];
     size_t bytes_read, bytes_written;
 
@@ -116,7 +116,7 @@ bool initialize_json_switch_states(struct backend_data_t* backend) {
     return eva_init;
 }
 
-/** 
+/**
 * Initializes JSON switch states in EVA.json file
 * @param backend pointer to backend to update
 * @return true if initialization was successful, false otherwise
@@ -279,7 +279,7 @@ bool initialize_EVA_json_switch_states(struct backend_data_t* backend) {
         cJSON_Delete(eva_json);
         return false;
     }
-	
+
 	cJSON* ssu = cJSON_GetObjectItem(eva_json, "ssu");
     if (!dcu) {
         printf("Error: Failed to get SSU from EVA config file in initialize_json_switch_states\n");
@@ -999,6 +999,13 @@ void update_ssu_simulation(struct backend_data_t *backend){
 	bool power = cJSON_GetObjectItemCaseSensitive(ssu, "power")->valueint;
 	bool booting = cJSON_GetObjectItemCaseSensitive(ssu, "booting")->valueint;
 	bool ready = cJSON_GetObjectItemCaseSensitive(ssu, "ready")->valueint;
+
+
+	// reset on power off
+	if(!power && (booting || ready)){
+		cJSON_ReplaceItemInObject(ssu, "booting", cJSON_CreateBool(false));
+		cJSON_ReplaceItemInObject(ssu, "ready", cJSON_CreateBool(false));
+	}
 
 	// initial power
 	if (power && !booting && !ready){

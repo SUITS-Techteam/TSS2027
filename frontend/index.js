@@ -69,6 +69,28 @@ async function fetchData() {
       value = getNestedValue(evaData, path.slice(4));
     }
 
+	if (path === "eva.ssu.booting" || path === "eva.ssu.ready"){
+		const booting = getNestedValue(evaData, "ssu.booting");
+		const ready = getNestedValue(evaData, "ssu.ready");
+
+		const statusEl = document.getElementById("ssu-status");
+
+		if (!booting && !ready) {
+			statusEl.textContent = "OFF";
+			statusEl.className = "ssu-off";
+		}
+		else if (booting && !ready) {
+			statusEl.textContent = "BOOTING";
+			statusEl.className = "ssu-booting";
+		}
+		else {
+			statusEl.textContent = "READY";
+			statusEl.className = "ssu-ready";
+		}
+		return;
+	}
+
+
     // Handle checkboxes/switches (set checked property for boolean values)
     if (el.type === "checkbox") {
       el.checked = Boolean(value);
@@ -92,6 +114,7 @@ async function fetchData() {
 
       return; // don't set textContent for action buttons
     }
+
 
     // Handle time formatting if data-format="time" is specified
     const format = el.getAttribute("data-format");
