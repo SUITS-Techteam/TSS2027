@@ -25,6 +25,9 @@ struct backend_data_t {
 
     int instance_index;
 	int ssu_boot_time;
+	int last_mode;
+	bool sp_deployed;
+	bool bb_deployed;
 
     // Simulation engine
     sim_engine_t* sim_engine;
@@ -107,8 +110,9 @@ static const udp_command_mapping_t udp_command_mappings[] = {
 
 	// SEISMO commands (sent from the peripheral device over UDP)
 	{2021, "eva.ssu.power", "bool"},
-	{2022, "eva.ssu.booting", "bool"},
-	{2023, "eva.ssu.ready", "bool"},
+	{2022, "eva.ssu.angle", "float"},
+	{2023, "eva.ssu.mode", "int"},
+	{2024, "eva.ssu.deploy", "bool"},
 
     {0, NULL, NULL} // Sentinel
 };

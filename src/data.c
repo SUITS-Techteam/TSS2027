@@ -38,6 +38,10 @@ struct backend_data_t *init_backend(int instanceIndex) {
     backend->start_time = time(NULL);
     backend->server_up_time = 0;
     backend->time_since_last_ping = 0;
+	backend->last_mode = -1;
+
+	backend->sp_deployed = false;
+	backend->bb_deployed = false;
 
     // Initialize simulation engine
     backend->sim_engine = sim_engine_create();
@@ -304,6 +308,13 @@ bool initialize_EVA_json_switch_states(struct backend_data_t* backend) {
 	cJSON_ReplaceItemInObject(ssu, "ready",cJSON_CreateBool(0));
 	if (!cJSON_GetObjectItem(ssu, "ready")) {
 		printf("Error: Failed to set eva.ssu.ready in EVA config file in initialize_json_switch_states\n");
+		cJSON_Delete(eva_json);
+		return false;
+	}
+
+	cJSON_ReplaceItemInObject(ssu, "mode",cJSON_CreateBool(0));
+	if (!cJSON_GetObjectItem(ssu, "mode")) {
+		printf("Error: Failed to set eva.ssu.mode in EVA config file in initialize_json_switch_states\n");
 		cJSON_Delete(eva_json);
 		return false;
 	}
@@ -986,6 +997,16 @@ void update_error_states(struct backend_data_t* backend) {
 }
 
 
+void reset_ssu_simulation(struct backend_data_t* backend, cJSON* ssu) {
+	cJSON_ReplaceItemInObject(ssu, "booting", cJSON_CreateBool(false));
+	cJSON_ReplaceItemInObject(ssu, "ready", cJSON_CreateBool(false));
+	cJSON_ReplaceItemInObject(ssu, "mode", cJSON_CreateNumber(0));
+	cJSON_ReplaceItemInObject(ssu, "deploy", cJSON_CreateBool(false));
+	backend->sp_deployed = false;
+	backend->bb_deployed = false;
+	backend->last_mode = -1;
+}
+
 void update_ssu_simulation(struct backend_data_t *backend){
 	cJSON* eva_json = get_json_file(backend, "EVA");
 	if (!eva_json) return;
@@ -1003,8 +1024,7 @@ void update_ssu_simulation(struct backend_data_t *backend){
 
 	// reset on power off
 	if(!power && (booting || ready)){
-		cJSON_ReplaceItemInObject(ssu, "booting", cJSON_CreateBool(false));
-		cJSON_ReplaceItemInObject(ssu, "ready", cJSON_CreateBool(false));
+		reset_ssu_simulation(backend, ssu);
 	}
 
 	// initial power
@@ -1018,11 +1038,46 @@ void update_ssu_simulation(struct backend_data_t *backend){
 	if (booting) {
 		int elapsed = backend->server_up_time - backend->ssu_boot_time;
 
-		printf("Booting\n");
-		if (elapsed >= 5) {
-			cJSON_ReplaceItemInObject(ssu, "booting", cJSON_CreateBool(false));
+		if (elapsed <= 5) printf("Booting\n");
+		if (elapsed == 5) {
 			cJSON_ReplaceItemInObject(ssu, "ready", cJSON_CreateBool(true));
+		}
+		if(elapsed > 5) {
 			printf("System Ready\n");
+			cJSON_ReplaceItemInObject(ssu, "booting", cJSON_CreateBool(false));
+		}
+	}
+
+	// only allow interaction if power is on and system is ready
+	if(power && ready) {
+
+		int mode = cJSON_GetObjectItemCaseSensitive(ssu, "mode")->valueint;
+
+		if(backend->last_mode == -1){
+			backend->last_mode = mode;
+		}
+
+		else if(mode != backend->last_mode){
+			if(mode == 0){
+				printf("SSU in Short Period Sensor mode\n");
+			}
+			else if(mode == 1) {
+				printf("SSU in Broadband Sensor Mode\n");
+			}
+			backend->last_mode = mode;
+		}
+
+		bool deploy = cJSON_GetObjectItemCaseSensitive(ssu, "deploy")->valueint;
+
+		if(deploy) {
+			if(mode == 0 && !backend->sp_deployed) {
+				printf("Deploying Short Period Sensor\n");
+				backend->sp_deployed = true;
+			}
+			if(mode == 1 && !backend->bb_deployed) {
+				printf("Deploying Broadband Sensor\n");
+				backend->bb_deployed = true;
+			}
 		}
 	}
 
@@ -1060,8 +1115,7 @@ void increment_simulation(struct backend_data_t *backend) {
         // if UIA is connected, update the simulation values based on UIA states and ingress/egress procedures
         if(backend->sim_engine) {
             // Update simulation engine with elapsed time
-            float delta_time = 1.0f;  // 1 second per update
-
+			float delta_time = 1.0f;
             //update simulation engine DCU field settings based on the new values received from UDP commands
             update_sim_DCU_field_settings(backend);
             update_sim_UIA_field_settings(backend);
@@ -1165,7 +1219,15 @@ bool handle_udp_post_request(unsigned int command, unsigned char* data, struct b
             float value = extract_float_value(data);
             sprintf(value_str, "%.6f", value);
         }
+		else if (strcmp(mapping->data_type, "int") == 0) {
+			float bool_float;
+			memcpy(&bool_float, data, 4);
+			bool b = bool_float != 0.0f;
+			sprintf(value_str, "%d", b ? 1 : 0);
+		}
     }
+
+
 
     // Create request content in the same format as HTML forms
     char request_content[256];

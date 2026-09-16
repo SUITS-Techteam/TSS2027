@@ -63,6 +63,9 @@
 	"ssu":	{
 		"power":	false,
 		"booting":	false,
-		"ready":	false
+		"ready":	false,
+		"angle":	0,
+		"mode":	false,
+		"deploy":	0
 	}
 }
