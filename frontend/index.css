@@ -546,16 +546,26 @@ input:checked + .slider:before {
 
 
 .ssu-ready {
-	color: #00cc00;
+	color: #00cc00; // green
 	font-weight: bold;
 }
 
 .ssu-booting {
-	color: #ff3333;
-	font-weight; bold;
+	color: #ff3333; // red
+	font-weight: bold;
 }
 
 .ssu-off {
-	color: #ff3333;
-	font-weight; bold;
+	color: #ff3333; // red
+	font-weight: bold;
+}
+
+.mode-sp {
+	color: #0000cc; // blue
+	font-weight: bold;
+}
+
+.mode-bb {
+	color: #ff3333; // blue
+	font-weight: bold;
 }

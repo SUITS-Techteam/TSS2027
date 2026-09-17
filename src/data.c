@@ -1039,11 +1039,9 @@ void update_ssu_simulation(struct backend_data_t *backend){
 		int elapsed = backend->server_up_time - backend->ssu_boot_time;
 
 		if (elapsed <= 5) printf("Booting\n");
-		if (elapsed == 5) {
-			cJSON_ReplaceItemInObject(ssu, "ready", cJSON_CreateBool(true));
-		}
-		if(elapsed > 5) {
+		if (elapsed > 5) {
 			printf("System Ready\n");
+			cJSON_ReplaceItemInObject(ssu, "ready", cJSON_CreateBool(true));
 			cJSON_ReplaceItemInObject(ssu, "booting", cJSON_CreateBool(false));
 		}
 	}
