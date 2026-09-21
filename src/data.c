@@ -1000,7 +1000,6 @@ void update_error_states(struct backend_data_t* backend) {
 void reset_ssu_simulation(struct backend_data_t* backend, cJSON* ssu) {
 	cJSON_ReplaceItemInObject(ssu, "booting", cJSON_CreateBool(false));
 	cJSON_ReplaceItemInObject(ssu, "ready", cJSON_CreateBool(false));
-	cJSON_ReplaceItemInObject(ssu, "mode", cJSON_CreateNumber(0));
 	cJSON_ReplaceItemInObject(ssu, "deploy", cJSON_CreateBool(false));
 	backend->sp_deployed = false;
 	backend->bb_deployed = false;
