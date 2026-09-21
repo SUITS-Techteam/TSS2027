@@ -78,6 +78,8 @@ double get_field_from_json(struct backend_data_t* backend, char* filename, const
 bool extract_bool_value(unsigned char* data);
 float extract_float_value(unsigned char* data);
 
+void update_spec(struct backend_data_t* backend, const char* eva, int rock_id);
+
 // UDP command to JSON path mapping table
 // NOTE: most of these commands have been reused from the TSS 2025 project to help support backwards compatibility. In the future, it may be recommended to standardize these.
 static const udp_command_mapping_t udp_command_mappings[] = {
@@ -106,13 +108,16 @@ static const udp_command_mapping_t udp_command_mappings[] = {
     {2018, "eva.imu.posy", "float"},
     {2019, "eva.imu.heading", "float"},
 
-	// (TODO: 2020 for SPEC UDP rewrite)
+	// SPEC commands (sent from the peripheral device over UDP)
+	{2020, "spec.eva1.id", "float"},
+	{2021, "spec.eva2.id", "float"},
 
 	// SEISMO commands (sent from the peripheral device over UDP)
-	{2021, "eva.ssu.power", "bool"},
-	{2022, "eva.ssu.angle", "float"},
-	{2023, "eva.ssu.mode", "int"},
-	{2024, "eva.ssu.deploy", "bool"},
+	{2022, "eva.ssu.power", "bool"},
+	{2023, "eva.ssu.umbilical", "bool"},
+	{2024, "eva.ssu.angle", "float"},
+	{2025, "eva.ssu.mode", "int"},
+	{2026, "eva.ssu.deploy", "bool"},
 
     {0, NULL, NULL} // Sentinel
 };

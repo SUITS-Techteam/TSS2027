@@ -27,6 +27,7 @@ struct backend_data_t *init_backend(int instanceIndex) {
     memset(backend, 0, sizeof(struct backend_data_t));
     backend->instance_index = instanceIndex;
     copy_data_file_to_instance(instanceIndex, "EVA.json");
+	copy_data_file_to_instance(instanceIndex, "RockData.json");
 
     //initialize the JSON files
     if (!initialize_json_switch_states(backend)) {
@@ -319,21 +320,49 @@ bool initialize_EVA_json_switch_states(struct backend_data_t* backend) {
 		return false;
 	}
 
-    //write to JSON file
-    char *json_string = cJSON_Print(eva_json);
-
-    FILE *file = fopen("data/EVA.json", "w");
-    if (!file) {
-        printf("Error opening EVA.json for writing\n");
-        free(json_string);
+	cJSON* spec = cJSON_GetObjectItem(eva_json, "spec");
+    if (!spec) {
+        printf("Error: Failed to get spec from EVA config file in initialize_json_switch_states\n");
         cJSON_Delete(eva_json);
         return false;
     }
 
-    fprintf(file, "%s", json_string);
-    fclose(file);
+	cJSON* eva1 = cJSON_GetObjectItem(spec, "eva1");
+    if (!eva1) {
+        printf("Error: Failed to get uia from EVA config file in initialize_json_switch_states\n");
+        cJSON_Delete(eva_json);
+        return false;
+	}
 
-    free(json_string);
+    // default SPEC eva values
+    cJSON_ReplaceItemInObject(eva1, "name", cJSON_CreateString("default_rock"));
+    if (!cJSON_GetObjectItem(eva1, "name")) {
+        printf("Error: Failed to set name in SPEC config file in initialize_json_switch_states\n");
+        cJSON_Delete(eva_json);
+        return false;
+    }
+
+	cJSON_ReplaceItemInObject(eva1, "id", cJSON_CreateNumber(0));
+    if (!cJSON_GetObjectItem(eva1, "id")) {
+        printf("Error: Failed to set id in SPEC config file in initialize_json_switch_states\n");
+        cJSON_Delete(eva_json);
+        return false;
+    }
+
+    //write to JSON file
+    char *eva_json_string = cJSON_Print(eva_json);
+
+    FILE *eva_file = fopen("data/EVA.json", "w");
+    if (!eva_file) {
+        printf("Error opening EVA.json for writing\n");
+        free(eva_json_string);
+        cJSON_Delete(eva_json);
+        return false;
+    }
+    fprintf(eva_file, "%s", eva_json_string);
+    fclose(eva_file);
+
+    free(eva_json_string);
     cJSON_Delete(eva_json);
 
     return true;
@@ -1049,6 +1078,7 @@ void update_ssu_simulation(struct backend_data_t *backend){
 	if(power && ready) {
 
 		int mode = cJSON_GetObjectItemCaseSensitive(ssu, "mode")->valueint;
+		bool deploy = cJSON_GetObjectItemCaseSensitive(ssu, "deploy")->valueint;
 
 		if(backend->last_mode == -1){
 			backend->last_mode = mode;
@@ -1063,8 +1093,6 @@ void update_ssu_simulation(struct backend_data_t *backend){
 			}
 			backend->last_mode = mode;
 		}
-
-		bool deploy = cJSON_GetObjectItemCaseSensitive(ssu, "deploy")->valueint;
 
 		if(deploy) {
 			if(mode == 0 && !backend->sp_deployed) {
@@ -1196,7 +1224,7 @@ bool handle_udp_post_request(unsigned int command, unsigned char* data, struct b
         printf("Invalid UDP POST command: %u\n", command);
         return false;
     }
-    
+
     // Extract value from UDP data
     char value_str[32];
 
@@ -1539,6 +1567,114 @@ void sync_simulation_to_json(struct backend_data_t* backend) {
     cJSON_Delete(root);
 }
 
+void update_spec(struct backend_data_t* backend, const char* eva, int rock_id) {
+	if (!backend) {
+        printf("update_spec_rock_info: backend is NULL\n");
+        return;
+    }
+
+	// find instance rock data
+    char rock_path[128];
+    snprintf(rock_path, sizeof(rock_path),
+             "data/instances/%d/RockData.json",
+             backend->instance_index);
+
+    FILE* fp = fopen(rock_path, "r");
+    if (!fp) {
+        printf("update_spec_rock_info: cannot open %s\n", rock_path);
+        return;
+    }
+
+    fseek(fp, 0, SEEK_END);
+    long size = ftell(fp);
+    rewind(fp);
+
+    char* buffer = malloc(size + 1);
+    fread(buffer, 1, size, fp);
+    buffer[size] = '\0';
+    fclose(fp);
+
+    // parse RockData.json
+    cJSON* rock_json = cJSON_Parse(buffer);
+    free(buffer);
+
+    if (!rock_json) {
+        printf("update_spec_rock_info: Failed to parse RockData.json\n");
+        return;
+    }
+
+    cJSON* rock_array = cJSON_GetObjectItemCaseSensitive(rock_json, "ROCKS");
+    if (!rock_array || !cJSON_IsArray(rock_array)) {
+        printf("update_spec_rock_info: ROCKS array missing\n");
+        cJSON_Delete(rock_json);
+        return;
+    }
+
+    // find matching rock by its ID
+    cJSON* rock_obj = NULL;
+    cJSON* item = NULL;
+
+    cJSON_ArrayForEach(item, rock_array) {
+        cJSON* id_json = cJSON_GetObjectItemCaseSensitive(item, "id");
+
+        if (id_json && cJSON_IsNumber(id_json) && id_json->valueint == rock_id) {
+            rock_obj = item;
+            break;
+        }
+    }
+
+    if (!rock_obj) {
+        printf("update_spec_rock_info: No rock with id %d found\n", rock_id);
+        cJSON_Delete(rock_json);
+        return;
+    }
+
+    // extract name and data fields
+    cJSON* name_json = cJSON_GetObjectItemCaseSensitive(rock_obj, "name");
+    cJSON* data_json = cJSON_GetObjectItemCaseSensitive(rock_obj, "data");
+
+    if (!name_json || !data_json) {
+        printf("update_spec_rock_info: rock missing name/data\n");
+        cJSON_Delete(rock_json);
+        return;
+    }
+
+	// update name and id
+	char field_path_id[64];
+	snprintf(field_path_id, sizeof(field_path_id),
+	         "%s.id", eva);
+
+	char id_str[16];
+	sprintf(id_str, "%d", rock_id);
+
+	update_json_file(backend, "EVA", "spec", field_path_id, id_str);
+
+    char field_path_name[64];
+    snprintf(field_path_name, sizeof(field_path_name),
+             "%s.name", eva);
+
+    update_json_file(backend, "EVA", "spec", field_path_name, name_json->valuestring);
+
+    // update data
+    cJSON* data = NULL;
+    cJSON_ArrayForEach(data, data_json) {
+
+        if (!data->string) continue;  // safety
+
+        char field_path_data[128];
+        snprintf(field_path_data, sizeof(field_path_data),
+                 "%s.data.%s", eva, data->string);
+
+        char numbuf[32];
+        sprintf(numbuf, "%.6f", data->valuedouble);
+
+        update_json_file(backend, "EVA", "spec", field_path_data, numbuf);
+    }
+
+    cJSON_Delete(rock_json);
+
+}
+
 /**
  * Updates a field in a JSON file based on a route-style request (for example, "eva.error.fan_error=true") from a HTML form submission
  * The request content is parsed and matched to the appropriate JSON file and field.
@@ -1607,8 +1743,16 @@ bool html_form_json_update(char* request_content, struct backend_data_t* backend
     if (strcmp(route_parts[0], "eva") == 0) {
         filename = "EVA";
     }
+	else if (strcmp(route_parts[0], "spec") == 0) {
+		if(strcmp(route_parts[2], "id") == 0) {
+			const char* eva = route_parts[1];
+			int new_id = atoi(value);
+			update_spec(backend, eva, new_id);
+			return true;
+		}
+	}
     else {
-        printf("Error: Unsupported file type '%s'. Use 'eva' \n", route_parts[0]);
+        printf("Error: Unsupported file type '%s'. Use 'eva' or 'spec' \n", route_parts[0]);
         return false;
     }
     
@@ -1657,6 +1801,11 @@ bool html_form_json_update(char* request_content, struct backend_data_t* backend
         return false;
     }
 }
+
+
+
+
+
 
 /**
 * Updates sim_UIA_field_settings based on the current state of the UIA station
