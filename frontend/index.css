@@ -561,11 +561,11 @@ input:checked + .slider:before {
 }
 
 .mode-sp {
-	color: #0000cc; // blue
+	color: #275ef5; // blue
 	font-weight: bold;
 }
 
 .mode-bb {
-	color: #ff3333; // blue
+	color: #ff3333; // red
 	font-weight: bold;
 }

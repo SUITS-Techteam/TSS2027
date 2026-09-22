@@ -1059,16 +1059,16 @@ void update_ssu_simulation(struct backend_data_t *backend){
 	if (power && !booting && !ready){
 		cJSON_ReplaceItemInObject(ssu, "booting", cJSON_CreateBool(true));
 		backend->ssu_boot_time = backend->server_up_time;
-		printf("Starting boot sequence\n");
+		printf("Starting boot sequence for Team %d\n", backend->instance_index);
 	}
 
 	// boot sequence (5 seconds)
 	if (booting) {
 		int elapsed = backend->server_up_time - backend->ssu_boot_time;
 
-		if (elapsed <= 5) printf("Booting\n");
+		if (elapsed <= 5) printf("Booting for Team %d\n", backend->instance_index);
 		if (elapsed > 5) {
-			printf("System Ready\n");
+			printf("System Ready for Team %d\n", backend->instance_index);
 			cJSON_ReplaceItemInObject(ssu, "ready", cJSON_CreateBool(true));
 			cJSON_ReplaceItemInObject(ssu, "booting", cJSON_CreateBool(false));
 		}
