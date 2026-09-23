@@ -61,10 +61,6 @@ Configuring Local Address...
 Creating HTTP Socket...
 Binding HTTP Socket...
 Listening to HTTP Socket...
-Creating UDP Socket...
-Binding UDP Socket...
-Listening to UDP Socket...
-Backend and simulation engine initialized successfully
 ```
 
 6. Type the IP address printed in the first output for `Launching Server at IP: xxx.xx.xxx.xx:14141`. This will open the website for the server. From this website, you can interact with the server. This is where you can monitor the state of the simulation, verify the display of your system, and virtually interact with the EVA devices like you will be using during test week.
@@ -109,6 +105,17 @@ The display and control unit (DCU) used for this challenge is a component that a
 | PUMP    | OPEN       | CLOSED          | Describes if the coolant pump for the suit is open or closed (allows water to be flushed or supplied) |
 | CO2     | Scrubber A | Scrubber B      | Describes which scrubber is currently filling with CO2 (other is venting)                             |
 
+### SPM
+
+The solar power module (SSU) is one of the planned peripheral hardware devices that the user will setup as one of the POIs during an EVA. The SPM will send telemetry data to the TSS indicating its operational state, deployment status, and any active readings returned from the device.
+
+### SSU
+
+The seismic sensing unit (SSU) is one of the planned peripheral hardware devices that the user will setup as one of the POIs during an EVA. The SSU will send telemetry data to the TSS indicating its operational state, deployment status, and any active readings returned from the device.
+
+### CTS
+
+The comms tower station (SSU) is one of the planned peripheral hardware devices that the user will setup as one of the POIs during an EVA. The SPM will send telemetry data to the TSS indicating its operational state, deployment status, and any active readings returned from the device.
 
 ### Connecting to the simulator
 
