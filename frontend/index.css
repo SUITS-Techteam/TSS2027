@@ -560,7 +560,12 @@ input:checked + .slider:before {
 	font-weight: bold;
 }
 
-.mode {
+.ssu-deployed {
+	color: #2761f5; // blue
+	font-weight: bold;
+}
+
+.ssu-mode {
 	color: #5ef527; // green
 	font-weight: bold;
 }

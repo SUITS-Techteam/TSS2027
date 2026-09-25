@@ -1043,6 +1043,8 @@ void reset_ssu_simulation(struct backend_data_t* backend, cJSON* ssu) {
 	cJSON_ReplaceItemInObject(ssu, "booting", cJSON_CreateBool(false));
 	cJSON_ReplaceItemInObject(ssu, "ready", cJSON_CreateBool(false));
 	cJSON_ReplaceItemInObject(ssu, "deploy", cJSON_CreateBool(false));
+	cJSON_ReplaceItemInObject(ssu, "sp_deployed", cJSON_CreateBool(false));
+	cJSON_ReplaceItemInObject(ssu, "bb_deployed", cJSON_CreateBool(false));
 	backend->sp_deployed = false;
 	backend->bb_deployed = false;
 	backend->last_mode = -1;
@@ -1064,7 +1066,7 @@ void update_ssu_simulation(struct backend_data_t *backend){
 
 
 	// reset on power off
-	if(!power && (booting || ready)){
+	if(!power){
 		reset_ssu_simulation(backend, ssu);
 	}
 
@@ -1086,10 +1088,10 @@ void update_ssu_simulation(struct backend_data_t *backend){
 		}
 	}
 
+	int mode = cJSON_GetObjectItemCaseSensitive(ssu, "mode")->valueint;
 	// only allow interaction if power is on and system is ready
 	if(power && ready) {
 
-		int mode = cJSON_GetObjectItemCaseSensitive(ssu, "mode")->valueint;
 		bool deploy = cJSON_GetObjectItemCaseSensitive(ssu, "deploy")->valueint;
 
 		if(backend->last_mode == -1){

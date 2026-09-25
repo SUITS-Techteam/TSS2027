@@ -87,10 +87,47 @@ async function fetchData() {
 			statusEl.textContent = "READY";
 			statusEl.className = "ssu-ready";
 		}
+	}
+	if (path === "eva.ssu.sp_deployed") {
+		const sp = getNestedValue(evaData, "ssu.sp_deployed");
+		const spEl = document.getElementById("ssu-sp");
+		const pow = getNestedValue(evaData, "ssu.ready");
+
+		if(!pow){
+			spEl.textContent = "NOT READY";
+			spEl.className = "ssu-off"
+			return;
+		}
+		if(!sp) {
+			spEl.textContent = "PRIMED";
+			spEl.className = "ssu-ready";
+		}
+		else if (sp){
+			spEl.textContent = "DEPLOYED";
+			spEl.className = "ssu-deployed";
+		}
 		return;
 	}
+	if(path === "eva.ssu.bb_deployed"){
+		const bb = getNestedValue(evaData, "ssu.bb_deployed");
+		const bbEl = document.getElementById("ssu-bb");
+		const pow = getNestedValue(evaData, "ssu.ready");
 
-
+		if(!pow){
+			bbEl.textContent = "NOT READY";
+			bbEl.className = "ssu-off"
+			return;
+		}
+		if(!bb) {
+			bbEl.textContent = "PRIMED";
+			bbEl.className = "ssu-ready";
+		}
+		else if (bb){
+			bbEl.textContent = "DEPLOYED";
+			bbEl.className = "ssu-deployed";
+		}
+		return;
+	}
     // Handle checkboxes/switches (set checked property for boolean values)
     if (el.type === "checkbox") {
       el.checked = Boolean(value);
