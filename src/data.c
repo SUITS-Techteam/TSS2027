@@ -319,6 +319,19 @@ bool initialize_EVA_json_switch_states(struct backend_data_t* backend) {
 		cJSON_Delete(eva_json);
 		return false;
 	}
+	cJSON_ReplaceItemInObject(ssu, "sp_deployed",cJSON_CreateBool(0));
+	if (!cJSON_GetObjectItem(ssu, "sp_deployed")) {
+		printf("Error: Failed to set eva.ssu.sp_deployed in EVA config file in initialize_json_switch_states\n");
+		cJSON_Delete(eva_json);
+		return false;
+	}
+	cJSON_ReplaceItemInObject(ssu, "bb_deployed",cJSON_CreateBool(0));
+	if (!cJSON_GetObjectItem(ssu, "bb_deployed")) {
+		printf("Error: Failed to set eva.ssu.bb_deployed in EVA config file in initialize_json_switch_states\n");
+		cJSON_Delete(eva_json);
+		return false;
+	}
+
 
 	cJSON* spec = cJSON_GetObjectItem(eva_json, "spec");
     if (!spec) {
@@ -335,7 +348,7 @@ bool initialize_EVA_json_switch_states(struct backend_data_t* backend) {
 	}
 
     // default SPEC eva values
-    cJSON_ReplaceItemInObject(eva1, "name", cJSON_CreateString("default_rock"));
+    cJSON_ReplaceItemInObject(eva1, "name", cJSON_CreateString("Default Rock"));
     if (!cJSON_GetObjectItem(eva1, "name")) {
         printf("Error: Failed to set name in SPEC config file in initialize_json_switch_states\n");
         cJSON_Delete(eva_json);
@@ -1066,7 +1079,6 @@ void update_ssu_simulation(struct backend_data_t *backend){
 	if (booting) {
 		int elapsed = backend->server_up_time - backend->ssu_boot_time;
 
-		if (elapsed <= 5) printf("Booting for Team %d\n", backend->instance_index);
 		if (elapsed > 5) {
 			printf("System Ready for Team %d\n", backend->instance_index);
 			cJSON_ReplaceItemInObject(ssu, "ready", cJSON_CreateBool(true));
@@ -1086,10 +1098,10 @@ void update_ssu_simulation(struct backend_data_t *backend){
 
 		else if(mode != backend->last_mode){
 			if(mode == 0){
-				printf("SSU in Short Period Sensor mode\n");
+				printf("SSU in Short Period Sensor mode for Team %d\n", backend->instance_index);
 			}
 			else if(mode == 1) {
-				printf("SSU in Broadband Sensor Mode\n");
+				printf("SSU in Broadband Sensor Mode for Team %d\n", backend->instance_index);
 			}
 			backend->last_mode = mode;
 		}
@@ -1097,10 +1109,12 @@ void update_ssu_simulation(struct backend_data_t *backend){
 		if(deploy) {
 			if(mode == 0 && !backend->sp_deployed) {
 				printf("Deploying Short Period Sensor\n");
+				cJSON_ReplaceItemInObject(ssu, "sp_deployed", cJSON_CreateBool(true));
 				backend->sp_deployed = true;
 			}
 			if(mode == 1 && !backend->bb_deployed) {
 				printf("Deploying Broadband Sensor\n");
+				cJSON_ReplaceItemInObject(ssu, "bb_deployed", cJSON_CreateBool(true));
 				backend->bb_deployed = true;
 			}
 		}

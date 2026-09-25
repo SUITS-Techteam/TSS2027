@@ -89,20 +89,6 @@ async function fetchData() {
 		}
 		return;
 	}
-	if (path === "eva.ssu.mode") {
-		const mode = getNestedValue(evaData, "ssu.mode");
-		const modeEl = document.getElementById("ssu-mode");
-
-		if (!mode) {
-			modeEl.textContent = "SP"
-			modeEl.className = "mode-sp";
-		}
-		else {
-			modeEl.textContent = "BB"
-			modeEl.className = "mode-bb";
-		}
-
-	}
 
 
     // Handle checkboxes/switches (set checked property for boolean values)

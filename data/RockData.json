@@ -1,7 +1,8 @@
 {
     "ROCKS" : [
         {
-            "name": "default_rock",
+        	"name": "Default Rock",
+            "type": "default_rock",
             "id" : 0,
             "data": {
                 "SiO2": 1,
@@ -13,11 +14,12 @@
                 "CaO": 1,
                 "K2O": 1,
                 "P2O3": 1,
-                "other" : 91 
+                "other" : 91
             }
         },
         {
-            "name": "mare_basalt",
+        	"name": "Mare Basalt",
+            "type": "mare_basalt",
             "id" : 1,
             "data": {
                 "SiO2": 40.58,
@@ -33,7 +35,8 @@
             }
         },
         {
-            "name": "vesicular_basalt",
+        	"name": "Vesicular Basalt",
+            "type": "vesicular_basalt",
             "id" : 2,
             "data": {
                 "SiO2": 36.89,
@@ -49,7 +52,8 @@
             }
         },
         {
-            "name": "olivine_basalt_1",
+        	"name": "Olivine Basalt",
+            "type": "olivine_basalt_1",
             "id" : 3,
             "data": {
                 "SiO2": 41.62,
@@ -65,7 +69,8 @@
             }
         },
         {
-            "name": "feldspathic_basalt",
+        	"name": "Feldspathic Basalt",
+            "type": "feldspathic_basalt",
             "id" : 4,
             "data": {
                 "SiO2": 46.72,
@@ -81,7 +86,8 @@
             }
         },
         {
-            "name": "pigeonite_basalt",
+        	"name": "Pigeonite Basalt",
+            "type": "pigeonite_basalt",
             "id" : 5,
             "data": {
                 "SiO2": 46.53,
@@ -97,7 +103,8 @@
             }
         },
         {
-            "name": "olivine_basalt_2",
+        	"name": "Olivine Basalt",
+            "type": "olivine_basalt_2",
             "id" : 6,
             "data": {
                 "SiO2": 42.45,
@@ -111,9 +118,10 @@
                 "P2O3": 0.34,
                 "other" : 6.29
             }
-        }, 
+        },
         {
-            "name": "ilmenite_basalt",
+        	"name": "Ilmenite Basalt",
+            "type": "ilmenite_basalt",
             "id" : 7,
             "data": {
                 "SiO2": 42.56,
@@ -127,9 +135,10 @@
                 "P2O3": 0.44,
                 "other" : 3.65
             }
-        }, 
+        },
         {
-            "name": "ilmenite_basalt",
+        	"name": "Ilmenite Basalt",
+            "type": "ilmenite_basalt",
             "id" : 8,
             "data": {
                 "SiO2": 37.93,
@@ -143,9 +152,10 @@
                 "P2O3": 0.04,
                 "other" : 1.03
             }
-        },  
+        },
         {
-            "name": "ilmenite_basalt",
+        	"name": "Ilmenite Basalt",
+            "type": "ilmenite_basalt",
             "id" : 9,
             "data": {
                 "SiO2": 37.8,
@@ -159,9 +169,10 @@
                 "P2O3": 0.05,
                 "other" : 1.47
             }
-        },  
+        },
         {
-            "name": "brecia_granite",
+        	"name": "Brecia Granite",
+            "type": "brecia_granite",
             "id" : 10,
             "data": {
                 "SiO2": 53.7,
@@ -175,9 +186,10 @@
                 "P2O3": 0.00,
                 "other" : 5.94
             }
-        },  
+        },
         {
-            "name": "kreep_breccia",
+        	"name": "Kreep Breccia",
+            "type": "kreep_breccia",
             "id" : 11,
             "data": {
                 "SiO2": 48.00,
@@ -191,9 +203,10 @@
                 "P2O3": 0.40,
                 "other" : 0.00
             }
-        },  
+        },
         {
-            "name": "ancient_regolith_breccia",
+        	"name": "Ancient Regolith Breccia",
+            "type": "ancient_regolith_breccia",
             "id" : 12,
             "data": {
                 "SiO2": 45.25,
@@ -207,9 +220,10 @@
                 "P2O3": 0.18,
                 "other" : 0.54
             }
-        },  
+        },
         {
-            "name": "vitric_matrix_breccia",
+        	"name": "Vitric Matrix Breccia",
+            "type": "vitric_matrix_breccia",
             "id" : 13,
             "data": {
                 "SiO2": 48.8,
@@ -223,9 +237,10 @@
                 "P2O3": 0.66,
                 "other" : 0.56
             }
-        },  
+        },
         {
-            "name": "ilmenite_basalt",
+        	"name": "Ilmenite Basalt",
+            "type": "ilmenite_basalt",
             "id" : 14,
             "data": {
                 "SiO2": 38,

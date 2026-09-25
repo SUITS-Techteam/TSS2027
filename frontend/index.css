@@ -560,12 +560,7 @@ input:checked + .slider:before {
 	font-weight: bold;
 }
 
-.mode-sp {
-	color: #275ef5; // blue
-	font-weight: bold;
-}
-
-.mode-bb {
-	color: #ff3333; // red
+.mode {
+	color: #5ef527; // green
 	font-weight: bold;
 }
