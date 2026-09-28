@@ -31,19 +31,13 @@ struct backend_data_t {
 	bool tss_test; // testing drilling without input
 	bool test_applied; // apply test settings once
 
-	float sp_depth;
-	float sp_temp;
-	float sp_rpm;
 	float sp_drill_heat_rate;
 	float sp_drill_cool_rate;
 
 
+	bool sp_input; // accept input when drill is not critical
 	bool sp_warning;
 	bool sp_critical;
-	bool sp_drilling;
-	bool sp_retracting;
-	bool sp_deployed;
-
 	bool bb_deployed;
 
     // Simulation engine
@@ -135,6 +129,7 @@ static const udp_command_mapping_t udp_command_mappings[] = {
 	{2024, "eva.ssu.angle", "float"},
 	{2025, "eva.ssu.mode", "int"},
 	{2026, "eva.ssu.deploy_pressed", "bool"},
+	{2027, "eva.ssu.retract_pressed", "bool"},
 
     {0, NULL, NULL} // Sentinel
 };
