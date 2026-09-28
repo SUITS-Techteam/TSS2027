@@ -238,6 +238,23 @@ async function setupEventListeners() {
       }
     });
   });
+
+  const sliders = document.querySelectorAll('input[type="range"][data-path]');
+  sliders.forEach((slider) => {
+    const path = slider.getAttribute("data-path");
+
+    slider.addEventListener("input", (event) => {
+      const value = event.target.value;
+
+      updateServerData(path, value);
+
+      const valueEl = document.getElementById(slider.id + "-value");
+      if (valueEl) {
+        valueEl.textContent = value;
+      }
+    });
+  });
+
 }
 
 // HELPER FUNCTIONS

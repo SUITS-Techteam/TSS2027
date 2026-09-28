@@ -397,6 +397,91 @@
 			                                    </div>
 											</div>
 										</div>
+										<div class="card-body">
+											<div class="card-content">	
+												<div class="telemetry-label">
+			                                        <span class="telemetry-data">
+			                                            SP Depth
+			                                        </span>
+			                                    </div>
+			                                    <div class="telemetry-value">
+			                                        <span data-path="eva.ssu.sp_depth" class="telemetry-data" id="ssu-sp_depth" data-units="cm">
+			                                            ------
+			                                        </span>
+			                                    </div>
+			                                    <div class="telemetry-label">
+			                                        <span class="telemetry-data">
+			                                            BB Depth
+			                                        </span>
+			                                    </div>
+			                                    <div class="telemetry-value">
+			                                        <span data-path="eva.ssu.bb_deployed" class="telemetry-data" id="ssu-bb_depth" data-units="cm">
+			                                            ------
+			                                        </span>
+			                                    </div>
+											</div>
+										</div>
+										<div class="card-body">
+											<div class="card-content">	
+												<div class="telemetry-label">
+			                                        <span class="telemetry-data">
+			                                            SP Temp
+			                                        </span>
+			                                    </div>
+			                                    <div class="telemetry-value">
+			                                        <span data-path="eva.ssu.sp_temp" class="telemetry-data" id="ssu-sp_temp" data-units="°C">
+			                                            ------
+			                                        </span>
+			                                    </div>
+			                                    <div class="telemetry-label">
+			                                        <span class="telemetry-data">
+			                                            BB Temp
+			                                        </span>
+			                                    </div>
+			                                    <div class="telemetry-value">
+			                                        <span data-path="eva.ssu.bb_deployed" class="telemetry-data" id="ssu-bb_temp" data-units="°C">
+			                                            ------
+			                                        </span>
+			                                    </div>
+											</div>
+										</div>
+										<div class="card-body">
+											<div class="card-content">	
+												<div class="telemetry-label">
+			                                        <span class="telemetry-data">
+			                                            SP RPM
+			                                        </span>
+			                                    </div>
+			                                    <div class="telemetry-value">
+			                                        <span data-path="eva.ssu.sp_rpm" class="telemetry-data" id="ssu-sp_rpm" data-units="rpm">
+			                                            ------
+			                                        </span>
+			                                    </div>
+			                                    <div class="telemetry-label">
+			                                        <span class="telemetry-data">
+			                                            BB RPM
+			                                        </span>
+			                                    </div>
+			                                    <div class="telemetry-value">
+			                                        <span data-path="eva.ssu.bb_deployed" class="telemetry-data" id="ssu-bb_rpm">
+			                                            ------
+			                                        </span>
+			                                    </div>
+											</div>
+										</div>
+										<div class="card-body">
+											<label for="mock-sp-rpm-slider">Mock SP RPM:</label>
+												<input 
+												  type="range" 
+												  id="mock-sp-rpm-slider" 
+												  min="0" 
+												  max="300" 
+												  value="0" 
+												  step="1"
+												  data-path="eva.ssu.mock_rpm"
+												/>
+												<span id="mock-sp-rpm-value" class="telemetry-data" data-path="eva.ssu.mock_rpm">0</span>
+										</div>
 	                        	</div>
 						<!-----------------------EV1 Spectroscopy Section---------------------------------------------------->
 	                         	<div class="card" style="border-bottom: 2px solid var(--sharp-blue);">

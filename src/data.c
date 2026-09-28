@@ -39,10 +39,8 @@ struct backend_data_t *init_backend(int instanceIndex) {
     backend->start_time = time(NULL);
     backend->server_up_time = 0;
     backend->time_since_last_ping = 0;
-	backend->last_mode = -1;
-
-	backend->sp_deployed = false;
-	backend->bb_deployed = false;
+	backend->tss_test = true; // testing without analog inputs
+	backend->test_applied = false;
 
     // Initialize simulation engine
     backend->sim_engine = sim_engine_create();
@@ -291,37 +289,63 @@ bool initialize_EVA_json_switch_states(struct backend_data_t* backend) {
         cJSON_Delete(eva_json);
         return false;
     }
-
 	cJSON_ReplaceItemInObject(ssu, "power",cJSON_CreateBool(0));
 	if (!cJSON_GetObjectItem(ssu, "power")) {
 		printf("Error: Failed to set eva.ssu.power in EVA config file in initialize_json_switch_states\n");
 		cJSON_Delete(eva_json);
 		return false;
 	}
-
 	cJSON_ReplaceItemInObject(ssu, "booting",cJSON_CreateBool(0));
 	if (!cJSON_GetObjectItem(ssu, "booting")) {
 		printf("Error: Failed to set eva.ssu.booting in EVA config file in initialize_json_switch_states\n");
 		cJSON_Delete(eva_json);
 		return false;
 	}
-
 	cJSON_ReplaceItemInObject(ssu, "ready",cJSON_CreateBool(0));
 	if (!cJSON_GetObjectItem(ssu, "ready")) {
 		printf("Error: Failed to set eva.ssu.ready in EVA config file in initialize_json_switch_states\n");
 		cJSON_Delete(eva_json);
 		return false;
 	}
-
-	cJSON_ReplaceItemInObject(ssu, "mode",cJSON_CreateBool(0));
+	cJSON_ReplaceItemInObject(ssu, "mode",cJSON_CreateNumber(0));
 	if (!cJSON_GetObjectItem(ssu, "mode")) {
 		printf("Error: Failed to set eva.ssu.mode in EVA config file in initialize_json_switch_states\n");
 		cJSON_Delete(eva_json);
 		return false;
 	}
-	cJSON_ReplaceItemInObject(ssu, "sp_deployed",cJSON_CreateBool(0));
-	if (!cJSON_GetObjectItem(ssu, "sp_deployed")) {
-		printf("Error: Failed to set eva.ssu.sp_deployed in EVA config file in initialize_json_switch_states\n");
+	cJSON_ReplaceItemInObject(ssu, "deploy_pressed",cJSON_CreateBool(0));
+	if (!cJSON_GetObjectItem(ssu, "deploy_pressed")) {
+		printf("Error: Failed to set eva.ssu.deploy_pressed in EVA config file in initialize_json_switch_states\n");
+		cJSON_Delete(eva_json);
+		return false;
+	}
+	cJSON_ReplaceItemInObject(ssu, "sp_depth",cJSON_CreateNumber(0.0));
+	if (!cJSON_GetObjectItem(ssu, "sp_depth")) {
+		printf("Error: Failed to set eva.ssu.sp_depth in EVA config file in initialize_json_switch_states\n");
+		cJSON_Delete(eva_json);
+		return false;
+	}
+	cJSON_ReplaceItemInObject(ssu, "sp_temp",cJSON_CreateNumber(-25.0));
+	if (!cJSON_GetObjectItem(ssu, "sp_temp")) {
+		printf("Error: Failed to set eva.ssu.sp_temp in EVA config file in initialize_json_switch_states\n");
+		cJSON_Delete(eva_json);
+		return false;
+	}
+	cJSON_ReplaceItemInObject(ssu, "sp_rpm",cJSON_CreateNumber(0));
+	if (!cJSON_GetObjectItem(ssu, "sp_rpm")) {
+		printf("Error: Failed to set eva.ssu.sp_rpm in EVA config file in initialize_json_switch_states\n");
+		cJSON_Delete(eva_json);
+		return false;
+	}
+	cJSON_ReplaceItemInObject(ssu, "sp_drilling",cJSON_CreateBool(0));
+	if (!cJSON_GetObjectItem(ssu, "sp_drilling")) {
+		printf("Error: Failed to set eva.ssu.sp_drilling in EVA config file in initialize_json_switch_states\n");
+		cJSON_Delete(eva_json);
+		return false;
+	}
+	cJSON_ReplaceItemInObject(ssu, "sp_retracting",cJSON_CreateBool(0));
+	if (!cJSON_GetObjectItem(ssu, "sp_retracting")) {
+		printf("Error: Failed to set eva.ssu.sp_retracting in EVA config file in initialize_json_switch_states\n");
 		cJSON_Delete(eva_json);
 		return false;
 	}
@@ -331,7 +355,6 @@ bool initialize_EVA_json_switch_states(struct backend_data_t* backend) {
 		cJSON_Delete(eva_json);
 		return false;
 	}
-
 
 	cJSON* spec = cJSON_GetObjectItem(eva_json, "spec");
     if (!spec) {
@@ -347,7 +370,7 @@ bool initialize_EVA_json_switch_states(struct backend_data_t* backend) {
         return false;
 	}
 
-    // default SPEC eva values
+    // default SPEC eva1 values
     cJSON_ReplaceItemInObject(eva1, "name", cJSON_CreateString("Default Rock"));
     if (!cJSON_GetObjectItem(eva1, "name")) {
         printf("Error: Failed to set name in SPEC config file in initialize_json_switch_states\n");
@@ -517,7 +540,6 @@ void update_fan_values(struct backend_data_t* backend) {
             }
         }
 
-        
         field->active = true; //set all fields to active by default, then set to false if they depend on a DCU command that is not active
 
         if(component && strncmp(component->component_name, "eva", 3) == 0) { //if the field is within an EVA component, check DCU command dependencies to determine active state
@@ -604,7 +626,7 @@ bool update_sim_UIA_connected(struct backend_data_t* backend) {
         bool uia_oxy_vent_open = sim_engine->uia_field_settings->oxy_vent;
 
         //check if o2 vent is closed and oxygen EMU1 is open
-        //if so, fill 
+        //if so, fill
         bool uia_oxy_vent_closed = !sim_engine->uia_field_settings->oxy_vent;
         bool uia_oxy_emu1_open = sim_engine->uia_field_settings->eva1_oxy;
         bool uia_oxy_emu1_closed = !sim_engine->uia_field_settings->eva1_oxy;
@@ -618,7 +640,6 @@ bool update_sim_UIA_connected(struct backend_data_t* backend) {
                 suit_pressure_oxy_field->active = true; //make the field active so it starts updating based on the new algorithm
                 suit_pressure_oxy_field->algorithm = SIM_ALGO_LINEAR_DECAY;
                 suit_pressure_oxy_field->rate.f = OXY_VENT_RATE; //set the rate of decay to 0.5 units per second when the vent is open
-                
             } else {
                 printf("Simulation tried to access non-existent field '.oxy_pri_storage' for UIA override\n");
             }
@@ -1042,11 +1063,25 @@ void update_error_states(struct backend_data_t* backend) {
 void reset_ssu_simulation(struct backend_data_t* backend, cJSON* ssu) {
 	cJSON_ReplaceItemInObject(ssu, "booting", cJSON_CreateBool(false));
 	cJSON_ReplaceItemInObject(ssu, "ready", cJSON_CreateBool(false));
-	cJSON_ReplaceItemInObject(ssu, "deploy", cJSON_CreateBool(false));
+	cJSON_ReplaceItemInObject(ssu, "mode", cJSON_CreateNumber(0));
+	cJSON_ReplaceItemInObject(ssu, "deploy_pressed", cJSON_CreateBool(false));
 	cJSON_ReplaceItemInObject(ssu, "sp_deployed", cJSON_CreateBool(false));
+	cJSON_ReplaceItemInObject(ssu, "sp_depth", cJSON_CreateNumber(0.0));
+	cJSON_ReplaceItemInObject(ssu, "sp_temp", cJSON_CreateNumber(-25.0));
+	cJSON_ReplaceItemInObject(ssu, "sp_rpm", cJSON_CreateNumber(0));
+	cJSON_ReplaceItemInObject(ssu, "sp_drilling", cJSON_CreateBool(false));
+	cJSON_ReplaceItemInObject(ssu, "sp_retracting", cJSON_CreateBool(false));
 	cJSON_ReplaceItemInObject(ssu, "bb_deployed", cJSON_CreateBool(false));
+	backend->sp_depth = 0.0;
+	backend->sp_temp = -25.0;
+	backend->sp_drill_heat_rate = 3.0;
+	backend->sp_drill_cool_rate = 3.0;
+	backend->sp_rpm = 0;
+	backend->sp_drilling = false;
+	backend->sp_retracting = false;
 	backend->sp_deployed = false;
 	backend->bb_deployed = false;
+	backend->test_applied = false;
 	backend->last_mode = -1;
 }
 
@@ -1063,6 +1098,7 @@ void update_ssu_simulation(struct backend_data_t *backend){
 	bool power = cJSON_GetObjectItemCaseSensitive(ssu, "power")->valueint;
 	bool booting = cJSON_GetObjectItemCaseSensitive(ssu, "booting")->valueint;
 	bool ready = cJSON_GetObjectItemCaseSensitive(ssu, "ready")->valueint;
+	int mode = cJSON_GetObjectItemCaseSensitive(ssu, "mode")->valueint;
 
 
 	// reset on power off
@@ -1088,16 +1124,13 @@ void update_ssu_simulation(struct backend_data_t *backend){
 		}
 	}
 
-	int mode = cJSON_GetObjectItemCaseSensitive(ssu, "mode")->valueint;
 	// only allow interaction if power is on and system is ready
 	if(power && ready) {
-
-		bool deploy = cJSON_GetObjectItemCaseSensitive(ssu, "deploy")->valueint;
+		bool deploy_pressed = cJSON_GetObjectItemCaseSensitive(ssu, "deploy_pressed")->valueint;
 
 		if(backend->last_mode == -1){
 			backend->last_mode = mode;
 		}
-
 		else if(mode != backend->last_mode){
 			if(mode == 0){
 				printf("SSU in Short Period Sensor mode for Team %d\n", backend->instance_index);
@@ -1108,13 +1141,76 @@ void update_ssu_simulation(struct backend_data_t *backend){
 			backend->last_mode = mode;
 		}
 
-		if(deploy) {
-			if(mode == 0 && !backend->sp_deployed) {
+		if(mode == 0) {
+
+			bool deployed = cJSON_GetObjectItemCaseSensitive(ssu,"sp_deployed")->valueint;
+			if(backend->tss_test && !deployed){
+				backend->sp_rpm = cJSON_GetObjectItemCaseSensitive(ssu, "mock_rpm")->valueint;
+				cJSON_ReplaceItemInObject(ssu, "sp_rpm", cJSON_CreateNumber(backend->sp_rpm));
+			}
+			float depth = cJSON_GetObjectItemCaseSensitive(ssu, "sp_depth")->valuedouble;
+			float temp = cJSON_GetObjectItemCaseSensitive(ssu, "sp_temp")->valuedouble;
+			float rpm = cJSON_GetObjectItemCaseSensitive(ssu, "sp_rpm")->valueint;
+			bool drilling = cJSON_GetObjectItemCaseSensitive(ssu, "sp_drilling")->valueint;
+			bool retracting = cJSON_GetObjectItemCaseSensitive(ssu, "sp_retracting")->valueint;
+
+			cJSON_ReplaceItemInObject(ssu, "sp_temp", cJSON_CreateNumber(backend->sp_temp));
+
+			if(rpm > 0) {
+				backend->sp_drilling = true;
+				cJSON_ReplaceItemInObject(ssu, "sp_drilling", cJSON_CreateBool(backend->sp_drilling));
+			}
+			if(drilling && !retracting && !deployed){
+				backend->sp_depth += (backend->sp_rpm / 300) * 1.75;
+				backend->sp_temp += (backend->sp_rpm / 300) * backend->sp_drill_heat_rate;
+				cJSON_ReplaceItemInObject(ssu, "sp_temp", cJSON_CreateNumber(backend->sp_temp));
+				cJSON_ReplaceItemInObject(ssu, "sp_depth", cJSON_CreateNumber(backend->sp_depth));
+			}
+			if(retracting && depth > 0){
+				backend->sp_depth -= 2.0;
+				if(backend->sp_depth < 0) {
+					backend->sp_depth = 0;
+				}
+				cJSON_ReplaceItemInObject(ssu, "sp_depth", cJSON_CreateNumber(backend->sp_depth));
+			}
+
+			if(rpm == 0 && temp > -25.0) {
+				backend->sp_temp -= backend->sp_drill_cool_rate;
+				if(backend->sp_temp < -25.0){
+					backend->sp_temp = -25.0;
+				}
+				cJSON_ReplaceItemInObject(ssu, "sp_temp", cJSON_CreateNumber(backend->sp_temp));
+			}
+
+			if(temp >= 15.0 && temp < 35.0 && rpm > 0 && !backend->sp_warning) {
+				backend->sp_drill_cool_rate = 2.0;
+				printf("WARNING: THERMAL THRESHOLD EXCEEDED\n");
+				backend->sp_warning = true;
+				backend->sp_critical = false;
+			}
+			if(temp >= 35.0 && rpm > 0 && !backend->sp_critical) {
+				backend->sp_drill_cool_rate = 1.5;
+				printf("CRITICAL: THERMAL LIMIT REACHED\nDISENGAGING DRILL\n");
+				backend->sp_warning = false;
+				backend->sp_critical = true;
+				backend->sp_drilling = false;
+				backend->sp_rpm = 0;
+				cJSON_ReplaceItemInObject(ssu, "sp_drilling", cJSON_CreateBool(backend->sp_drilling));
+				cJSON_ReplaceItemInObject(ssu, "sp_rpm", cJSON_CreateNumber(backend->sp_rpm));
+			}
+
+			if(depth >= 30 && deploy_pressed && !deployed){
 				printf("Deploying Short Period Sensor\n");
 				cJSON_ReplaceItemInObject(ssu, "sp_deployed", cJSON_CreateBool(true));
+				backend->sp_drilling = false;
 				backend->sp_deployed = true;
+				printf("Retracting drill\n");
+				backend->sp_retracting = true;
+				cJSON_ReplaceItemInObject(ssu, "sp_retracting", cJSON_CreateBool(true));
 			}
-			if(mode == 1 && !backend->bb_deployed) {
+		}
+		else if (mode == 1) {
+			if(deploy_pressed && !backend->bb_deployed){
 				printf("Deploying Broadband Sensor\n");
 				cJSON_ReplaceItemInObject(ssu, "bb_deployed", cJSON_CreateBool(true));
 				backend->bb_deployed = true;

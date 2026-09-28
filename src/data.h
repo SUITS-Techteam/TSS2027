@@ -8,7 +8,7 @@
 #include "lib/cjson/cJSON.h"
 #include "lib/simulation/sim_engine.h"
 #include <stdlib.h>
-#include <stdio.h>  
+#include <stdio.h>
 
 // UDP command mapping structure
 typedef struct {
@@ -24,9 +24,26 @@ struct backend_data_t {
     uint32_t time_since_last_ping;
 
     int instance_index;
+
+	// ssu simulation
 	int ssu_boot_time;
 	int last_mode;
+	bool tss_test; // testing drilling without input
+	bool test_applied; // apply test settings once
+
+	float sp_depth;
+	float sp_temp;
+	float sp_rpm;
+	float sp_drill_heat_rate;
+	float sp_drill_cool_rate;
+
+
+	bool sp_warning;
+	bool sp_critical;
+	bool sp_drilling;
+	bool sp_retracting;
 	bool sp_deployed;
+
 	bool bb_deployed;
 
     // Simulation engine
@@ -117,7 +134,7 @@ static const udp_command_mapping_t udp_command_mappings[] = {
 	{2023, "eva.ssu.umbilical", "bool"},
 	{2024, "eva.ssu.angle", "float"},
 	{2025, "eva.ssu.mode", "int"},
-	{2026, "eva.ssu.deploy", "bool"},
+	{2026, "eva.ssu.deploy_pressed", "bool"},
 
     {0, NULL, NULL} // Sentinel
 };
