@@ -1078,7 +1078,6 @@ void update_ssu_simulation(struct backend_data_t *backend){
 	ssu_state_t status = get_ssu_state(ssu);
 	int mode = cjson_get(ssu, "mode")->valueint;
 
-
 	// reset on power off
 	if(!power){
 		reset_ssu_simulation(backend, ssu);
@@ -1303,7 +1302,7 @@ void cleanup_backend(struct backend_data_t *backend) {
 
 /**
  * Handles UDP GET requests for data retrieval
- * 
+ *
  * @param command Command identifier for the GET request
  * @param data Response buffer to populate with requested data
  * @param backend Backend data structure containing all telemetry and simulation engines
@@ -1315,6 +1314,23 @@ void handle_udp_get_request(unsigned int command, unsigned char* data, struct ba
             printf("Getting EVA telemetry data.\n");
             send_json_file(backend, "EVA", data);
             break;
+		case 1: ;
+			cJSON* eva = get_json_file(backend, "EVA");
+			cJSON* ssu;
+			if(eva){
+				ssu = cjson_get(eva, "ssu");
+			}
+			else {
+				ssu = NULL;
+			}
+			if(ssu){
+				char* s = cJSON_PrintUnformatted(ssu);
+				strcpy((char*)data, s);
+				free(s);
+			}
+			printf("Getting SSU telemetry data.\n");
+			cJSON_Delete(eva);
+			break;
         default:
             printf("Invalid GET command: %u\n", command);
             break;

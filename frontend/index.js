@@ -90,9 +90,9 @@ async function fetchData() {
 	if (path === "eva.ssu.sp_state") {
 		const sp = getNestedValue(evaData, "ssu.sp_state");
 		const spEl = document.getElementById("ssu-sp");
-		const pow = getNestedValue(evaData, "ssu.ready");
+		const pow = getNestedValue(evaData, "ssu.status");
 
-		if(!pow){
+		if(pow != "ready"){
 			spEl.textContent = "NOT READY";
 			spEl.className = "ssu-off"
 			return;
