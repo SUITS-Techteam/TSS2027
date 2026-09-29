@@ -283,79 +283,6 @@ bool initialize_EVA_json_switch_states(struct backend_data_t* backend) {
         return false;
     }
 
-	cJSON* ssu = cJSON_GetObjectItem(eva_json, "ssu");
-    if (!dcu) {
-        printf("Error: Failed to get SSU from EVA config file in initialize_json_switch_states\n");
-        cJSON_Delete(eva_json);
-        return false;
-    }
-	cJSON_ReplaceItemInObject(ssu, "power",cJSON_CreateBool(0));
-	if (!cJSON_GetObjectItem(ssu, "power")) {
-		printf("Error: Failed to set eva.ssu.power in EVA config file in initialize_json_switch_states\n");
-		cJSON_Delete(eva_json);
-		return false;
-	}
-	cJSON_ReplaceItemInObject(ssu, "booting",cJSON_CreateBool(0));
-	if (!cJSON_GetObjectItem(ssu, "booting")) {
-		printf("Error: Failed to set eva.ssu.booting in EVA config file in initialize_json_switch_states\n");
-		cJSON_Delete(eva_json);
-		return false;
-	}
-	cJSON_ReplaceItemInObject(ssu, "ready",cJSON_CreateBool(0));
-	if (!cJSON_GetObjectItem(ssu, "ready")) {
-		printf("Error: Failed to set eva.ssu.ready in EVA config file in initialize_json_switch_states\n");
-		cJSON_Delete(eva_json);
-		return false;
-	}
-	cJSON_ReplaceItemInObject(ssu, "mode",cJSON_CreateNumber(0));
-	if (!cJSON_GetObjectItem(ssu, "mode")) {
-		printf("Error: Failed to set eva.ssu.mode in EVA config file in initialize_json_switch_states\n");
-		cJSON_Delete(eva_json);
-		return false;
-	}
-	cJSON_ReplaceItemInObject(ssu, "deploy_pressed",cJSON_CreateBool(0));
-	if (!cJSON_GetObjectItem(ssu, "deploy_pressed")) {
-		printf("Error: Failed to set eva.ssu.deploy_pressed in EVA config file in initialize_json_switch_states\n");
-		cJSON_Delete(eva_json);
-		return false;
-	}
-	cJSON_ReplaceItemInObject(ssu, "sp_depth",cJSON_CreateNumber(0.0));
-	if (!cJSON_GetObjectItem(ssu, "sp_depth")) {
-		printf("Error: Failed to set eva.ssu.sp_depth in EVA config file in initialize_json_switch_states\n");
-		cJSON_Delete(eva_json);
-		return false;
-	}
-	cJSON_ReplaceItemInObject(ssu, "sp_temp",cJSON_CreateNumber(-25.0));
-	if (!cJSON_GetObjectItem(ssu, "sp_temp")) {
-		printf("Error: Failed to set eva.ssu.sp_temp in EVA config file in initialize_json_switch_states\n");
-		cJSON_Delete(eva_json);
-		return false;
-	}
-	cJSON_ReplaceItemInObject(ssu, "sp_rpm",cJSON_CreateNumber(0));
-	if (!cJSON_GetObjectItem(ssu, "sp_rpm")) {
-		printf("Error: Failed to set eva.ssu.sp_rpm in EVA config file in initialize_json_switch_states\n");
-		cJSON_Delete(eva_json);
-		return false;
-	}
-	cJSON_ReplaceItemInObject(ssu, "sp_drilling",cJSON_CreateBool(0));
-	if (!cJSON_GetObjectItem(ssu, "sp_drilling")) {
-		printf("Error: Failed to set eva.ssu.sp_drilling in EVA config file in initialize_json_switch_states\n");
-		cJSON_Delete(eva_json);
-		return false;
-	}
-	cJSON_ReplaceItemInObject(ssu, "sp_retracted",cJSON_CreateBool(0));
-	if (!cJSON_GetObjectItem(ssu, "sp_retracted")) {
-		printf("Error: Failed to set eva.ssu.sp_retracted in EVA config file in initialize_json_switch_states\n");
-		cJSON_Delete(eva_json);
-		return false;
-	}
-	cJSON_ReplaceItemInObject(ssu, "bb_deployed",cJSON_CreateBool(0));
-	if (!cJSON_GetObjectItem(ssu, "bb_deployed")) {
-		printf("Error: Failed to set eva.ssu.bb_deployed in EVA config file in initialize_json_switch_states\n");
-		cJSON_Delete(eva_json);
-		return false;
-	}
-
 	cJSON* spec = cJSON_GetObjectItem(eva_json, "spec");
     if (!spec) {
         printf("Error: Failed to get spec from EVA config file in initialize_json_switch_states\n");
@@ -1060,22 +987,79 @@ void update_error_states(struct backend_data_t* backend) {
 }
 
 
+
+// for retrieving strings from enums
+static const char* SSU_STATES[] = {
+	"off", "booting", "ready"
+};
+
+static const char* SP_STATES[] = {
+	"idle", "drilling", "overheated", "retracting", "retracted", "deployed"
+};
+static const char* SP_THERMAL[] = {
+	"nominal", "warning", "critical"
+};
+
+// got annoying to type out the full replace and get
+static void cjson_set(cJSON* cjsonObj, const char* key, cJSON* item) {
+	if (cJSON_GetObjectItemCaseSensitive(cjsonObj, key)){
+		cJSON_ReplaceItemInObject(cjsonObj, key, item);
+	}
+}
+static cJSON* cjson_get(cJSON* cjsonObj, const char* key){
+	return cJSON_GetObjectItemCaseSensitive(cjsonObj, key);
+}
+
+// ssu helper functions
+static ssu_state_t get_ssu_state(cJSON* ssu){
+	const char* s = cJSON_GetStringValue(cjson_get(ssu, "status"));
+	for(int i = SSU_OFF;i <= SSU_READY; ++i){
+		if(s && strcmp(s, SSU_STATES[i]) == 0){
+			return i;
+		}
+	}
+	return SSU_OFF;
+}
+
+
+// sp helper functions
+static sp_thermal_t get_sp_thermal(float t) {
+	if (t >= 35.0f){
+		return SP_THERMAL_CRITICAL;
+	}
+	if (t >= 15.0f){
+		return SP_THERMAL_WARNING;
+	}
+	return SP_THERMAL_NOMINAL;
+}
+static float sp_cool_rate(sp_thermal_t thermal){
+	switch (thermal) {
+		case SP_THERMAL_CRITICAL: return 1.5f;
+		case SP_THERMAL_WARNING: return 2.0f;
+		default: return 3.0f;
+	}
+}
+static sp_state_t get_sp_state(cJSON* ssu){
+	const char* s = cJSON_GetStringValue(cjson_get(ssu, "sp_state"));
+	for(int i = SP_IDLE;i <= SP_DEPLOYED; ++i){
+		if(s && strcmp(s, SP_STATES[i]) == 0){
+			return i;
+		}
+	}
+	return SP_IDLE;
+}
+
 void reset_ssu_simulation(struct backend_data_t* backend, cJSON* ssu) {
-	cJSON_ReplaceItemInObject(ssu, "booting", cJSON_CreateBool(false));
-	cJSON_ReplaceItemInObject(ssu, "ready", cJSON_CreateBool(false));
-	cJSON_ReplaceItemInObject(ssu, "mode", cJSON_CreateNumber(0));
-	cJSON_ReplaceItemInObject(ssu, "deploy_pressed", cJSON_CreateBool(false));
-	cJSON_ReplaceItemInObject(ssu, "sp_deployed", cJSON_CreateBool(false));
-	cJSON_ReplaceItemInObject(ssu, "sp_depth", cJSON_CreateNumber(0.0));
-	cJSON_ReplaceItemInObject(ssu, "sp_temp", cJSON_CreateNumber(-25.0));
-	cJSON_ReplaceItemInObject(ssu, "sp_rpm", cJSON_CreateNumber(0));
-	cJSON_ReplaceItemInObject(ssu, "sp_drilling", cJSON_CreateBool(false));
-	cJSON_ReplaceItemInObject(ssu, "sp_retracted", cJSON_CreateBool(false));
-	cJSON_ReplaceItemInObject(ssu, "bb_deployed", cJSON_CreateBool(false));
-	backend->sp_drill_heat_rate = 3.0;
-	backend->sp_drill_cool_rate = 3.0;
+	cjson_set(ssu, "power", cJSON_CreateBool(false));
+	cjson_set(ssu, "status", cJSON_CreateString("off"));
+	cjson_set(ssu, "mode", cJSON_CreateNumber(0));
+	cjson_set(ssu, "deploy_pressed", cJSON_CreateBool(false));
+	cjson_set(ssu, "sp_depth", cJSON_CreateNumber(0.0));
+	cjson_set(ssu, "sp_temp", cJSON_CreateNumber(-25.0));
+	cjson_set(ssu, "sp_rpm", cJSON_CreateNumber(0));
+	cjson_set(ssu, "sp_state", cJSON_CreateString("idle"));
+	cjson_set(ssu, "sp_thermal", cJSON_CreateString("nominal"));
 	backend->sp_input = true;
-	backend->bb_deployed = false;
 	backend->test_applied = false;
 	backend->last_mode = -1;
 }
@@ -1084,16 +1068,15 @@ void update_ssu_simulation(struct backend_data_t *backend){
 	cJSON* eva_json = get_json_file(backend, "EVA");
 	if (!eva_json) return;
 
-	cJSON* ssu = cJSON_GetObjectItemCaseSensitive(eva_json, "ssu");
+	cJSON* ssu = cjson_get(eva_json, "ssu");
 	if(!ssu){
 		cJSON_Delete(eva_json);
 		return;
 	}
 
-	bool power = cJSON_GetObjectItemCaseSensitive(ssu, "power")->valueint;
-	bool booting = cJSON_GetObjectItemCaseSensitive(ssu, "booting")->valueint;
-	bool ready = cJSON_GetObjectItemCaseSensitive(ssu, "ready")->valueint;
-	int mode = cJSON_GetObjectItemCaseSensitive(ssu, "mode")->valueint;
+	bool power = cjson_get(ssu, "power")->valueint;
+	ssu_state_t status = get_ssu_state(ssu);
+	int mode = cjson_get(ssu, "mode")->valueint;
 
 
 	// reset on power off
@@ -1102,27 +1085,26 @@ void update_ssu_simulation(struct backend_data_t *backend){
 	}
 
 	// initial power
-	if (power && !booting && !ready){
-		cJSON_ReplaceItemInObject(ssu, "booting", cJSON_CreateBool(true));
+	if (power && status == SSU_OFF){
+		cjson_set(ssu, "status", cJSON_CreateString(SSU_STATES[SSU_BOOTING]));
 		backend->ssu_boot_time = backend->server_up_time;
 		printf("Starting boot sequence for Team %d\n", backend->instance_index);
 	}
 
 	// boot sequence (5 seconds)
-	if (booting) {
+	if (status == SSU_BOOTING) {
 		int elapsed = backend->server_up_time - backend->ssu_boot_time;
 
 		if (elapsed > 5) {
 			printf("System Ready for Team %d\n", backend->instance_index);
-			cJSON_ReplaceItemInObject(ssu, "ready", cJSON_CreateBool(true));
-			cJSON_ReplaceItemInObject(ssu, "booting", cJSON_CreateBool(false));
+			cjson_set(ssu, "status", cJSON_CreateString(SSU_STATES[SSU_READY]));
 		}
 	}
 
 	// only allow interaction if power is on and system is ready
-	if(power && ready) {
-		bool deploy_pressed = cJSON_GetObjectItemCaseSensitive(ssu, "deploy_pressed")->valueint;
-		bool retract_pressed = cJSON_GetObjectItemCaseSensitive(ssu, "retract_pressed")->valueint;
+	if(power && status == SSU_READY) {
+		bool deploy_pressed = cjson_get(ssu, "deploy_pressed")->valueint;
+		bool retract_pressed = cjson_get(ssu, "retract_pressed")->valueint;
 
 		if(backend->last_mode == -1){
 			backend->last_mode = mode;
@@ -1138,88 +1120,109 @@ void update_ssu_simulation(struct backend_data_t *backend){
 		}
 
 		if(mode == 0) {
+			float depth = cjson_get(ssu, "sp_depth")->valuedouble;
+			float temp = cjson_get(ssu, "sp_temp")->valuedouble;
+			float rpm = cjson_get(ssu, "sp_rpm")->valueint;
 
-			bool deployed = cJSON_GetObjectItemCaseSensitive(ssu,"sp_deployed")->valueint;
-			if(backend->tss_test && !deployed && backend->sp_input){
-				int mock_rpm = cJSON_GetObjectItemCaseSensitive(ssu, "mock_rpm")->valueint;
-				cJSON_ReplaceItemInObject(ssu, "sp_rpm", cJSON_CreateNumber(mock_rpm));
+			sp_state_t sp_state = get_sp_state(ssu);
+			sp_thermal_t sp_thermal = get_sp_thermal(temp);
+
+			// check if drill can spin (cannot during an overheat phase or deployment phases)
+			bool can_drill = false;
+			if(sp_state == SP_IDLE || sp_state == SP_DRILLING){
+				can_drill = true;
+			}
+			if(!can_drill) {
+				cjson_set(ssu, "sp_rpm", cJSON_CreateNumber(0));
 			}
 
-			float depth = cJSON_GetObjectItemCaseSensitive(ssu, "sp_depth")->valuedouble;
-			float temp = cJSON_GetObjectItemCaseSensitive(ssu, "sp_temp")->valuedouble;
-			float rpm = cJSON_GetObjectItemCaseSensitive(ssu, "sp_rpm")->valueint;
-			bool drilling = cJSON_GetObjectItemCaseSensitive(ssu, "sp_drilling")->valueint;
-			bool retracted = cJSON_GetObjectItemCaseSensitive(ssu, "sp_retracted")->valueint;
-
-			// if drill is spinning, then drilling "state" is active
-			if(rpm > 0) {
-				cJSON_ReplaceItemInObject(ssu, "sp_drilling", cJSON_CreateBool(true));
+			// TODO: remove below once analog input is implemented
+			if(backend->tss_test){
+				rpm = cjson_get(ssu, "mock_rpm")->valueint;
+				cjson_set(ssu, "sp_rpm", cJSON_CreateNumber(rpm));
 			}
 
-			// drilling increment loop
-			if(drilling && !retracted && !deployed){
-				float newDepth = depth + ((rpm / 300) * 2.0);
-				float newTemp = temp + ((rpm / 300) * backend->sp_drill_heat_rate);
-				cJSON_ReplaceItemInObject(ssu, "sp_depth", cJSON_CreateNumber(newDepth));
-				cJSON_ReplaceItemInObject(ssu, "sp_temp", cJSON_CreateNumber(newTemp));
+			// check for retraction button press at correct depth plus if drill is not overheating
+			if(retract_pressed && depth >= 45.0f && can_drill){
+				cjson_set(ssu, "sp_state", cJSON_CreateString(SP_STATES[SP_RETRACTING]));
+				cjson_set(ssu, "sp_rpm", cJSON_CreateNumber(0));
 			}
+			else switch (sp_state) {
 
-			// two-level stages for temperature
-			// level 1: warning, drill will cool slower
-			if(temp >= 15.0 && temp < 35.0 && rpm > 0 && !backend->sp_warning) {
-				backend->sp_drill_cool_rate = 2.0;
-				printf("WARNING: THERMAL THRESHOLD EXCEEDED\n");
-				backend->sp_warning = true;
-				backend->sp_critical = false;
-			}
-			// level 2: critical, drill will cool even slower and disengage for safety
-			if(temp >= 35.0 && rpm > 0 && !backend->sp_critical) {
-				backend->sp_drill_cool_rate = 1.5;
-				printf("CRITICAL: THERMAL LIMIT REACHED\nDISENGAGING DRILL\n");
-				backend->sp_warning = false;
-				backend->sp_critical = true;
-				backend->sp_input = false;
-				cJSON_ReplaceItemInObject(ssu, "sp_drilling", cJSON_CreateBool(false));
-				cJSON_ReplaceItemInObject(ssu, "sp_rpm", cJSON_CreateNumber(0));
-			}
+				// idle state when drill is not spinning, checks if it starts
+				case SP_IDLE:
+					if(rpm > 0) {
+						cjson_set(ssu, "sp_state", cJSON_CreateString(SP_STATES[SP_DRILLING]));
+					}
+					break;
 
+				// main drilling state, checks if drill overheats
+				case SP_DRILLING:
+					if(rpm <= 0) {
+						cjson_set(ssu, "sp_state", cJSON_CreateString(SP_STATES[SP_IDLE]));
+						break;
+					}
+					float newTemp = temp + (rpm / 300) * 3.0f;
+					cjson_set(ssu, "sp_temp", cJSON_CreateNumber(newTemp));
+					cjson_set(ssu, "sp_depth", cJSON_CreateNumber(depth + (rpm / 300) * 2.0f));
+					// if drill reaches critical temperature, stop drill and set to overheated state
+					if(newTemp >= 35.0f && sp_thermal != SP_THERMAL_CRITICAL){
+						printf("CRITICAL: THERMAL LIMIT REACHED\nDISENGAGING DRILL\n");
+						cjson_set(ssu, "sp_state", cJSON_CreateString(SP_STATES[SP_OVERHEATED]));
+						cjson_set(ssu, "sp_rpm", cJSON_CreateNumber(0));
+					}
+					break;
+
+				// overheat state, depth will not increase until temp is below 25C
+				case SP_OVERHEATED:
+					if(temp <= 25.0f) {
+						cjson_set(ssu, "sp_state", cJSON_CreateString(SP_STATES[SP_IDLE]));
+					}
+					break;
+				// retraction state, depth will decrease until back to 0 cm
+				case SP_RETRACTING: ;
+					float newDepth = depth - 5.0f;
+					if(newDepth <= 0.0){
+						newDepth = 0.0f;
+						cjson_set(ssu, "sp_state", cJSON_CreateString(SP_STATES[SP_RETRACTED]));
+					}
+						cjson_set(ssu, "sp_depth", cJSON_CreateNumber(newDepth));
+					break;
+
+				// allow deploying after full retraction
+				case SP_RETRACTED:
+					if(deploy_pressed) {
+						printf("Deploying Short Period Sensor\n");
+						cjson_set(ssu, "sp_state", cJSON_CreateString(SP_STATES[SP_DEPLOYED]));
+					}
+					break;
+
+				// final state, allow no more interaction after deploying
+				case SP_DEPLOYED:
+					break;
+
+				}
 			// cooling down when drill is not spinning
-			if(rpm == 0 && temp > -25.0) {
-				int newTemp = temp - backend->sp_drill_cool_rate;
-				if(newTemp < 25.0) {
-					backend->sp_input = true;
+			if(rpm <= 0 && temp > -25.0f) {
+				float newTemp = temp - sp_cool_rate(sp_thermal);
+				if (newTemp < -25.0f){
+					newTemp = -25.0f;
 				}
-				if(newTemp < -25.0){
-					cJSON_ReplaceItemInObject(ssu, "sp_temp", cJSON_CreateNumber(-25));
-				}
-				cJSON_ReplaceItemInObject(ssu, "sp_temp", cJSON_CreateNumber(newTemp));
+				cjson_set(ssu, "sp_temp", cJSON_CreateNumber(newTemp));
 			}
 
-			if(depth >= 45.0 && retract_pressed){
-				cJSON_ReplaceItemInObject(ssu, "sp_retracted", cJSON_CreateBool(true));
+			// final temperature and thermal state calculation
+			float finalTemp = cjson_get(ssu, "sp_temp")->valuedouble;
+			sp_thermal_t newThermal = get_sp_thermal(finalTemp);
+
+			// warn if drill temp is approaching thermal limit
+			if(sp_thermal == SP_THERMAL_NOMINAL && newThermal == SP_THERMAL_WARNING){
+				printf("WARNING: REACHING THERMAL LIMIT\n");
 			}
-			// retraction loop
-			if(retracted){
-				int newDepth = depth - 5.0;
-				if(newDepth < 0) {
-					newDepth = 0;
-					cJSON_ReplaceItemInObject(ssu, "sp_retracting", cJSON_CreateBool(false));
-				}
-				cJSON_ReplaceItemInObject(ssu, "sp_depth", cJSON_CreateNumber(newDepth));
-			}
-			// allow deploying at or deeper than target depth
-			if(depth == 0 && retracted && deploy_pressed && !deployed){
-				printf("Deploying Short Period Sensor\n");
-				cJSON_ReplaceItemInObject(ssu, "sp_deployed", cJSON_CreateBool(true));
-				cJSON_ReplaceItemInObject(ssu, "sp_drilling", cJSON_CreateBool(false));
-			}
+			cjson_set(ssu, "sp_thermal", cJSON_CreateString(SP_THERMAL[newThermal]));
 		}
 		else if (mode == 1) {
-			if(deploy_pressed && !backend->bb_deployed){
-				printf("Deploying Broadband Sensor\n");
-				cJSON_ReplaceItemInObject(ssu, "bb_deployed", cJSON_CreateBool(true));
-				backend->bb_deployed = true;
-			}
+
 		}
 	}
 

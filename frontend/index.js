@@ -69,17 +69,16 @@ async function fetchData() {
       value = getNestedValue(evaData, path.slice(4));
     }
 
-	if (path === "eva.ssu.booting" || path === "eva.ssu.ready"){
-		const booting = getNestedValue(evaData, "ssu.booting");
-		const ready = getNestedValue(evaData, "ssu.ready");
+	if (path === "eva.ssu.status"){
+		const status = getNestedValue(evaData, "ssu.status");
 
 		const statusEl = document.getElementById("ssu-status");
 
-		if (!booting && !ready) {
+		if (status === "off") {
 			statusEl.textContent = "OFF";
 			statusEl.className = "ssu-off";
 		}
-		else if (booting && !ready) {
+		else if (status === "booting") {
 			statusEl.textContent = "BOOTING";
 			statusEl.className = "ssu-booting";
 		}
@@ -88,8 +87,8 @@ async function fetchData() {
 			statusEl.className = "ssu-ready";
 		}
 	}
-	if (path === "eva.ssu.sp_deployed") {
-		const sp = getNestedValue(evaData, "ssu.sp_deployed");
+	if (path === "eva.ssu.sp_state") {
+		const sp = getNestedValue(evaData, "ssu.sp_state");
 		const spEl = document.getElementById("ssu-sp");
 		const pow = getNestedValue(evaData, "ssu.ready");
 
@@ -98,13 +97,13 @@ async function fetchData() {
 			spEl.className = "ssu-off"
 			return;
 		}
-		if(!sp) {
-			spEl.textContent = "PRIMED";
-			spEl.className = "ssu-ready";
-		}
-		else if (sp){
+		if (sp === "deployed"){
 			spEl.textContent = "DEPLOYED";
 			spEl.className = "ssu-deployed";
+		}
+		else {
+			spEl.textContent = "PRIMED";
+			spEl.className = "ssu-ready";
 		}
 		return;
 	}

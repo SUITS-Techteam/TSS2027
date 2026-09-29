@@ -17,6 +17,18 @@ typedef struct {
     const char* data_type;   // bool or float, this makes the parsing easier
 } udp_command_mapping_t;
 
+typedef enum {
+	SSU_OFF, SSU_BOOTING, SSU_READY
+} ssu_state_t;
+
+typedef enum {
+	SP_IDLE, SP_DRILLING, SP_OVERHEATED, SP_RETRACTING, SP_RETRACTED, SP_DEPLOYED
+} sp_state_t;
+
+typedef enum {
+	SP_THERMAL_NOMINAL, SP_THERMAL_WARNING, SP_THERMAL_CRITICAL
+} sp_thermal_t;
+
 struct backend_data_t {
     // Timing information
     uint32_t start_time;
@@ -30,15 +42,9 @@ struct backend_data_t {
 	int last_mode;
 	bool tss_test; // testing drilling without input
 	bool test_applied; // apply test settings once
-
-	float sp_drill_heat_rate;
-	float sp_drill_cool_rate;
-
-
 	bool sp_input; // accept input when drill is not critical
-	bool sp_warning;
-	bool sp_critical;
-	bool bb_deployed;
+	sp_state_t sp_state;
+	sp_thermal_t sp_thermal;
 
     // Simulation engine
     sim_engine_t* sim_engine;
