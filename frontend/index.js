@@ -71,7 +71,6 @@ async function fetchData() {
 
 	if (path === "eva.ssu.status"){
 		const status = getNestedValue(evaData, "ssu.status");
-
 		const statusEl = document.getElementById("ssu-status");
 
 		if (status === "off") {
@@ -87,12 +86,11 @@ async function fetchData() {
 			statusEl.className = "ssu-ready";
 		}
 	}
-	if (path === "eva.ssu.sp_state") {
-		const sp = getNestedValue(evaData, "ssu.sp_state");
-		const spEl = document.getElementById("ssu-sp");
-		const pow = getNestedValue(evaData, "ssu.status");
+	if (path === "eva.ssu.sp_sensor") {
+		const sp = getNestedValue(evaData, "ssu.sp_sensor");
+		const spEl = document.getElementById("ssu-sp-sensor");
 
-		if(pow != "ready"){
+		if(sp === "not ready"){
 			spEl.textContent = "NOT READY";
 			spEl.className = "ssu-off"
 			return;
@@ -133,10 +131,14 @@ async function fetchData() {
       return; // don't set textContent for checkboxes
     }
 
-    // Handle action buttons (START/RESET) - enable/disable based on current state
+    // Handle action buttons (START/RESET/DEPLOY/RETRACT)
     if (el.tagName === "BUTTON" && el.hasAttribute("data-action")) {
       const action = el.getAttribute("data-action");
       const isRunning = Boolean(value);
+	  const sp = getNestedValue(evaData, "ssu.sp_sensor");
+	  const state = getNestedValue(evaData, "ssu.sp_state");
+	  const depth = getNestedValue(evaData, "ssu.sp_depth");
+	  const mode = getNestedValue(evaData, "ssu.mode");
 
       if (action === "start") {
         // START button: enabled when NOT running
@@ -146,6 +148,30 @@ async function fetchData() {
         // RESET button: enabled when IS running
         el.disabled = !isRunning;
         el.style.opacity = !isRunning ? "0.5" : "1";
+      } else if (action === "deploy") {
+		// DEPLOY button - enabled when NOT deployed and state is retracted and depth is 0.0 for respective mode
+			if(mode === 0) {
+				if (state === "retracted" && depth === 0 && sp === "primed"){
+					el.disabled = false;
+					el.style.opacity = "1";
+			    }
+			    else {
+					el.disabled = true;
+					el.style.opacity = "0.5";
+			    }
+			}
+      } else if (action === "retract") {
+		// RETRACT button - enabled when depth is at target (50) and state is not overheated or sensor already deployed
+			if(mode === 0) {
+				if (state !== "deployed" && state !== "overheated" && depth >= 50){
+					el.disabled = false;
+					el.style.opacity = "1";
+			    }
+			    else {
+					el.disabled = true;
+					el.style.opacity = "0.5";
+			    }
+			}
       }
 
       return; // don't set textContent for action buttons
@@ -230,7 +256,10 @@ async function setupEventListeners() {
       } else if (action === "reset") {
         // Reset: set the field to false
         updateServerData(path, false);
-      } else {
+      } else if (action === "deploy" || action === "retract") {
+		updateServerData(path, true);
+      }
+      	else {
         // Fallback to old data-value system for backward compatibility
         const value = event.target.getAttribute("data-value") === "true";
         updateServerData(path, value);

@@ -22,6 +22,10 @@ typedef enum {
 } ssu_state_t;
 
 typedef enum {
+	SP_NOT_READY, SP_SENSOR_PRIMED, SP_SENSOR_DEPLOYED
+} sp_sensor_t;
+
+typedef enum {
 	SP_IDLE, SP_DRILLING, SP_OVERHEATED, SP_RETRACTING, SP_RETRACTED, SP_DEPLOYED
 } sp_state_t;
 
@@ -41,10 +45,11 @@ struct backend_data_t {
 	int ssu_boot_time;
 	int last_mode;
 	bool tss_test; // testing drilling without input
-	bool test_applied; // apply test settings once
-	bool sp_input; // accept input when drill is not critical
 	sp_state_t sp_state;
 	sp_thermal_t sp_thermal;
+	bool deploy_latch;
+	bool retract_latch;
+
 
     // Simulation engine
     sim_engine_t* sim_engine;
@@ -56,6 +61,7 @@ void increment_simulation(struct backend_data_t* backend);
 void cleanup_backend(struct backend_data_t*  backend);
 
 // UDP Request Handlers
+bool ssu_handle_button(struct backend_data_t* backend, const char* route, const char* value);
 void handle_udp_get_request(unsigned int command, unsigned char* data, struct backend_data_t* backend);
 bool handle_udp_post_request(unsigned int command, unsigned char* data, struct backend_data_t* backend);
 

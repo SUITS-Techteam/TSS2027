@@ -40,7 +40,9 @@ struct backend_data_t *init_backend(int instanceIndex) {
     backend->server_up_time = 0;
     backend->time_since_last_ping = 0;
 	backend->tss_test = true; // testing without analog inputs
-	backend->test_applied = false;
+	backend->deploy_latch = false;
+	backend->retract_latch = false;
+
 
     // Initialize simulation engine
     backend->sim_engine = sim_engine_create();
@@ -993,6 +995,10 @@ static const char* SSU_STATES[] = {
 	"off", "booting", "ready"
 };
 
+static const char* SP_SENSOR[] = {
+	"not ready", "primed", "deployed"
+};
+
 static const char* SP_STATES[] = {
 	"idle", "drilling", "overheated", "retracting", "retracted", "deployed"
 };
@@ -1053,14 +1059,12 @@ void reset_ssu_simulation(struct backend_data_t* backend, cJSON* ssu) {
 	cjson_set(ssu, "power", cJSON_CreateBool(false));
 	cjson_set(ssu, "status", cJSON_CreateString("off"));
 	cjson_set(ssu, "mode", cJSON_CreateNumber(0));
-	cjson_set(ssu, "deploy_pressed", cJSON_CreateBool(false));
+	cjson_set(ssu, "sp_sensor", cJSON_CreateString("not ready"));
 	cjson_set(ssu, "sp_depth", cJSON_CreateNumber(0.0));
 	cjson_set(ssu, "sp_temp", cJSON_CreateNumber(-25.0));
 	cjson_set(ssu, "sp_rpm", cJSON_CreateNumber(0));
 	cjson_set(ssu, "sp_state", cJSON_CreateString("idle"));
 	cjson_set(ssu, "sp_thermal", cJSON_CreateString("nominal"));
-	backend->sp_input = true;
-	backend->test_applied = false;
 	backend->last_mode = -1;
 }
 
@@ -1094,16 +1098,19 @@ void update_ssu_simulation(struct backend_data_t *backend){
 	if (status == SSU_BOOTING) {
 		int elapsed = backend->server_up_time - backend->ssu_boot_time;
 
-		if (elapsed > 5) {
-			printf("System Ready for Team %d\n", backend->instance_index);
+		if (elapsed == 3) {
 			cjson_set(ssu, "status", cJSON_CreateString(SSU_STATES[SSU_READY]));
+			cjson_set(ssu, "sp_sensor", cJSON_CreateString(SP_SENSOR[SP_SENSOR_PRIMED]));
+		}
+		if (elapsed == 4) {
+			printf("System Ready for Team %d\n", backend->instance_index);
 		}
 	}
 
 	// only allow interaction if power is on and system is ready
 	if(power && status == SSU_READY) {
-		bool deploy_pressed = cjson_get(ssu, "deploy_pressed")->valueint;
-		bool retract_pressed = cjson_get(ssu, "retract_pressed")->valueint;
+		bool deploy_pressed = backend->deploy_latch;
+		bool retract_pressed = backend->retract_latch;
 
 		if(backend->last_mode == -1){
 			backend->last_mode = mode;
@@ -1142,7 +1149,7 @@ void update_ssu_simulation(struct backend_data_t *backend){
 			}
 
 			// check for retraction button press at correct depth plus if drill is not overheating
-			if(retract_pressed && depth >= 45.0f && can_drill){
+			if(retract_pressed && depth >= 50.0f && can_drill){
 				cjson_set(ssu, "sp_state", cJSON_CreateString(SP_STATES[SP_RETRACTING]));
 				cjson_set(ssu, "sp_rpm", cJSON_CreateNumber(0));
 			}
@@ -1193,6 +1200,7 @@ void update_ssu_simulation(struct backend_data_t *backend){
 					if(deploy_pressed) {
 						printf("Deploying Short Period Sensor\n");
 						cjson_set(ssu, "sp_state", cJSON_CreateString(SP_STATES[SP_DEPLOYED]));
+						cjson_set(ssu, "sp_sensor", cJSON_CreateString(SP_SENSOR[SP_SENSOR_DEPLOYED]));
 					}
 					break;
 
@@ -1224,6 +1232,8 @@ void update_ssu_simulation(struct backend_data_t *backend){
 
 		}
 	}
+	backend->deploy_latch = false;
+	backend->retract_latch = false;
 
 	char filepath[100];
 	snprintf(filepath, sizeof(filepath), "data/instances/%d/EVA.json", backend->instance_index);
@@ -1299,6 +1309,21 @@ void cleanup_backend(struct backend_data_t *backend) {
 //                             UDP Request Handlers
 ///////////////////////////////////////////////////////////////////////////////////
 
+
+// Momentary SSU buttons latch for the next tick instead of writing to the JSON.
+// Returns true if the route was a button (handled here), false otherwise.
+bool ssu_handle_button(struct backend_data_t* backend, const char* route, const char* value) {
+    bool is_deploy  = strcmp(route, "eva.ssu.deploy_pressed") == 0;
+    bool is_retract = strcmp(route, "eva.ssu.retract_pressed") == 0;
+    if (!is_deploy && !is_retract) return false;
+
+    if (strcmp(value, "true") == 0) {
+        if (is_deploy) backend->deploy_latch = true;
+        else           backend->retract_latch = true;
+        printf("SSU %s pressed (team %d)\n", is_deploy ? "deploy" : "retract", backend->instance_index);
+    }
+    return true;
+}
 
 /**
  * Handles UDP GET requests for data retrieval
@@ -1388,7 +1413,7 @@ bool handle_udp_post_request(unsigned int command, unsigned char* data, struct b
 		}
     }
 
-
+    if (ssu_handle_button(backend, mapping->path, value_str)) return true;
 
     // Create request content in the same format as HTML forms
     char request_content[256];
@@ -1853,6 +1878,8 @@ bool html_form_json_update(char* request_content, struct backend_data_t* backend
         printf("Error: Invalid format, missing route or value in request: %s\n", request_content);
         return false;
     }
+
+	if (ssu_handle_button(backend, route, value)) return true;
 
     // Parse the route (split by dots)
     char route_copy[256];
