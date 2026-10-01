@@ -70,13 +70,22 @@
 		"sp_target_depth":	50,
 		"sp_temp":	-25,
 		"sp_temp_warning":	15,
-		"sp_temp_critical":	25,
+		"sp_temp_critical":	35,
 		"sp_temp_unlock":	25,
 		"sp_rpm":	0,
 		"sp_state":	"idle",
 		"sp_thermal":	"nominal",
-		"mock_rpm":	0,
-		"bb_deployed":	false
+		"bb_depth":	0,
+		"bb_sensor":	"not ready",
+		"bb_target_depth":	100,
+		"bb_temp":	-15,
+		"bb_temp_warning":	15,
+		"bb_temp_critical":	35,
+		"bb_temp_unlock":	25,
+		"bb_rpm":	0,
+		"bb_state":	"idle",
+		"bb_thermal":	"nominal",
+		"mock_rpm":	0
 	},
 	"spec":	{
 		"eva1":	{

@@ -22,16 +22,16 @@ typedef enum {
 } ssu_state_t;
 
 typedef enum {
-	SP_NOT_READY, SP_SENSOR_PRIMED, SP_SENSOR_DEPLOYED
-} sp_sensor_t;
+	NOT_READY, SENSOR_PRIMED, SENSOR_DEPLOYED
+} sensor_t;
 
 typedef enum {
-	SP_IDLE, SP_DRILLING, SP_OVERHEATED, SP_RETRACTING, SP_RETRACTED, SP_DEPLOYED
-} sp_state_t;
+	IDLE, DRILLING, OVERHEATED, RETRACTING, RETRACTED, DEPLOYED
+} state_t;
 
 typedef enum {
-	SP_THERMAL_NOMINAL, SP_THERMAL_WARNING, SP_THERMAL_CRITICAL
-} sp_thermal_t;
+	THERMAL_NOMINAL, THERMAL_WARNING, THERMAL_CRITICAL
+} thermal_t;
 
 struct backend_data_t {
     // Timing information
@@ -45,8 +45,6 @@ struct backend_data_t {
 	int ssu_boot_time;
 	int last_mode;
 	bool tss_test; // testing drilling without input
-	sp_state_t sp_state;
-	sp_thermal_t sp_thermal;
 	bool deploy_latch;
 	bool retract_latch;
 

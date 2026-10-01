@@ -105,23 +105,93 @@ async function fetchData() {
 		}
 		return;
 	}
-	if(path === "eva.ssu.bb_deployed"){
-		const bb = getNestedValue(evaData, "ssu.bb_deployed");
-		const bbEl = document.getElementById("ssu-bb");
-		const pow = getNestedValue(evaData, "ssu.ready");
+	if (path === "eva.ssu.bb_sensor") {
+		const bb = getNestedValue(evaData, "ssu.bb_sensor");
+		const bbEl = document.getElementById("ssu-bb-sensor");
 
-		if(!pow){
+		if(bb === "not ready"){
 			bbEl.textContent = "NOT READY";
 			bbEl.className = "ssu-off"
 			return;
 		}
-		if(!bb) {
+		if (bb === "deployed"){
+			bbEl.textContent = "DEPLOYED";
+			bbEl.className = "ssu-deployed";
+		}
+		else {
 			bbEl.textContent = "PRIMED";
 			bbEl.className = "ssu-ready";
 		}
-		else if (bb){
-			bbEl.textContent = "DEPLOYED";
-			bbEl.className = "ssu-deployed";
+		return;
+	}
+	if (path === "eva.ssu.sp_state" || path === "eva.ssu.bb_state"){
+		const spState = getNestedValue(evaData, "ssu.sp_state");
+		const bbState = getNestedValue(evaData, "ssu.bb_state");
+		const spEl = document.getElementById("ssu-sp-state");
+		const bbEl = document.getElementById("ssu-bb-state");
+		const mode = getNestedValue(evaData, "ssu.mode");
+
+		if(mode === 0) {
+			bbEl.style.display = "none";
+			spEl.style.display = "inline";
+			switch (spState){
+				case "idle":
+					spEl.textContent = "IDLE";
+					spEl.className = "ssu-off";
+					break;
+				case "drilling":
+					spEl.textContent = "DRILLING";
+					spEl.className = "ssu-ready";
+					break;
+				case "overheated":
+					spEl.textContent = "OVERHEATED";
+					spEl.className = "ssu-off";
+					break;
+				case "retracting":
+					spEl.textContent = "RETRACTING";
+					spEl.className = "ssu-deployed";
+					break;
+				case "retracted":
+					spEl.textContent = "RETRACTED";
+					spEl.className = "ssu-ready";
+					break;
+				case "deployed":
+					spEl.textContent = "DEPLOYED";
+					spEl.className = "ssu-deployed";
+					break;
+				default:
+			}
+		}
+		if(mode === 1) {
+			bbEl.style.display = "inline";
+			spEl.style.display = "none";
+			switch (bbState){
+				case "idle":
+					bbEl.textContent = "IDLE";
+					bbEl.className = "ssu-off";
+					break;
+				case "drilling":
+					bbEl.textContent = "DRILLING";
+					bbEl.className = "ssu-ready";
+					break;
+				case "overheated":
+					bbEl.textContent = "OVERHEATED";
+					bbEl.className = "ssu-off";
+					break;
+				case "retracting":
+					bbEl.textContent = "RETRACTING";
+					bbEl.className = "ssu-deployed";
+					break;
+				case "retracted":
+					bbEl.textContent = "RETRACTED";
+					bbEl.className = "ssu-ready";
+					break;
+				case "deployed":
+					bbEl.textContent = "DEPLOYED";
+					bbEl.className = "ssu-deployed";
+					break;
+				default:
+			}
 		}
 		return;
 	}
@@ -135,9 +205,15 @@ async function fetchData() {
     if (el.tagName === "BUTTON" && el.hasAttribute("data-action")) {
       const action = el.getAttribute("data-action");
       const isRunning = Boolean(value);
+
 	  const sp = getNestedValue(evaData, "ssu.sp_sensor");
-	  const state = getNestedValue(evaData, "ssu.sp_state");
-	  const depth = getNestedValue(evaData, "ssu.sp_depth");
+	  const spState = getNestedValue(evaData, "ssu.sp_state");
+	  const spDepth = getNestedValue(evaData, "ssu.sp_depth");
+
+	  const bb = getNestedValue(evaData, "ssu.bb_sensor");
+	  const bbState = getNestedValue(evaData, "ssu.bb_state");
+	  const bbDepth = getNestedValue(evaData, "ssu.bb_depth");
+
 	  const mode = getNestedValue(evaData, "ssu.mode");
 
       if (action === "start") {
@@ -151,7 +227,17 @@ async function fetchData() {
       } else if (action === "deploy") {
 		// DEPLOY button - enabled when NOT deployed and state is retracted and depth is 0.0 for respective mode
 			if(mode === 0) {
-				if (state === "retracted" && depth === 0 && sp === "primed"){
+				if (spState === "retracted" && spDepth === 0 && sp === "primed"){
+					el.disabled = false;
+					el.style.opacity = "1";
+			    }
+			    else {
+					el.disabled = true;
+					el.style.opacity = "0.5";
+			    }
+			}
+			else if(mode === 1) {
+				if (bbState === "retracted" && bbDepth === 0 && bb === "primed"){
 					el.disabled = false;
 					el.style.opacity = "1";
 			    }
@@ -163,7 +249,17 @@ async function fetchData() {
       } else if (action === "retract") {
 		// RETRACT button - enabled when depth is at target (50) and state is not overheated or sensor already deployed
 			if(mode === 0) {
-				if (state !== "deployed" && state !== "overheated" && depth >= 50){
+				if (spState !== "drilling" && spState !== "deployed" && spState !== "overheated" && spDepth >= 50){
+					el.disabled = false;
+					el.style.opacity = "1";
+			    }
+			    else {
+					el.disabled = true;
+					el.style.opacity = "0.5";
+			    }
+			}
+			else if(mode === 1) {
+				if (bbState !== "drilling" && bbState !== "deployed" && bbState !== "overheated" && bbDepth >= 100){
 					el.disabled = false;
 					el.style.opacity = "1";
 			    }

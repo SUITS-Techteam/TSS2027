@@ -995,14 +995,14 @@ static const char* SSU_STATES[] = {
 	"off", "booting", "ready"
 };
 
-static const char* SP_SENSOR[] = {
+static const char* SENSORS[] = {
 	"not ready", "primed", "deployed"
 };
 
-static const char* SP_STATES[] = {
+static const char* STATES[] = {
 	"idle", "drilling", "overheated", "retracting", "retracted", "deployed"
 };
-static const char* SP_THERMAL[] = {
+static const char* THERMALS[] = {
 	"nominal", "warning", "critical"
 };
 
@@ -1029,30 +1029,32 @@ static ssu_state_t get_ssu_state(cJSON* ssu){
 
 
 // sp helper functions
-static sp_thermal_t get_sp_thermal(float t) {
+static thermal_t get_thermal(float t) {
 	if (t >= 35.0f){
-		return SP_THERMAL_CRITICAL;
+		return THERMAL_CRITICAL;
 	}
 	if (t >= 15.0f){
-		return SP_THERMAL_WARNING;
+		return THERMAL_WARNING;
 	}
-	return SP_THERMAL_NOMINAL;
+	return THERMAL_NOMINAL;
 }
-static float sp_cool_rate(sp_thermal_t thermal){
+static float get_cool_rate(thermal_t thermal){
 	switch (thermal) {
-		case SP_THERMAL_CRITICAL: return 1.5f;
-		case SP_THERMAL_WARNING: return 2.0f;
+		case THERMAL_CRITICAL: return 1.5f;
+		case THERMAL_WARNING: return 2.0f;
 		default: return 3.0f;
 	}
 }
-static sp_state_t get_sp_state(cJSON* ssu){
-	const char* s = cJSON_GetStringValue(cjson_get(ssu, "sp_state"));
-	for(int i = SP_IDLE;i <= SP_DEPLOYED; ++i){
-		if(s && strcmp(s, SP_STATES[i]) == 0){
+static state_t get_state(cJSON* ssu, int mode){
+	const char* s;
+	if(mode == 0) s = cJSON_GetStringValue(cjson_get(ssu, "sp_state"));
+	if(mode == 1) s = cJSON_GetStringValue(cjson_get(ssu, "bb_state"));
+	for(int i = IDLE;i <= DEPLOYED; ++i){
+		if(s && strcmp(s, STATES[i]) == 0){
 			return i;
 		}
 	}
-	return SP_IDLE;
+	return IDLE;
 }
 
 void reset_ssu_simulation(struct backend_data_t* backend, cJSON* ssu) {
@@ -1065,6 +1067,12 @@ void reset_ssu_simulation(struct backend_data_t* backend, cJSON* ssu) {
 	cjson_set(ssu, "sp_rpm", cJSON_CreateNumber(0));
 	cjson_set(ssu, "sp_state", cJSON_CreateString("idle"));
 	cjson_set(ssu, "sp_thermal", cJSON_CreateString("nominal"));
+	cjson_set(ssu, "bb_sensor", cJSON_CreateString("not ready"));
+	cjson_set(ssu, "bb_depth", cJSON_CreateNumber(0.0));
+	cjson_set(ssu, "bb_temp", cJSON_CreateNumber(-15.0));
+	cjson_set(ssu, "bb_rpm", cJSON_CreateNumber(0));
+	cjson_set(ssu, "bb_state", cJSON_CreateString("idle"));
+	cjson_set(ssu, "bb_thermal", cJSON_CreateString("nominal"));
 	backend->last_mode = -1;
 }
 
@@ -1100,7 +1108,8 @@ void update_ssu_simulation(struct backend_data_t *backend){
 
 		if (elapsed == 3) {
 			cjson_set(ssu, "status", cJSON_CreateString(SSU_STATES[SSU_READY]));
-			cjson_set(ssu, "sp_sensor", cJSON_CreateString(SP_SENSOR[SP_SENSOR_PRIMED]));
+			cjson_set(ssu, "sp_sensor", cJSON_CreateString(SENSORS[SENSOR_PRIMED]));
+			cjson_set(ssu, "bb_sensor", cJSON_CreateString(SENSORS[SENSOR_PRIMED]));
 		}
 		if (elapsed == 4) {
 			printf("System Ready for Team %d\n", backend->instance_index);
@@ -1130,12 +1139,12 @@ void update_ssu_simulation(struct backend_data_t *backend){
 			float temp = cjson_get(ssu, "sp_temp")->valuedouble;
 			float rpm = cjson_get(ssu, "sp_rpm")->valueint;
 
-			sp_state_t sp_state = get_sp_state(ssu);
-			sp_thermal_t sp_thermal = get_sp_thermal(temp);
+			state_t sp_state = get_state(ssu, 0);
+			thermal_t sp_thermal = get_thermal(temp);
 
 			// check if drill can spin (cannot during an overheat phase or deployment phases)
 			bool can_drill = false;
-			if(sp_state == SP_IDLE || sp_state == SP_DRILLING){
+			if(sp_state == IDLE || sp_state == DRILLING){
 				can_drill = true;
 			}
 			if(!can_drill) {
@@ -1150,68 +1159,68 @@ void update_ssu_simulation(struct backend_data_t *backend){
 
 			// check for retraction button press at correct depth plus if drill is not overheating
 			if(retract_pressed && depth >= 50.0f && can_drill){
-				cjson_set(ssu, "sp_state", cJSON_CreateString(SP_STATES[SP_RETRACTING]));
+				cjson_set(ssu, "sp_state", cJSON_CreateString(STATES[RETRACTING]));
 				cjson_set(ssu, "sp_rpm", cJSON_CreateNumber(0));
 			}
 			else switch (sp_state) {
 
 				// idle state when drill is not spinning, checks if it starts
-				case SP_IDLE:
+				case IDLE:
 					if(rpm > 0) {
-						cjson_set(ssu, "sp_state", cJSON_CreateString(SP_STATES[SP_DRILLING]));
+						cjson_set(ssu, "sp_state", cJSON_CreateString(STATES[DRILLING]));
 					}
 					break;
 
 				// main drilling state, checks if drill overheats
-				case SP_DRILLING:
+				case DRILLING:
 					if(rpm <= 0) {
-						cjson_set(ssu, "sp_state", cJSON_CreateString(SP_STATES[SP_IDLE]));
+						cjson_set(ssu, "sp_state", cJSON_CreateString(STATES[IDLE]));
 						break;
 					}
 					float newTemp = temp + (rpm / 300) * 3.0f;
 					cjson_set(ssu, "sp_temp", cJSON_CreateNumber(newTemp));
 					cjson_set(ssu, "sp_depth", cJSON_CreateNumber(depth + (rpm / 300) * 2.0f));
 					// if drill reaches critical temperature, stop drill and set to overheated state
-					if(newTemp >= 35.0f && sp_thermal != SP_THERMAL_CRITICAL){
+					if(newTemp >= 35.0f && sp_thermal != THERMAL_CRITICAL){
 						printf("CRITICAL: THERMAL LIMIT REACHED\nDISENGAGING DRILL\n");
-						cjson_set(ssu, "sp_state", cJSON_CreateString(SP_STATES[SP_OVERHEATED]));
+						cjson_set(ssu, "sp_state", cJSON_CreateString(STATES[OVERHEATED]));
 						cjson_set(ssu, "sp_rpm", cJSON_CreateNumber(0));
 					}
 					break;
 
 				// overheat state, depth will not increase until temp is below 25C
-				case SP_OVERHEATED:
+				case OVERHEATED:
 					if(temp <= 25.0f) {
-						cjson_set(ssu, "sp_state", cJSON_CreateString(SP_STATES[SP_IDLE]));
+						cjson_set(ssu, "sp_state", cJSON_CreateString(STATES[IDLE]));
 					}
 					break;
 				// retraction state, depth will decrease until back to 0 cm
-				case SP_RETRACTING: ;
+				case RETRACTING: ;
 					float newDepth = depth - 5.0f;
 					if(newDepth <= 0.0){
 						newDepth = 0.0f;
-						cjson_set(ssu, "sp_state", cJSON_CreateString(SP_STATES[SP_RETRACTED]));
+						cjson_set(ssu, "sp_state", cJSON_CreateString(STATES[RETRACTED]));
 					}
 						cjson_set(ssu, "sp_depth", cJSON_CreateNumber(newDepth));
 					break;
 
 				// allow deploying after full retraction
-				case SP_RETRACTED:
+				case RETRACTED:
 					if(deploy_pressed) {
 						printf("Deploying Short Period Sensor\n");
-						cjson_set(ssu, "sp_state", cJSON_CreateString(SP_STATES[SP_DEPLOYED]));
-						cjson_set(ssu, "sp_sensor", cJSON_CreateString(SP_SENSOR[SP_SENSOR_DEPLOYED]));
+						cjson_set(ssu, "sp_state", cJSON_CreateString(STATES[DEPLOYED]));
+						cjson_set(ssu, "sp_sensor", cJSON_CreateString(SENSORS[SENSOR_DEPLOYED]));
 					}
 					break;
 
 				// final state, allow no more interaction after deploying
-				case SP_DEPLOYED:
+				case DEPLOYED:
 					break;
 
 				}
 			// cooling down when drill is not spinning
 			if(rpm <= 0 && temp > -25.0f) {
-				float newTemp = temp - sp_cool_rate(sp_thermal);
+				float newTemp = temp - get_cool_rate(sp_thermal);
 				if (newTemp < -25.0f){
 					newTemp = -25.0f;
 				}
@@ -1220,16 +1229,116 @@ void update_ssu_simulation(struct backend_data_t *backend){
 
 			// final temperature and thermal state calculation
 			float finalTemp = cjson_get(ssu, "sp_temp")->valuedouble;
-			sp_thermal_t newThermal = get_sp_thermal(finalTemp);
+			thermal_t newThermal = get_thermal(finalTemp);
 
 			// warn if drill temp is approaching thermal limit
-			if(sp_thermal == SP_THERMAL_NOMINAL && newThermal == SP_THERMAL_WARNING){
+			if(sp_thermal == THERMAL_NOMINAL && newThermal == THERMAL_WARNING){
 				printf("WARNING: REACHING THERMAL LIMIT\n");
 			}
-			cjson_set(ssu, "sp_thermal", cJSON_CreateString(SP_THERMAL[newThermal]));
+			cjson_set(ssu, "sp_thermal", cJSON_CreateString(THERMALS[newThermal]));
 		}
 		else if (mode == 1) {
+			float depth = cjson_get(ssu, "bb_depth")->valuedouble;
+			float temp = cjson_get(ssu, "bb_temp")->valuedouble;
+			float rpm = cjson_get(ssu, "bb_rpm")->valueint;
 
+			state_t bb_state = get_state(ssu, 1);
+			thermal_t bb_thermal = get_thermal(temp);
+
+			// check if drill can spin (cannot during an overheat phase or deployment phases)
+			bool can_drill = false;
+			if(bb_state == IDLE || bb_state == DRILLING){
+				can_drill = true;
+			}
+			if(!can_drill) {
+				cjson_set(ssu, "bb_rpm", cJSON_CreateNumber(0));
+			}
+
+			// TODO: remove below once analog input is implemented
+			if(backend->tss_test){
+				rpm = cjson_get(ssu, "mock_rpm")->valueint;
+				cjson_set(ssu, "bb_rpm", cJSON_CreateNumber(rpm));
+			}
+
+			// check for retraction button press at correct depth plus if drill is not overheating
+			if(retract_pressed && depth >= 100.0f && can_drill){
+				cjson_set(ssu, "bb_state", cJSON_CreateString(STATES[RETRACTING]));
+				cjson_set(ssu, "bb_rpm", cJSON_CreateNumber(0));
+			}
+			else switch (bb_state) {
+
+				// idle state when drill is not spinning, checks if it starts
+				case IDLE:
+					if(rpm > 0) {
+						cjson_set(ssu, "bb_state", cJSON_CreateString(STATES[DRILLING]));
+					}
+					break;
+
+				// main drilling state, checks if drill overheats
+				case DRILLING:
+					if(rpm <= 0) {
+						cjson_set(ssu, "bb_state", cJSON_CreateString(STATES[IDLE]));
+						break;
+					}
+					float newTemp = temp + (rpm / 300) * 3.0f;
+					cjson_set(ssu, "bb_temp", cJSON_CreateNumber(newTemp));
+					cjson_set(ssu, "bb_depth", cJSON_CreateNumber(depth + (rpm / 300) * 2.0f));
+					// if drill reaches critical temperature, stop drill and set to overheated state
+					if(newTemp >= 35.0f && bb_thermal != THERMAL_CRITICAL){
+						printf("CRITICAL: THERMAL LIMIT REACHED\nDISENGAGING DRILL\n");
+						cjson_set(ssu, "bb_state", cJSON_CreateString(STATES[OVERHEATED]));
+						cjson_set(ssu, "bb_rpm", cJSON_CreateNumber(0));
+					}
+					break;
+
+				// overheat state, depth will not increase until temp is below 25C
+				case OVERHEATED:
+					if(temp <= 25.0f) {
+						cjson_set(ssu, "bb_state", cJSON_CreateString(STATES[IDLE]));
+					}
+					break;
+				// retraction state, depth will decrease until back to 0 cm
+				case RETRACTING: ;
+					float newDepth = depth - 7.0f;
+					if(newDepth <= 0.0){
+						newDepth = 0.0f;
+						cjson_set(ssu, "bb_state", cJSON_CreateString(STATES[RETRACTED]));
+					}
+						cjson_set(ssu, "bb_depth", cJSON_CreateNumber(newDepth));
+					break;
+
+				// allow deploying after full retraction
+				case RETRACTED:
+					if(deploy_pressed) {
+						printf("Deploying Broadband Sensor\n");
+						cjson_set(ssu, "bb_state", cJSON_CreateString(STATES[DEPLOYED]));
+						cjson_set(ssu, "bb_sensor", cJSON_CreateString(SENSORS[SENSOR_DEPLOYED]));
+					}
+					break;
+
+				// final state, allow no more interaction after deploying
+				case DEPLOYED:
+					break;
+
+				}
+			// cooling down when drill is not spinning
+			if(rpm <= 0 && temp > -25.0f) {
+				float newTemp = temp - get_cool_rate(bb_thermal);
+				if (newTemp < -25.0f){
+					newTemp = -25.0f;
+				}
+				cjson_set(ssu, "bb_temp", cJSON_CreateNumber(newTemp));
+			}
+
+			// final temperature and thermal state calculation
+			float finalTemp = cjson_get(ssu, "bb_temp")->valuedouble;
+			thermal_t newThermal = get_thermal(finalTemp);
+
+			// warn if drill temp is approaching thermal limit
+			if(bb_thermal == THERMAL_NOMINAL && newThermal == THERMAL_WARNING){
+				printf("WARNING: REACHING THERMAL LIMIT\n");
+			}
+			cjson_set(ssu, "bb_thermal", cJSON_CreateString(THERMALS[newThermal]));
 		}
 	}
 	backend->deploy_latch = false;
