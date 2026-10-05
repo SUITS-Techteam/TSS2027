@@ -188,7 +188,7 @@ When a press is ignored, TSS does not report why. Your interface or assistant ca
 | `critical` | 35 °C and above | 1.5 °C |
 
 - **Max drill speed** is 600 rpm.
-- **Each second while drilling,** depth increases by rpm ÷ 150 cm, and temperature rises by 6 × (rpm ÷ 600)³ °C. Broadband heats 1.5× faster past 50 cm.
+- **Each second while drilling,** depth increases by rpm ÷ 150 cm, and temperature rises by 6 × (rpm ÷ 600)³ °C. Broadband heats 2× faster past 50 cm.
 - **Temperature never drops below −25 °C.**
 
 #### Timing and delays
