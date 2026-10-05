@@ -178,7 +178,7 @@ When a press is ignored, TSS does not report why. Your interface or assistant ca
 | | Short Period | Broadband |
 |---|---|---|
 | Target depth | 50 cm | 80 cm |
-| Starting temperature | −25 °C | −15 °C |
+| Starting temperature | −25 °C | −25 °C |
 | Hard layer | none | past 50 cm, the drill heats 50% faster |
 
 | Thermal level | Temperature | Cooling per second while stopped |
