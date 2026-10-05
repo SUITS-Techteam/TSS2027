@@ -1028,12 +1028,12 @@ static ssu_state_t get_ssu_state(cJSON* ssu){
 }
 
 
-// sp helper functions
+// helper functions
 static thermal_t get_thermal(float t) {
 	if (t >= 35.0f){
 		return THERMAL_CRITICAL;
 	}
-	if (t >= 15.0f){
+	if (t >= 10.0f){
 		return THERMAL_WARNING;
 	}
 	return THERMAL_NOMINAL;
@@ -1069,7 +1069,7 @@ void reset_ssu_simulation(struct backend_data_t* backend, cJSON* ssu) {
 	cjson_set(ssu, "sp_thermal", cJSON_CreateString("nominal"));
 	cjson_set(ssu, "bb_sensor", cJSON_CreateString("not ready"));
 	cjson_set(ssu, "bb_depth", cJSON_CreateNumber(0.0));
-	cjson_set(ssu, "bb_temp", cJSON_CreateNumber(-15.0));
+	cjson_set(ssu, "bb_temp", cJSON_CreateNumber(-25.0));
 	cjson_set(ssu, "bb_rpm", cJSON_CreateNumber(0));
 	cjson_set(ssu, "bb_state", cJSON_CreateString("idle"));
 	cjson_set(ssu, "bb_thermal", cJSON_CreateString("nominal"));
@@ -1177,7 +1177,8 @@ void update_ssu_simulation(struct backend_data_t *backend){
 						cjson_set(ssu, "sp_state", cJSON_CreateString(STATES[IDLE]));
 						break;
 					}
-					float newTemp = temp + (rpm / 300) * 3.0f;
+					float r = rpm / 600.0f;
+					float newTemp = temp + (6.0f * r * r * r);
 					cjson_set(ssu, "sp_temp", cJSON_CreateNumber(newTemp));
 					cjson_set(ssu, "sp_depth", cJSON_CreateNumber(depth + (rpm / 300) * 2.0f));
 					// if drill reaches critical temperature, stop drill and set to overheated state
@@ -1188,15 +1189,15 @@ void update_ssu_simulation(struct backend_data_t *backend){
 					}
 					break;
 
-				// overheat state, depth will not increase until temp is below 25C
+				// overheat state, depth will not increase until temp is below 15C
 				case OVERHEATED:
-					if(temp <= 25.0f) {
+					if(temp <= 15.0f) {
 						cjson_set(ssu, "sp_state", cJSON_CreateString(STATES[IDLE]));
 					}
 					break;
 				// retraction state, depth will decrease until back to 0 cm
 				case RETRACTING: ;
-					float newDepth = depth - 5.0f;
+					float newDepth = depth - 10.0f;
 					if(newDepth <= 0.0){
 						newDepth = 0.0f;
 						cjson_set(ssu, "sp_state", cJSON_CreateString(STATES[RETRACTED]));
@@ -1261,7 +1262,7 @@ void update_ssu_simulation(struct backend_data_t *backend){
 			}
 
 			// check for retraction button press at correct depth plus if drill is not overheating
-			if(retract_pressed && depth >= 100.0f && can_drill){
+			if(retract_pressed && depth >= 80.0f && can_drill){
 				cjson_set(ssu, "bb_state", cJSON_CreateString(STATES[RETRACTING]));
 				cjson_set(ssu, "bb_rpm", cJSON_CreateNumber(0));
 			}
@@ -1280,7 +1281,8 @@ void update_ssu_simulation(struct backend_data_t *backend){
 						cjson_set(ssu, "bb_state", cJSON_CreateString(STATES[IDLE]));
 						break;
 					}
-					float newTemp = temp + (rpm / 300) * 3.0f;
+					float r = rpm / 600.0f;
+					float newTemp = temp + (6.0f * r * r * r);
 					cjson_set(ssu, "bb_temp", cJSON_CreateNumber(newTemp));
 					cjson_set(ssu, "bb_depth", cJSON_CreateNumber(depth + (rpm / 300) * 2.0f));
 					// if drill reaches critical temperature, stop drill and set to overheated state
@@ -1293,13 +1295,13 @@ void update_ssu_simulation(struct backend_data_t *backend){
 
 				// overheat state, depth will not increase until temp is below 25C
 				case OVERHEATED:
-					if(temp <= 25.0f) {
+					if(temp <= 15.0f) {
 						cjson_set(ssu, "bb_state", cJSON_CreateString(STATES[IDLE]));
 					}
 					break;
 				// retraction state, depth will decrease until back to 0 cm
 				case RETRACTING: ;
-					float newDepth = depth - 7.0f;
+					float newDepth = depth - 10.0f;
 					if(newDepth <= 0.0){
 						newDepth = 0.0f;
 						cjson_set(ssu, "bb_state", cJSON_CreateString(STATES[RETRACTED]));

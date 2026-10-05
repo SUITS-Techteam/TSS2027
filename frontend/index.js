@@ -259,7 +259,7 @@ async function fetchData() {
 			    }
 			}
 			else if(mode === 1) {
-				if (bbState !== "drilling" && bbState !== "deployed" && bbState !== "overheated" && bbDepth >= 100){
+				if (bbState !== "drilling" && bbState !== "deployed" && bbState !== "overheated" && bbDepth >= 80){
 					el.disabled = false;
 					el.style.opacity = "1";
 			    }
