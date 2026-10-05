@@ -280,7 +280,7 @@ async function fetchData() {
 		const spSlider = document.getElementById("mock-sp-rpm-slider");
 		const spLabel = document.getElementById("mock-sp-rpm-label");
 		const bbSlider = document.getElementById("mock-bb-rpm-slider");
-		const bbLabel = document.getElementById("mock-sp-rpm-label");
+		const bbLabel = document.getElementById("mock-bb-rpm-label");
 		if(mode === 0 || mode === -1) {
 			bbSlider.style.display = "none";
 			bbLabel.style.display = "none";

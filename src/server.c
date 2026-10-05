@@ -270,7 +270,12 @@ int main(int argc, char *argv[]) {
                         (struct sockaddr *)&client->udp_addr, client->address_length);
 
                     drop_udp_client(&udp_clients, client);
-                } else {  // Unknown command
+                }
+                else if (command == SSU_SNAPSHOT_CMD && received_bytes > 12){
+					handle_ssu_snapshot(client->udp_request + 12, received_bytes - 12, backends[i]);
+					drop_udp_client(&udp_clients, client);
+                }
+                else {  // Unknown command
                     drop_udp_client(&udp_clients, client);
                 }
             }
