@@ -23,7 +23,7 @@ typedef struct {
 } drill_cfg_t;
 
 static const drill_cfg_t SP = { "Short Period", "sp_depth", "sp_temp", "sp_rpm", "sp_state", "sp_thermal", "sp_sensor",  50.0f, 0.0f, 1.0f};
-static const drill_cfg_t BB = { "Broadband",    "bb_depth", "bb_temp", "bb_rpm", "bb_state", "bb_thermal", "bb_sensor", 100.0f, 50.0f, 1.5f};
+static const drill_cfg_t BB = { "Broadband",    "bb_depth", "bb_temp", "bb_rpm", "bb_state", "bb_thermal", "bb_sensor", 100.0f, 50.0f,2.0f};
 
 // Replace a field, or add it if missing (a plain replace leaks the item when the key doesn't exist)
 static void cjson_set(cJSON* obj, const char* key, cJSON* item) {
