@@ -39,9 +39,15 @@ struct backend_data_t *init_backend(int instanceIndex) {
     backend->start_time = time(NULL);
     backend->server_up_time = 0;
     backend->time_since_last_ping = 0;
-	backend->tss_test = true; // testing without analog inputs
+
+	// ssu sim variables
+	backend->ssu_ctx.team = instanceIndex;
+	backend->ssu_ctx.last_mode = -1;
 	backend->deploy_latch = false;
 	backend->retract_latch = false;
+
+	// enable if testing with slider
+	backend->tss_test = true;
 
 
     // Initialize simulation engine
@@ -292,23 +298,16 @@ bool initialize_EVA_json_switch_states(struct backend_data_t* backend) {
         return false;
     }
 
-	cJSON* eva1 = cJSON_GetObjectItem(spec, "eva1");
-    if (!eva1) {
-        printf("Error: Failed to get uia from EVA config file in initialize_json_switch_states\n");
-        cJSON_Delete(eva_json);
-        return false;
-	}
-
     // default SPEC eva1 values
-    cJSON_ReplaceItemInObject(eva1, "name", cJSON_CreateString("Default Rock"));
-    if (!cJSON_GetObjectItem(eva1, "name")) {
+    cJSON_ReplaceItemInObject(spec, "name", cJSON_CreateString("Default Rock"));
+    if (!cJSON_GetObjectItem(spec, "name")) {
         printf("Error: Failed to set name in SPEC config file in initialize_json_switch_states\n");
         cJSON_Delete(eva_json);
         return false;
     }
 
-	cJSON_ReplaceItemInObject(eva1, "id", cJSON_CreateNumber(0));
-    if (!cJSON_GetObjectItem(eva1, "id")) {
+	cJSON_ReplaceItemInObject(spec, "id", cJSON_CreateNumber(0));
+    if (!cJSON_GetObjectItem(spec, "id")) {
         printf("Error: Failed to set id in SPEC config file in initialize_json_switch_states\n");
         cJSON_Delete(eva_json);
         return false;
@@ -989,366 +988,25 @@ void update_error_states(struct backend_data_t* backend) {
 }
 
 
-
-// for retrieving strings from enums
-static const char* SSU_STATES[] = {
-	"off", "booting", "ready"
-};
-
-static const char* SENSORS[] = {
-	"not ready", "primed", "deployed"
-};
-
-static const char* STATES[] = {
-	"idle", "drilling", "overheated", "retracting", "retracted", "deployed"
-};
-static const char* THERMALS[] = {
-	"nominal", "warning", "critical"
-};
-
 // got annoying to type out the full replace and get
-static void cjson_set(cJSON* cjsonObj, const char* key, cJSON* item) {
-	if (cJSON_GetObjectItemCaseSensitive(cjsonObj, key)){
-		cJSON_ReplaceItemInObject(cjsonObj, key, item);
+static void cjson_set(cJSON* obj, const char* key, cJSON* item) {
+	if (cJSON_GetObjectItemCaseSensitive(obj, key)){
+		cJSON_ReplaceItemInObject(obj, key, item);
+	}
+	else {
+		printf("Warning: tried to set missing field: '%s'\n", key);
+		cJSON_Delete(item);
 	}
 }
 static cJSON* cjson_get(cJSON* cjsonObj, const char* key){
 	return cJSON_GetObjectItemCaseSensitive(cjsonObj, key);
 }
 
-// ssu helper functions
-static ssu_state_t get_ssu_state(cJSON* ssu){
-	const char* s = cJSON_GetStringValue(cjson_get(ssu, "status"));
-	for(int i = SSU_OFF;i <= SSU_READY; ++i){
-		if(s && strcmp(s, SSU_STATES[i]) == 0){
-			return i;
-		}
-	}
-	return SSU_OFF;
-}
+#define SSU_LINK_TIMEOUT 3   // seconds without a snapshot before the peripheral counts as lost
 
-
-// helper functions
-static thermal_t get_thermal(float t) {
-	if (t >= 35.0f){
-		return THERMAL_CRITICAL;
-	}
-	if (t >= 10.0f){
-		return THERMAL_WARNING;
-	}
-	return THERMAL_NOMINAL;
-}
-static float get_cool_rate(thermal_t thermal){
-	switch (thermal) {
-		case THERMAL_CRITICAL: return 1.5f;
-		case THERMAL_WARNING: return 2.0f;
-		default: return 3.0f;
-	}
-}
-static state_t get_state(cJSON* ssu, int mode){
-	const char* s;
-	if(mode == 0) s = cJSON_GetStringValue(cjson_get(ssu, "sp_state"));
-	if(mode == 1) s = cJSON_GetStringValue(cjson_get(ssu, "bb_state"));
-	for(int i = IDLE;i <= DEPLOYED; ++i){
-		if(s && strcmp(s, STATES[i]) == 0){
-			return i;
-		}
-	}
-	return IDLE;
-}
-
-void reset_ssu_simulation(struct backend_data_t* backend, cJSON* ssu) {
-	cjson_set(ssu, "power", cJSON_CreateBool(false));
-	cjson_set(ssu, "status", cJSON_CreateString("off"));
-	cjson_set(ssu, "mode", cJSON_CreateNumber(0));
-	cjson_set(ssu, "sp_sensor", cJSON_CreateString("not ready"));
-	cjson_set(ssu, "sp_depth", cJSON_CreateNumber(0.0));
-	cjson_set(ssu, "sp_temp", cJSON_CreateNumber(-25.0));
-	cjson_set(ssu, "sp_rpm", cJSON_CreateNumber(0));
-	cjson_set(ssu, "sp_state", cJSON_CreateString("idle"));
-	cjson_set(ssu, "sp_thermal", cJSON_CreateString("nominal"));
-	cjson_set(ssu, "bb_sensor", cJSON_CreateString("not ready"));
-	cjson_set(ssu, "bb_depth", cJSON_CreateNumber(0.0));
-	cjson_set(ssu, "bb_temp", cJSON_CreateNumber(-25.0));
-	cjson_set(ssu, "bb_rpm", cJSON_CreateNumber(0));
-	cjson_set(ssu, "bb_state", cJSON_CreateString("idle"));
-	cjson_set(ssu, "bb_thermal", cJSON_CreateString("nominal"));
-	backend->last_mode = -1;
-}
-
-void update_ssu_simulation(struct backend_data_t *backend){
-	cJSON* eva_json = get_json_file(backend, "EVA");
-	if (!eva_json) return;
-
-	cJSON* ssu = cjson_get(eva_json, "ssu");
-	if(!ssu){
-		cJSON_Delete(eva_json);
-		return;
-	}
-
-	bool power = cjson_get(ssu, "power")->valueint;
-	ssu_state_t status = get_ssu_state(ssu);
-	int mode = cjson_get(ssu, "mode")->valueint;
-
-	// reset on power off
-	if(!power){
-		reset_ssu_simulation(backend, ssu);
-	}
-
-	// initial power
-	if (power && status == SSU_OFF){
-		cjson_set(ssu, "status", cJSON_CreateString(SSU_STATES[SSU_BOOTING]));
-		backend->ssu_boot_time = backend->server_up_time;
-		printf("Starting boot sequence for Team %d\n", backend->instance_index);
-	}
-
-	// boot sequence (5 seconds)
-	if (status == SSU_BOOTING) {
-		int elapsed = backend->server_up_time - backend->ssu_boot_time;
-
-		if (elapsed == 3) {
-			cjson_set(ssu, "status", cJSON_CreateString(SSU_STATES[SSU_READY]));
-			cjson_set(ssu, "sp_sensor", cJSON_CreateString(SENSORS[SENSOR_PRIMED]));
-			cjson_set(ssu, "bb_sensor", cJSON_CreateString(SENSORS[SENSOR_PRIMED]));
-		}
-		if (elapsed == 4) {
-			printf("System Ready for Team %d\n", backend->instance_index);
-		}
-	}
-
-	// only allow interaction if power is on and system is ready
-	if(power && status == SSU_READY) {
-		bool deploy_pressed = backend->deploy_latch;
-		bool retract_pressed = backend->retract_latch;
-
-		if(backend->last_mode == -1){
-			backend->last_mode = mode;
-		}
-		else if(mode != backend->last_mode){
-			if(mode == 0){
-				printf("SSU in Short Period Sensor mode for Team %d\n", backend->instance_index);
-			}
-			else if(mode == 1) {
-				printf("SSU in Broadband Sensor Mode for Team %d\n", backend->instance_index);
-			}
-			backend->last_mode = mode;
-		}
-
-		if(mode == 0) {
-			float depth = cjson_get(ssu, "sp_depth")->valuedouble;
-			float temp = cjson_get(ssu, "sp_temp")->valuedouble;
-			float rpm = cjson_get(ssu, "sp_rpm")->valueint;
-
-			state_t sp_state = get_state(ssu, 0);
-			thermal_t sp_thermal = get_thermal(temp);
-
-			// check if drill can spin (cannot during an overheat phase or deployment phases)
-			bool can_drill = false;
-			if(sp_state == IDLE || sp_state == DRILLING){
-				can_drill = true;
-			}
-			if(!can_drill) {
-				cjson_set(ssu, "sp_rpm", cJSON_CreateNumber(0));
-			}
-
-			// TODO: remove below once analog input is implemented
-			if(backend->tss_test){
-				rpm = cjson_get(ssu, "mock_rpm")->valueint;
-				cjson_set(ssu, "sp_rpm", cJSON_CreateNumber(rpm));
-			}
-
-			// check for retraction button press at correct depth plus if drill is not overheating
-			if(retract_pressed && depth >= 50.0f && can_drill){
-				cjson_set(ssu, "sp_state", cJSON_CreateString(STATES[RETRACTING]));
-				cjson_set(ssu, "sp_rpm", cJSON_CreateNumber(0));
-			}
-			else switch (sp_state) {
-
-				// idle state when drill is not spinning, checks if it starts
-				case IDLE:
-					if(rpm > 0) {
-						cjson_set(ssu, "sp_state", cJSON_CreateString(STATES[DRILLING]));
-					}
-					break;
-
-				// main drilling state, checks if drill overheats
-				case DRILLING:
-					if(rpm <= 0) {
-						cjson_set(ssu, "sp_state", cJSON_CreateString(STATES[IDLE]));
-						break;
-					}
-					float r = rpm / 600.0f;
-					float newTemp = temp + (6.0f * r * r * r);
-					cjson_set(ssu, "sp_temp", cJSON_CreateNumber(newTemp));
-					cjson_set(ssu, "sp_depth", cJSON_CreateNumber(depth + (rpm / 300) * 2.0f));
-					// if drill reaches critical temperature, stop drill and set to overheated state
-					if(newTemp >= 35.0f && sp_thermal != THERMAL_CRITICAL){
-						printf("CRITICAL: THERMAL LIMIT REACHED\nDISENGAGING DRILL\n");
-						cjson_set(ssu, "sp_state", cJSON_CreateString(STATES[OVERHEATED]));
-						cjson_set(ssu, "sp_rpm", cJSON_CreateNumber(0));
-					}
-					break;
-
-				// overheat state, depth will not increase until temp is below 15C
-				case OVERHEATED:
-					if(temp <= 15.0f) {
-						cjson_set(ssu, "sp_state", cJSON_CreateString(STATES[IDLE]));
-					}
-					break;
-				// retraction state, depth will decrease until back to 0 cm
-				case RETRACTING: ;
-					float newDepth = depth - 10.0f;
-					if(newDepth <= 0.0){
-						newDepth = 0.0f;
-						cjson_set(ssu, "sp_state", cJSON_CreateString(STATES[RETRACTED]));
-					}
-						cjson_set(ssu, "sp_depth", cJSON_CreateNumber(newDepth));
-					break;
-
-				// allow deploying after full retraction
-				case RETRACTED:
-					if(deploy_pressed) {
-						printf("Deploying Short Period Sensor\n");
-						cjson_set(ssu, "sp_state", cJSON_CreateString(STATES[DEPLOYED]));
-						cjson_set(ssu, "sp_sensor", cJSON_CreateString(SENSORS[SENSOR_DEPLOYED]));
-					}
-					break;
-
-				// final state, allow no more interaction after deploying
-				case DEPLOYED:
-					break;
-
-				}
-			// cooling down when drill is not spinning
-			if(rpm <= 0 && temp > -25.0f) {
-				float newTemp = temp - get_cool_rate(sp_thermal);
-				if (newTemp < -25.0f){
-					newTemp = -25.0f;
-				}
-				cjson_set(ssu, "sp_temp", cJSON_CreateNumber(newTemp));
-			}
-
-			// final temperature and thermal state calculation
-			float finalTemp = cjson_get(ssu, "sp_temp")->valuedouble;
-			thermal_t newThermal = get_thermal(finalTemp);
-
-			// warn if drill temp is approaching thermal limit
-			if(sp_thermal == THERMAL_NOMINAL && newThermal == THERMAL_WARNING){
-				printf("WARNING: REACHING THERMAL LIMIT\n");
-			}
-			cjson_set(ssu, "sp_thermal", cJSON_CreateString(THERMALS[newThermal]));
-		}
-		else if (mode == 1) {
-			float depth = cjson_get(ssu, "bb_depth")->valuedouble;
-			float temp = cjson_get(ssu, "bb_temp")->valuedouble;
-			float rpm = cjson_get(ssu, "bb_rpm")->valueint;
-
-			state_t bb_state = get_state(ssu, 1);
-			thermal_t bb_thermal = get_thermal(temp);
-
-			// check if drill can spin (cannot during an overheat phase or deployment phases)
-			bool can_drill = false;
-			if(bb_state == IDLE || bb_state == DRILLING){
-				can_drill = true;
-			}
-			if(!can_drill) {
-				cjson_set(ssu, "bb_rpm", cJSON_CreateNumber(0));
-			}
-
-			// TODO: remove below once analog input is implemented
-			if(backend->tss_test){
-				rpm = cjson_get(ssu, "mock_rpm")->valueint;
-				cjson_set(ssu, "bb_rpm", cJSON_CreateNumber(rpm));
-			}
-
-			// check for retraction button press at correct depth plus if drill is not overheating
-			if(retract_pressed && depth >= 80.0f && can_drill){
-				cjson_set(ssu, "bb_state", cJSON_CreateString(STATES[RETRACTING]));
-				cjson_set(ssu, "bb_rpm", cJSON_CreateNumber(0));
-			}
-			else switch (bb_state) {
-
-				// idle state when drill is not spinning, checks if it starts
-				case IDLE:
-					if(rpm > 0) {
-						cjson_set(ssu, "bb_state", cJSON_CreateString(STATES[DRILLING]));
-					}
-					break;
-
-				// main drilling state, checks if drill overheats
-				case DRILLING:
-					if(rpm <= 0) {
-						cjson_set(ssu, "bb_state", cJSON_CreateString(STATES[IDLE]));
-						break;
-					}
-					float r = rpm / 600.0f;
-					float newTemp = temp + (6.0f * r * r * r);
-					cjson_set(ssu, "bb_temp", cJSON_CreateNumber(newTemp));
-					cjson_set(ssu, "bb_depth", cJSON_CreateNumber(depth + (rpm / 300) * 2.0f));
-					// if drill reaches critical temperature, stop drill and set to overheated state
-					if(newTemp >= 35.0f && bb_thermal != THERMAL_CRITICAL){
-						printf("CRITICAL: THERMAL LIMIT REACHED\nDISENGAGING DRILL\n");
-						cjson_set(ssu, "bb_state", cJSON_CreateString(STATES[OVERHEATED]));
-						cjson_set(ssu, "bb_rpm", cJSON_CreateNumber(0));
-					}
-					break;
-
-				// overheat state, depth will not increase until temp is below 25C
-				case OVERHEATED:
-					if(temp <= 15.0f) {
-						cjson_set(ssu, "bb_state", cJSON_CreateString(STATES[IDLE]));
-					}
-					break;
-				// retraction state, depth will decrease until back to 0 cm
-				case RETRACTING: ;
-					float newDepth = depth - 10.0f;
-					if(newDepth <= 0.0){
-						newDepth = 0.0f;
-						cjson_set(ssu, "bb_state", cJSON_CreateString(STATES[RETRACTED]));
-					}
-						cjson_set(ssu, "bb_depth", cJSON_CreateNumber(newDepth));
-					break;
-
-				// allow deploying after full retraction
-				case RETRACTED:
-					if(deploy_pressed) {
-						printf("Deploying Broadband Sensor\n");
-						cjson_set(ssu, "bb_state", cJSON_CreateString(STATES[DEPLOYED]));
-						cjson_set(ssu, "bb_sensor", cJSON_CreateString(SENSORS[SENSOR_DEPLOYED]));
-					}
-					break;
-
-				// final state, allow no more interaction after deploying
-				case DEPLOYED:
-					break;
-
-				}
-			// cooling down when drill is not spinning
-			if(rpm <= 0 && temp > -25.0f) {
-				float newTemp = temp - get_cool_rate(bb_thermal);
-				if (newTemp < -25.0f){
-					newTemp = -25.0f;
-				}
-				cjson_set(ssu, "bb_temp", cJSON_CreateNumber(newTemp));
-			}
-
-			// final temperature and thermal state calculation
-			float finalTemp = cjson_get(ssu, "bb_temp")->valuedouble;
-			thermal_t newThermal = get_thermal(finalTemp);
-
-			// warn if drill temp is approaching thermal limit
-			if(bb_thermal == THERMAL_NOMINAL && newThermal == THERMAL_WARNING){
-				printf("WARNING: REACHING THERMAL LIMIT\n");
-			}
-			cjson_set(ssu, "bb_thermal", cJSON_CreateString(THERMALS[newThermal]));
-		}
-	}
-	backend->deploy_latch = false;
-	backend->retract_latch = false;
-
+static void save_eva_json(struct backend_data_t* backend, cJSON* eva_json) {
 	char filepath[100];
 	snprintf(filepath, sizeof(filepath), "data/instances/%d/EVA.json", backend->instance_index);
-
 	char* json_str = cJSON_Print(eva_json);
 	FILE* fp = fopen(filepath, "w");
 	if (fp) {
@@ -1356,9 +1014,83 @@ void update_ssu_simulation(struct backend_data_t *backend){
 		fclose(fp);
 	}
 	free(json_str);
+}
+
+static double json_num(cJSON* obj, const char* key) {
+	cJSON* item = cjson_get(obj, key);
+	return cJSON_IsNumber(item) ? item->valuedouble : 0.0;
+}
+
+// Runs the SSU simulation here, or only reports the link once a Pi has taken over
+void update_ssu(struct backend_data_t* backend) {
+	cJSON* eva_json = get_json_file(backend, "EVA");
+	if (!eva_json) return;
+
+	cJSON* ssu = cjson_get(eva_json, "ssu");
+	if (!ssu) {
+		cJSON_Delete(eva_json);
+		return;
+	}
+
+	if (backend->ssu_peripheral) {
+		// the Pi owns the simulation; only track whether it's still sending
+		bool alive = backend->server_up_time - backend->ssu_last_snapshot <= SSU_LINK_TIMEOUT;
+		const char* link = cJSON_GetStringValue(cjson_get(ssu, "link"));
+		if (!alive && link && strcmp(link, "lost") != 0) {
+			printf("SSU link lost (team %d)\n", backend->instance_index);
+		}
+		cjson_set(ssu, "link", cJSON_CreateString(alive ? "connected" : "lost"));
+	} else {
+		// no peripheral: simulate here so teams can test without hardware
+		int mode = (int)json_num(ssu, "mode");
+		ssu_inputs_t in = {
+			.power = cJSON_IsTrue(cjson_get(ssu, "power")),
+			.mode  = mode,
+			.rpm = json_num(ssu, mode == 0 ? "sp_rpm" : "bb_rpm"),
+			.deploy_pressed  = backend->deploy_latch,
+			.retract_pressed = backend->retract_latch,
+		};
+		ssu_sim_tick(ssu, &backend->ssu_ctx, &in);
+		cjson_set(ssu, "link", cJSON_CreateString("none"));
+	}
+
+	backend->deploy_latch = false;
+	backend->retract_latch = false;
+
+	save_eva_json(backend, eva_json);
 	cJSON_Delete(eva_json);
 }
 
+// Full SSU state from the peripheral: replaces the ssu section and marks the link alive
+void handle_ssu_snapshot(const char* payload, int length, struct backend_data_t* backend) {
+	cJSON* snapshot = cJSON_ParseWithLength(payload, length);
+	if (!cJSON_IsObject(snapshot)) {
+		printf("Bad SSU snapshot (team %d)\n", backend->instance_index);
+		cJSON_Delete(snapshot);
+		return;
+	}
+
+	cJSON* eva_json = get_json_file(backend, "EVA");
+	if (!eva_json) {
+		cJSON_Delete(snapshot);
+		return;
+	}
+
+	if (!backend->ssu_peripheral) {
+		printf("SSU peripheral connected (team %d)\n", backend->instance_index);
+	} else if (backend->server_up_time - backend->ssu_last_snapshot > SSU_LINK_TIMEOUT) {
+		printf("SSU link restored (team %d)\n", backend->instance_index);
+	}
+	backend->ssu_peripheral = true;
+	backend->ssu_last_snapshot = backend->server_up_time;
+
+    // the Pi doesn't send "link"; TSS owns this field, so add it here deliberately
+	cJSON_AddStringToObject(snapshot, "link", "connected");
+	cjson_set(eva_json, "ssu", snapshot);   // eva_json now owns the snapshot
+
+	save_eva_json(backend, eva_json);
+	cJSON_Delete(eva_json);
+}
 
 /**
  * Calls the simulation engine to update all telemetry data based on elapsed time
@@ -1393,8 +1125,7 @@ void increment_simulation(struct backend_data_t *backend) {
             // Update EVA station timing
             update_eva_station_timing(backend);
 
-			// Update SSU simulation
-			update_ssu_simulation(backend);
+			update_ssu(backend);
         }
     }
 }
@@ -1423,7 +1154,7 @@ void cleanup_backend(struct backend_data_t *backend) {
 
 // Momentary SSU buttons latch for the next tick instead of writing to the JSON.
 // Returns true if the route was a button (handled here), false otherwise.
-bool ssu_handle_button(struct backend_data_t* backend, const char* route, const char* value) {
+bool handle_ssu_button(struct backend_data_t* backend, const char* route, const char* value) {
     bool is_deploy  = strcmp(route, "eva.ssu.deploy_pressed") == 0;
     bool is_retract = strcmp(route, "eva.ssu.retract_pressed") == 0;
     if (!is_deploy && !is_retract) return false;
@@ -1524,7 +1255,7 @@ bool handle_udp_post_request(unsigned int command, unsigned char* data, struct b
 		}
     }
 
-    if (ssu_handle_button(backend, mapping->path, value_str)) return true;
+    if (handle_ssu_button(backend, mapping->path, value_str)) return true;
 
     // Create request content in the same format as HTML forms
     char request_content[256];
@@ -1990,7 +1721,7 @@ bool html_form_json_update(char* request_content, struct backend_data_t* backend
         return false;
     }
 
-	if (ssu_handle_button(backend, route, value)) return true;
+	if (handle_ssu_button(backend, route, value)) return true;
 
     // Parse the route (split by dots)
     char route_copy[256];

@@ -346,7 +346,7 @@ b<!DOCTYPE html>
 			                                    <svg style="pointer-events: none;" data-testid="geist-icon" height="16" stroke-linejoin="round" viewBox="0 0 16 16" width="16" style="color: currentcolor;"><path fill-rule="evenodd" clip-rule="evenodd" d="M14.5528 7.77638C14.737 7.86851 14.737 8.13147 14.5528 8.2236L1.3618 14.8191C1.19558 14.9022 1 14.7813 1 14.5955L1 1.4045C1 1.21865 1.19558 1.09778 1.3618 1.18089L14.5528 7.77638Z" fill="currentColor"></path></svg>
 			                                    RETRACT
 			                                </button>
-                                            <label style="color:var(--white);" for="mock-sp-rpm-slider">RPM</label>
+                                            <label style="color:var(--white);" id="mock-sp-rpm-label" for="mock-sp-rpm-slider">RPM</label>
                                                 <input
                                                   type="range"
                                                   id="mock-sp-rpm-slider"
@@ -354,9 +354,19 @@ b<!DOCTYPE html>
                                                   max="600"
                                                   value="0"
                                                   step="1"
-                                                  data-path="eva.ssu.mock_rpm"
+                                                  data-path="eva.ssu.sp_rpm"
                                                 />
-                                                <span id="mock-sp-rpm-value" class="telemetry-data" data-path="eva.ssu.mock_rpm">0</span>
+                                            <label style="color:var(--white);" id="mock-bb-rpm-label" for="mock-bb-rpm-slider">RPM</label>
+                                                <input
+                                                  type="range"
+                                                  id="mock-bb-rpm-slider"
+                                                  min="0"
+                                                  max="600"
+                                                  value="0"
+                                                  step="1"
+                                                  data-path="eva.ssu.bb_rpm"
+                                                />
+                                      
                                         </div>			                                    
 										<div class="card-body">
 											<div class="card-content">	
@@ -475,7 +485,7 @@ b<!DOCTYPE html>
 			                                        </span>
 			                                    </div>
 			                                    <div class="telemetry-value">
-			                                        <span data-path="eva.ssu.bb_rpm" class="telemetry-data" id="ssu-bb_rpm">
+			                                        <span data-path="eva.ssu.bb_rpm" class="telemetry-data" id="ssu-bb_rpm" data-units="rpm">
 			                                            ------
 			                                        </span>
 			                                    </div>
@@ -486,7 +496,7 @@ b<!DOCTYPE html>
 	                         	<div class="card" style="border-bottom: 2px solid var(--sharp-blue);">
 	                                    <div class="card-header">
 	                                        <span class="card-title">
-	                                            EV1 Spec
+	                                            EV Spec
 	                                        </span>
 	                                   	</div>
 
@@ -498,7 +508,7 @@ b<!DOCTYPE html>
 										<div class="card-body"> 
 											<div class="card-content"> 
 												<div class="telemetry-label">
-													<span class="telemetry-data" data-path="eva.spec.eva1.name"> 
+													<span class="telemetry-data" data-path="eva.spec.name"> 
 														------
 													</span> 
 												</div>
@@ -513,7 +523,7 @@ b<!DOCTYPE html>
 													</span> 
 												</div>
 												<div class="telemetry-value">
-			                                        <span class="telemetry-data" data-path="eva.spec.eva1.data.SiO2" data-units="%">
+			                                        <span class="telemetry-data" data-path="eva.spec.data.SiO2" data-units="%">
 			                                            ------
 			                                        </span>
 			                                    </div>
@@ -523,7 +533,7 @@ b<!DOCTYPE html>
 													</span> 
 												</div>
 												<div class="telemetry-value">
-			                                        <span class="telemetry-data" data-path="eva.spec.eva1.data.TiO2" data-units="%">
+			                                        <span class="telemetry-data" data-path="eva.spec.data.TiO2" data-units="%">
 			                                            ------
 			                                        </span>
 			                                    </div>
@@ -533,7 +543,7 @@ b<!DOCTYPE html>
 													</span> 
 												</div>
 												<div class="telemetry-value">
-			                                        <span class="telemetry-data" data-path="eva.spec.eva1.data.Al2O3" data-units="%">
+			                                        <span class="telemetry-data" data-path="eva.spec.data.Al2O3" data-units="%">
 			                                            ------
 			                                        </span>
 			                                    </div>
@@ -548,7 +558,7 @@ b<!DOCTYPE html>
 													</span> 
 												</div>
 												<div class="telemetry-value">
-			                                        <span class="telemetry-data" data-path="eva.spec.eva1.data.FeO" data-units="%">
+			                                        <span class="telemetry-data" data-path="eva.spec.data.FeO" data-units="%">
 			                                            ------
 			                                        </span>
 			                                    </div>
@@ -558,7 +568,7 @@ b<!DOCTYPE html>
 													</span> 
 												</div>
 												<div class="telemetry-value">
-			                                        <span class="telemetry-data" data-path="eva.spec.eva1.data.MnO" data-units="%">
+			                                        <span class="telemetry-data" data-path="eva.spec.data.MnO" data-units="%">
 			                                            ------
 			                                        </span>
 			                                    </div>
@@ -568,7 +578,7 @@ b<!DOCTYPE html>
 													</span> 
 												</div>
 												<div class="telemetry-value">
-			                                        <span class="telemetry-data" data-path="eva.spec.eva1.data.MgO" data-units="%">
+			                                        <span class="telemetry-data" data-path="eva.spec.data.MgO" data-units="%">
 			                                            ------
 			                                        </span>
 			                                    </div>
@@ -583,7 +593,7 @@ b<!DOCTYPE html>
 													</span> 
 												</div>
 												<div class="telemetry-value">
-			                                        <span class="telemetry-data" data-path="eva.spec.eva1.data.CaO" data-units="%">
+			                                        <span class="telemetry-data" data-path="eva.spec.data.CaO" data-units="%">
 			                                            ------
 			                                        </span>
 			                                    </div>
@@ -593,7 +603,7 @@ b<!DOCTYPE html>
 													</span> 
 												</div>
 												<div class="telemetry-value">
-			                                        <span class="telemetry-data" data-path="eva.spec.eva1.data.K2O" data-units="%">
+			                                        <span class="telemetry-data" data-path="eva.spec.data.K2O" data-units="%">
 			                                            ------
 			                                        </span>
 			                                    </div>
@@ -603,7 +613,7 @@ b<!DOCTYPE html>
 													</span> 
 												</div>
 												<div class="telemetry-value">
-			                                        <span class="telemetry-data" data-path="eva.spec.eva1.data.P2O3" data-units="%">
+			                                        <span class="telemetry-data" data-path="eva.spec.data.P2O3" data-units="%">
 			                                            ------
 			                                        </span>
 			                                    </div>
@@ -628,7 +638,7 @@ b<!DOCTYPE html>
 													</span> 
 												</div>
 												<div class="telemetry-value">
-			                                        <span class="telemetry-data" data-path="eva.spec.eva1.data.other" data-units="%">
+			                                        <span class="telemetry-data" data-path="eva.spec.data.other" data-units="%">
 			                                            ------
 			                                        </span>
 			                                    </div>
@@ -645,14 +655,6 @@ b<!DOCTYPE html>
 			                                </div>
 										</div>
 								</div>
-                    	<!-----------------------EV2 Spectroscopy Section---------------------------------------------------->
-	                         	<div class="card" style="border-bottom: 2px solid var(--sharp-blue);">
-	                                    <div class="card-header">
-	                                        <span class="card-title">
-	                                            EV2 Spec
-	                                        </span>
-	                                    </div>
-	                            </div>
 					</div>
 				
                     <div class="column">

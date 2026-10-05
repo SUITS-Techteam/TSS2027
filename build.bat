@@ -1,1 +1,1 @@
-gcc -g src/network.c src/data.c src/server.c src/lib/simulation/throw_errors.c src/lib/cjson/cJSON.c src/lib/simulation/sim_engine.c src/lib/simulation/sim_algorithms.c -o server.exe -lm
+gcc -g -Isrc/lib/cjson src/network.c src/data.c src/lib/ssu_sim/ssu_sim.c src/server.c src/lib/simulation/throw_errors.c src/lib/cjson/cJSON.c src/lib/simulation/sim_engine.c src/lib/simulation/sim_algorithms.c -o server.exe -lm

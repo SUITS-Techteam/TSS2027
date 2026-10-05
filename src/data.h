@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include "lib/cjson/cJSON.h"
 #include "lib/simulation/sim_engine.h"
+#include "lib/ssu_sim/ssu_sim.h"
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -17,21 +18,8 @@ typedef struct {
     const char* data_type;   // bool or float, this makes the parsing easier
 } udp_command_mapping_t;
 
-typedef enum {
-	SSU_OFF, SSU_BOOTING, SSU_READY
-} ssu_state_t;
 
-typedef enum {
-	NOT_READY, SENSOR_PRIMED, SENSOR_DEPLOYED
-} sensor_t;
-
-typedef enum {
-	IDLE, DRILLING, OVERHEATED, RETRACTING, RETRACTED, DEPLOYED
-} state_t;
-
-typedef enum {
-	THERMAL_NOMINAL, THERMAL_WARNING, THERMAL_CRITICAL
-} thermal_t;
+#define SSU_SNAPSHOT_CMD 2100   // UDP: full SSU state from the peripheral
 
 struct backend_data_t {
     // Timing information
@@ -42,12 +30,12 @@ struct backend_data_t {
     int instance_index;
 
 	// ssu simulation
-	int ssu_boot_time;
-	int last_mode;
-	bool tss_test; // testing drilling without input
+	ssu_ctx_t ssu_ctx;
+	bool tss_test;               // testing drilling without analog input
 	bool deploy_latch;
 	bool retract_latch;
-
+	bool ssu_peripheral;         // a Pi has sent a snapshot; it owns the simulation from now on
+	uint32_t ssu_last_snapshot;  // server_up_time of the last snapshot
 
     // Simulation engine
     sim_engine_t* sim_engine;
@@ -59,7 +47,9 @@ void increment_simulation(struct backend_data_t* backend);
 void cleanup_backend(struct backend_data_t*  backend);
 
 // UDP Request Handlers
-bool ssu_handle_button(struct backend_data_t* backend, const char* route, const char* value);
+void update_ssu(struct backend_data_t* backend);
+void handle_ssu_snapshot(const char* payload, int length, struct backend_data_t* backend);
+bool handle_ssu_button(struct backend_data_t* backend, const char* route, const char* value);
 void handle_udp_get_request(unsigned int command, unsigned char* data, struct backend_data_t* backend);
 bool handle_udp_post_request(unsigned int command, unsigned char* data, struct backend_data_t* backend);
 
@@ -130,8 +120,7 @@ static const udp_command_mapping_t udp_command_mappings[] = {
     {2019, "eva.imu.heading", "float"},
 
 	// SPEC commands (sent from the peripheral device over UDP)
-	{2020, "spec.eva1.id", "float"},
-	{2021, "spec.eva2.id", "float"},
+	{2020, "spec.id", "float"},
 
 	// SEISMO commands (sent from the peripheral device over UDP)
 	{2022, "eva.ssu.power", "bool"},

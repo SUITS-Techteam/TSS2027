@@ -195,6 +195,7 @@ async function fetchData() {
 		}
 		return;
 	}
+
     // Handle checkboxes/switches (set checked property for boolean values)
     if (el.type === "checkbox") {
       el.checked = Boolean(value);
@@ -273,6 +274,29 @@ async function fetchData() {
       return; // don't set textContent for action buttons
     }
 
+	// change slider input for drills
+	if((el.id != "ssu-sp_rpm" && el.id != "ssu-bb_rpm") && (path === "eva.ssu.sp_rpm" || path === "eva.ssu.bb_rpm")){
+		const mode = getNestedValue(evaData, "ssu.mode");
+		const spSlider = document.getElementById("mock-sp-rpm-slider");
+		const spLabel = document.getElementById("mock-sp-rpm-label");
+		const bbSlider = document.getElementById("mock-bb-rpm-slider");
+		const bbLabel = document.getElementById("mock-sp-rpm-label");
+		if(mode === 0 || mode === -1) {
+			bbSlider.style.display = "none";
+			bbLabel.style.display = "none";
+			spSlider.style.display = "inline";
+			spLabel.style.display = "inline";
+
+		}
+		else {
+			bbSlider.style.display = "inline";
+			bbLabel.style.display = "inline";
+			spSlider.style.display = "none";
+			spLabel.style.display = "none";
+		}
+		return;
+	}
+
 
     // Handle time formatting if data-format="time" is specified
     const format = el.getAttribute("data-format");
@@ -334,6 +358,16 @@ async function setupEventListeners() {
     // Listen for changes
     switchEl.addEventListener("change", (event) => {
       const value = event.target.checked;
+	  if(path === "eva.ssu.mode"){
+		if(value === false) {
+			updateServerData(path, 0);
+		}
+		else {
+			updateServerData(path, 1);
+		}
+		return;
+	  }
+
       updateServerData(path, value);
     });
   }
@@ -369,7 +403,6 @@ async function setupEventListeners() {
 
     slider.addEventListener("input", (event) => {
       const value = event.target.value;
-
       updateServerData(path, value);
 
       const valueEl = document.getElementById(slider.id + "-value");
