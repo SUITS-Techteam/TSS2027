@@ -170,8 +170,8 @@ When a press is ignored, TSS does not report why. Your interface or assistant ca
 | | Short Period | Broadband |
 |---|---|---|
 | Target depth | 50 cm | 80 cm |
-| Starting temperature | −25 °C | −25 °C |
-| Hard layer | none | past 50 cm, the drill heats 100% faster |
+| Starting temperature | −25 °C to -10 °C | −25 °C to -10 °C |
+| Hard layer | none | past 50 cm, the drill heats 2x faster |
 
 | Thermal level | Temperature | Cooling per second while stopped |
 |---|---|---|
@@ -181,7 +181,7 @@ When a press is ignored, TSS does not report why. Your interface or assistant ca
 
 - **Max drill speed** is 600 rpm.
 - **Each second while drilling,** depth increases by rpm ÷ 150 cm, and temperature rises by 6 × (rpm ÷ 600)³ °C. Broadband heats 2× faster past 50 cm.
-- **Temperature never drops below −25 °C.**
+- Temperature never drops below the ambient temperature, which is **randomized to anywhere between -25 °C and -10 °C** each time the SSU is started up. Both drills will start at this temperature.
 
 ### CTS
 
