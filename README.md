@@ -111,8 +111,6 @@ The solar power module (SSU) is one of the planned peripheral hardware devices t
 
 ### SSU
 
-#### What the SSU does
-
 The SSU deploys two seismic sensors into the ground:
 
 - a **short period (SP)** sensor
@@ -138,12 +136,6 @@ All SSU telemetry is in the `ssu` section of `EVA.json`, alongside the rest of t
 | `sp_temp` / `bb_temp` | number (°C) | Current drill temperature |
 | `sp_thermal` / `bb_thermal` | `"nominal"`, `"warning"`, `"critical"` | Drill temperature level |
 | `sp_rpm` / `bb_rpm` | number | Current drill speed. This is 0 whenever the drill can't spin, even if the operator has set a speed. |
-
-#### Powering on
-
-When the SSU is switched on, `status` changes to `"booting"`. After about 3 seconds it changes to `"ready"`, and both sensors change to `"primed"`. Nothing else responds until the SSU is ready.
-
-**Turning the power off resets everything:** depth, temperature, drill states, and deployed sensors.
 
 #### Drill states
 
@@ -190,36 +182,6 @@ When a press is ignored, TSS does not report why. Your interface or assistant ca
 - **Max drill speed** is 600 rpm.
 - **Each second while drilling,** depth increases by rpm ÷ 150 cm, and temperature rises by 6 × (rpm ÷ 600)³ °C. Broadband heats 2× faster past 50 cm.
 - **Temperature never drops below −25 °C.**
-
-#### Timing and delays
-
-TSS updates once per second, and the values you receive describe the **previous** second. Between reading the data and an operator acting on it, expect 1–2 seconds of delay. A warning that arrives exactly at the limit is already late. Interfaces and assistants that account for this delay, warning ahead of time rather than at the threshold, will serve the operator much better.
-
-#### The physical SSU and the `link` field
-
-During the challenge, the physical SSU runs its own simulation and sends its state to TSS every second. The `link` field tells you where the SSU data is coming from:
-
-| `link` | Meaning |
-|---|---|
-| `"none"` | No physical SSU is connected. TSS is simulating it (normal during testing). |
-| `"connected"` | Data is arriving live from the physical SSU. |
-| `"lost"` | The physical SSU hasn't been heard from for over 3 seconds. The SSU values are **the last known state** and are not updating. |
-
-If the connection is lost, the SSU keeps working on its own, and TSS catches up automatically when the connection returns. Your interface should make it obvious when the data is stale.
-
-#### Buttons on the physical SSU
-
-The deploy and retract buttons on the physical SSU must be **held for about 2 seconds** before a press counts, as a safety measure like those used on real EVAs. The button's light blinks while it's held and turns solid once the action takes effect.
-
-#### Testing without the SSU
-
-Before test week, TSS simulates the SSU for you (`link` shows `"none"`). Use the SSU controls on the TSS web page to drive it:
-
-- **Power** and **mode** switches
-- **Test drill speed**, which stands in for the speed knob on the physical SSU
-- **Deploy** and **Retract** buttons. These take effect on a single click. There's no hold during testing.
-
-The simulated SSU follows exactly the same rules as the physical one, so anything that works against the simulation should work against the real device.
 
 ### CTS
 
