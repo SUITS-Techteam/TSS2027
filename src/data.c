@@ -34,7 +34,7 @@ struct backend_data_t *init_backend(int instanceIndex) {
         printf("Warning: Failed to initialize JSON files\n");
     }
 
-
+	srand(time(NULL));
     // Set initial timing information
     backend->start_time = time(NULL);
     backend->server_up_time = 0;

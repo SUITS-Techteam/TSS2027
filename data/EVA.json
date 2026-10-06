@@ -65,7 +65,8 @@
 		"status":	"off",
 		"angle":	0,
 		"mode":	0,
-		"link": "none",
+		"link":	"none",
+		"ambient_temp": -25,
 		"temp_warning":	10,
 		"temp_critical":	35,
 		"temp_unlock":	15,
@@ -82,7 +83,7 @@
 		"bb_temp":	-25,
 		"bb_rpm":	0,
 		"bb_state":	"idle",
-		"bb_thermal":	"nominal",
+		"bb_thermal":	"nominal"
 	},
 	"spec":	{
 		"name":	"Default Rock",
