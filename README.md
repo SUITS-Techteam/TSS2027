@@ -117,13 +117,6 @@ See [SSU](src/lib/ssu_simulation/README.md)
 
 The comms tower station (SSU) is one of the planned peripheral hardware devices that the user will setup as one of the POIs during an EVA. The SPM will send telemetry data to the TSS indicating its operational state, deployment status, and any active readings returned from the device.
 
-### Connecting to the simulator
-
-
-<img src="frontend/images/dust-onboarding.png" style="height: 400px"/>
-
-After opening the simulator on a Windows PC, a screen prompting you to enter an IP address will show up. This is prompting you to enter the website address for the TSS server, which is used to communicate back and forth with the simulator. Type in the network address without the port number. For example, if your instance of TSS is running on `172.20.182.43:14141`, then you will type in `172.20.182.43`. Note that you will want the server to be running on the same network or computer as the device running DUST so that they can commmunciate with each other.
-
 ## Development
 
 The telemetry server is an important part of the challenge as it will serve as the main way to fetch telemetry for the EVA. You'll take this telemetry data and use it within the respective interfaces that you are designing and developing ahead of test week. This section will outline how to connect to the data stream, data formats, and other helpful information for development.
@@ -144,11 +137,19 @@ The server will always respond back with a UDP packet to acknowledge a request o
 | -------------- |
 | Variable # of bytes |
 
-These are the commands you can send to the server to fetch the telemetry data as JSON files. They directly correspond to the JSON files in `/data` folder in the root directory, and will be listed as such. Please note that the response from the UDP socket will be in byte format and you will need to convert it back to a human readable JSON format for processing.
+These are the commands you can send to the server to fetch the telemetry data as JSON files. They directly correspond to the fields in the EVA.JSON file in `/data` folder in the root directory. Please note that the response from the UDP socket will be in byte format and you will need to convert it back to a human readable JSON format for processing.
 
-| Command number | Referenced .json file          |
-| -------------- | ------------------------------ |
-| 0              | [EVA.json](/data/EVA.json)     |
+| Command number |   Command   |
+| -- | ----------------------- |
+| 1  | Get telemetry values    |
+| 2  | Get TSS status          |
+| 3  | Get DCU states          | 
+| 4  | Get ERROR states        | 
+| 5  | Get IMU states          | 
+| 6  | Get UIA states          | 
+| 7  | Get SSU states          |
+| 8  | Get SPEC states         | 
+
 
 When fetching data, we recommend doing so in one second intervals. Telemetry data is calculated and updated in one second increments, so increasing the request rate in your programs will not make any difference.
 
