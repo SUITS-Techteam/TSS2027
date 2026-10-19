@@ -1175,33 +1175,52 @@ bool handle_ssu_button(struct backend_data_t* backend, const char* route, const 
  * @param backend Backend data structure containing all telemetry and simulation engines
  */
 void handle_udp_get_request(unsigned int command, unsigned char* data, struct backend_data_t* backend) {
+	const char* section_name = NULL;
+
     // Handle different GET requests
     switch (command) {
         case 0: // EVA telemetry
             printf("Getting EVA telemetry data.\n");
             send_json_file(backend, "EVA", data);
             break;
-		case 1: ;
-			cJSON* eva = get_json_file(backend, "EVA");
-			cJSON* ssu;
-			if(eva){
-				ssu = cjson_get(eva, "ssu");
-			}
-			else {
-				ssu = NULL;
-			}
-			if(ssu){
-				char* s = cJSON_PrintUnformatted(ssu);
-				strcpy((char*)data, s);
-				free(s);
-			}
-			printf("Getting SSU telemetry data.\n");
-			cJSON_Delete(eva);
+		case 1:
+			section_name = "telemetry";
+			break;
+		case 2:
+			section_name = "status";
+			break;
+		case 3:
+			section_name = "dcu";
+			break;
+		case 4:
+			section_name = "error";
+			break;
+		case 5:
+			section_name = "imu";
+			break;
+		case 6:
+			section_name = "uia";
+			break;
+		case 7:
+			section_name = "ssu";
+			break;
+		case 8:
+			section_name = "spec";
 			break;
         default:
             printf("Invalid GET command: %u\n", command);
             break;
     }
+    cJSON* eva = get_json_file(backend, "EVA");
+    cJSON* section = eva ? cJSON_GetObjectItemCaseSensitive(eva, section_name) : NULL;
+    if (section) {
+        char* json_str = cJSON_Print(section);
+		size_t json_len = strlen(json_str);
+		memcpy(data, json_str, json_len);
+		data[json_len] = '\0'; // Null terminate
+        free(json_str);
+    }
+    cJSON_Delete(eva);
 }
 
 /**
@@ -1475,7 +1494,6 @@ void send_json_file(struct backend_data_t* backend, const char* filename, unsign
         printf("Error: Could not load JSON file %s\n", filename);
         return;
     }
-    
     // Convert JSON to string
     char* json_str = cJSON_Print(json);
     if (json_str == NULL) {

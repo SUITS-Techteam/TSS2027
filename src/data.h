@@ -7,7 +7,7 @@
 #include <sys/stat.h>
 #include "lib/cjson/cJSON.h"
 #include "lib/simulation/sim_engine.h"
-#include "lib/ssu_sim/ssu_sim.h"
+#include "lib/ssu_simulation/ssu_sim.h"
 #include <stdlib.h>
 #include <stdio.h>
 
