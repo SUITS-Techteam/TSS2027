@@ -1179,10 +1179,6 @@ void handle_udp_get_request(unsigned int command, unsigned char* data, struct ba
 
     // Handle different GET requests
     switch (command) {
-        case 0: // EVA telemetry
-            printf("Getting EVA telemetry data.\n");
-            send_json_file(backend, "EVA", data);
-            break;
 		case 1:
 			section_name = "telemetry";
 			break;
