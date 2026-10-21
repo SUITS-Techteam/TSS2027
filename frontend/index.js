@@ -7,7 +7,7 @@ let connectionFails = 0; // number of consecutive connection failures, resets on
  */
 function onload() {
   updateClock(); // set clock immediately on load (will be updated every second later)
-
+  setupEventListeners();
   // Fetch fresh data from the backend every one second
   setInterval(() => {
     fetchData();
@@ -17,7 +17,6 @@ function onload() {
 
 
   // Set up event listeners for switches and buttons
-  setupEventListeners();
 }
 
 // DATA MANAGEMENT
@@ -205,30 +204,38 @@ async function fetchData() {
     // Handle action buttons (START/RESET/DEPLOY/RETRACT)
     if (el.tagName === "BUTTON" && el.hasAttribute("data-action")) {
       const action = el.getAttribute("data-action");
-      const isRunning = Boolean(value);
+      const is_running = Boolean(value);
 
 	  const sp = getNestedValue(evaData, "ssu.sp_sensor");
-	  const spState = getNestedValue(evaData, "ssu.sp_state");
-	  const spDepth = getNestedValue(evaData, "ssu.sp_depth");
+	  const sp_state = getNestedValue(evaData, "ssu.sp_state");
+	  const sp_depth = getNestedValue(evaData, "ssu.sp_depth");
 
 	  const bb = getNestedValue(evaData, "ssu.bb_sensor");
-	  const bbState = getNestedValue(evaData, "ssu.bb_state");
-	  const bbDepth = getNestedValue(evaData, "ssu.bb_depth");
+	  const bb_state = getNestedValue(evaData, "ssu.bb_state");
+	  const bb_depth = getNestedValue(evaData, "ssu.bb_depth");
 
-	  const mode = getNestedValue(evaData, "ssu.mode");
+	  const ssu_mode = getNestedValue(evaData, "ssu.mode");
+
+	  const level = getNestedValue(evaData, "spm.level");
+	  const truss = getNestedValue(evaData, "spm.truss");
+	  const locked = getNestedValue(evaData, "spm.orientation_locked");
+	  const aligned = getNestedValue(evaData, "spm.azimuth_aligned");
+	  const spm_mode = getNestedValue(evaData, "spm.mode");
 
       if (action === "start") {
         // START button: enabled when NOT running
-        el.disabled = isRunning;
-        el.style.opacity = isRunning ? "0.5" : "1";
-      } else if (action === "reset") {
+        el.disabled = is_running;
+        el.style.opacity = is_running ? "0.5" : "1";
+      }
+      else if (action === "reset") {
         // RESET button: enabled when IS running
-        el.disabled = !isRunning;
-        el.style.opacity = !isRunning ? "0.5" : "1";
-      } else if (action === "deploy") {
+        el.disabled = !is_running;
+        el.style.opacity = !is_running ? "0.5" : "1";
+      }
+      else if (action === "deploy") {
 		// DEPLOY button - enabled when NOT deployed and state is retracted and depth is 0.0 for respective mode
-			if(mode === 0) {
-				if (spState === "retracted" && spDepth === 0 && sp === "primed"){
+			if(ssu_mode === 0) {
+				if (sp_state === "retracted" && sp_depth === 0 && sp === "primed"){
 					el.disabled = false;
 					el.style.opacity = "1";
 			    }
@@ -237,30 +244,8 @@ async function fetchData() {
 					el.style.opacity = "0.5";
 			    }
 			}
-			else if(mode === 1) {
-				if (bbState === "retracted" && bbDepth === 0 && bb === "primed"){
-					el.disabled = false;
-					el.style.opacity = "1";
-			    }
-			    else {
-					el.disabled = true;
-					el.style.opacity = "0.5";
-			    }
-			}
-      } else if (action === "retract") {
-		// RETRACT button - enabled when depth is at target (50) and state is not overheated or sensor already deployed
-			if(mode === 0) {
-				if (spState !== "drilling" && spState !== "deployed" && spState !== "overheated" && spDepth >= 50){
-					el.disabled = false;
-					el.style.opacity = "1";
-			    }
-			    else {
-					el.disabled = true;
-					el.style.opacity = "0.5";
-			    }
-			}
-			else if(mode === 1) {
-				if (bbState !== "drilling" && bbState !== "deployed" && bbState !== "overheated" && bbDepth >= 80){
+			else if(ssu_mode === 1) {
+				if (bb_state === "retracted" && bb_depth === 0 && bb === "primed"){
 					el.disabled = false;
 					el.style.opacity = "1";
 			    }
@@ -270,7 +255,109 @@ async function fetchData() {
 			    }
 			}
       }
-
+      else if (action === "retract") {
+		// RETRACT button - enabled when depth is at target (50) and state is not overheated or sensor already deployed
+			if(ssu_mode === 0) {
+				if (sp_state !== "drilling" && sp_state !== "deployed" && sp_state !== "overheated" && sp_depth >= 50){
+					el.disabled = false;
+					el.style.opacity = "1";
+			    }
+			    else {
+					el.disabled = true;
+					el.style.opacity = "0.5";
+			    }
+			}
+			else if(ssu_mode === 1) {
+				if (bb_state !== "drilling" && bb_state !== "deployed" && bb_state !== "overheated" && bb_depth >= 100){
+					el.disabled = false;
+					el.style.opacity = "1";
+			    }
+			    else {
+					el.disabled = true;
+					el.style.opacity = "0.5";
+			    }
+			}
+      }
+      else if (action === "unlock") {
+		// UNLOCK button - enabled when platform is level and truss needs to be unlocked or orientation needs to be unlocked
+			if(spm_mode === 0) {
+				if(level === true && truss === "stowed") {
+					el.disabled = false;
+					el.style.opacity = "1";
+				}
+				else {
+					el.disabled = true;
+					el.style.opacity = "0.5";
+				}
+			}
+			else if(spm_mode === 1) {
+				if(locked) {
+					el.disabled = false;
+					el.style.opacity = "1";
+				}
+				else {
+					el.disabled = true;
+					el.style.opacity = "0.5";
+				}
+			}
+      }
+      else if (action === "raise") {
+		// RAISE button - enabled when truss is unlocked
+			if(spm_mode === 0) {
+				if(level === true && truss === "stowed") {
+					el.disabled = false;
+					el.style.opacity = "1";
+				}
+				else {
+					el.disabled = true;
+					el.style.opacity = "0.5";
+				}
+			}
+			else {
+				el.disabled = true;
+				el.style.opacity = "0.5";
+			}
+	  }
+	  else if (action === "lock") {
+		// LOCK button - enabled when truss is raised or during orientation when not locked
+			if(spm_mode === 0) {
+				if(truss === "raised" || level === false) {
+					el.disabled = false;
+					el.style.opacity = "1";
+				}
+				else {
+					el.disabled = true;
+					el.style.opacity = "0.5";
+				}
+			}
+			else if (spm_mode === 1) {
+				if(locked === true) {
+					el.disabled = false;
+					el.style.opacity = "1";
+				}
+				else {
+					el.disabled = true;
+					el.style.opacity = "0.5";
+				}
+			}
+	  }
+	  else if (action === "verify") {
+		// RAISE button - enabled during orientation
+			if(spm_mode === 1) {
+				if(locked === true && aligned === false) {
+					el.disabled = false;
+					el.style.opacity = "1";
+				}
+				else {
+					el.disabled = true;
+					el.style.opacity = "0.5";
+				}
+			}
+			else {
+				el.disabled = true;
+				el.style.opacity = "0.5";
+			}
+	  }
       return; // don't set textContent for action buttons
     }
 
@@ -347,7 +434,7 @@ async function updateServerData(path, value) {
 // EVENT LISTENERS
 
 async function setupEventListeners() {
-  
+
   const switches = document.querySelectorAll(
     'input[type="checkbox"][data-path]'
   );
@@ -378,7 +465,7 @@ async function setupEventListeners() {
     button.addEventListener("click", (event) => {
       const path = event.target.getAttribute("data-path");
       const action = event.target.getAttribute("data-action");
-      
+
       // For action buttons, directly update the status field
       if (action === "start") {
         // Start: set the field to true
@@ -386,7 +473,8 @@ async function setupEventListeners() {
       } else if (action === "reset") {
         // Reset: set the field to false
         updateServerData(path, false);
-      } else if (action === "deploy" || action === "retract") {
+      } else if (action === "deploy" || action === "retract" || action == "unlock"
+      	|| action === "raise" || action === "lock" || action === "verify") {
 		updateServerData(path, true);
       }
       	else {

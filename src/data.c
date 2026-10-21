@@ -46,6 +46,14 @@ struct backend_data_t *init_backend(int instanceIndex) {
 	backend->deploy_latch = false;
 	backend->retract_latch = false;
 
+	// spm sim variables
+	backend->spm_ctx.rng = (uint32_t)time(NULL) ^ ((uint32_t)(backend->instance_index + 1) * 2654435761u); // rng seeding for each team
+	backend->unlock_latch = false;
+	backend->raise_latch = false;
+	backend->lock_latch = false;
+	backend->verify_latch = false;
+
+
 	// enable if testing with slider
 	backend->tss_test = true;
 
@@ -1002,7 +1010,7 @@ static cJSON* cjson_get(cJSON* cjsonObj, const char* key){
 	return cJSON_GetObjectItemCaseSensitive(cjsonObj, key);
 }
 
-#define SSU_LINK_TIMEOUT 3   // seconds without a snapshot before the peripheral counts as lost
+#define LINK_TIMEOUT 3   // seconds without a snapshot before the peripheral counts as lost
 
 static void save_eva_json(struct backend_data_t* backend, cJSON* eva_json) {
 	char filepath[100];
@@ -1034,7 +1042,7 @@ void update_ssu(struct backend_data_t* backend) {
 
 	if (backend->ssu_peripheral) {
 		// the Pi owns the simulation; only track whether it's still sending
-		bool alive = backend->server_up_time - backend->ssu_last_snapshot <= SSU_LINK_TIMEOUT;
+		bool alive = backend->server_up_time - backend->ssu_last_snapshot <= LINK_TIMEOUT;
 		const char* link = cJSON_GetStringValue(cjson_get(ssu, "link"));
 		if (!alive && link && strcmp(link, "lost") != 0) {
 			printf("SSU link lost (team %d)\n", backend->instance_index);
@@ -1078,7 +1086,7 @@ void handle_ssu_snapshot(const char* payload, int length, struct backend_data_t*
 
 	if (!backend->ssu_peripheral) {
 		printf("SSU peripheral connected (team %d)\n", backend->instance_index);
-	} else if (backend->server_up_time - backend->ssu_last_snapshot > SSU_LINK_TIMEOUT) {
+	} else if (backend->server_up_time - backend->ssu_last_snapshot > LINK_TIMEOUT) {
 		printf("SSU link restored (team %d)\n", backend->instance_index);
 	}
 	backend->ssu_peripheral = true;
@@ -1091,6 +1099,96 @@ void handle_ssu_snapshot(const char* payload, int length, struct backend_data_t*
 	save_eva_json(backend, eva_json);
 	cJSON_Delete(eva_json);
 }
+
+#define SPM_NUDGE_TICKS   2
+#define SPM_NUDGE_STICK   0.5f
+#define SPM_PUSH_TICKS  SPM_TICK_HZ
+
+// Runs the SPM simulation here, or only reports the link once a Pi has taken over
+void update_spm(struct backend_data_t* backend) {
+	cJSON* eva_json = get_json_file(backend, "EVA");
+	if (!eva_json) return;
+
+	cJSON* spm = cjson_get(eva_json, "spm");
+	if (!spm) {
+		cJSON_Delete(eva_json);
+		return;
+	}
+
+	if (backend->spm_peripheral) {
+		// the Pi owns the simulation; only track whether it's still sending
+		bool alive = backend->server_up_time - backend->spm_last_snapshot <= LINK_TIMEOUT;
+		const char* link = cJSON_GetStringValue(cjson_get(spm, "link"));
+		if (!alive && link && strcmp(link, "lost") != 0) {
+			printf("SPM link lost (team %d)\n", backend->instance_index);
+		}
+		cjson_set(spm, "link", cJSON_CreateString(alive ? "connected" : "lost"));
+	} else {
+		bool power = cJSON_IsTrue(cjson_get(spm, "power"));
+		int mode = (int)json_num(spm, "mode");
+
+		for (int step = 0; step < SPM_TICK_HZ; step++) {
+			spm_inputs_t in = {0};
+			in.switches_on = power;
+			in.mode = mode;
+
+			if (backend->spm_test_stick_ticks > 0) {
+				in.joy_x = backend->spm_test_stick;
+				backend->spm_test_stick_ticks--;
+			}
+
+			if (step == 0) {
+				in.unlock_pressed = backend->unlock_latch;
+				in.deploy_pressed = backend->deploy_latch;
+				in.lock_pressed   = backend->lock_latch;
+				in.verify_pressed = backend->verify_latch;
+			}
+
+			spm_tick(spm, &backend->spm_ctx, &in);
+		}
+		cjson_set(spm, "link", cJSON_CreateString("none"));
+	}
+
+	backend->unlock_latch = false;
+	backend->raise_latch = false;
+	backend->lock_latch = false;
+	backend->verify_latch = false;
+
+
+	save_eva_json(backend, eva_json);
+	cJSON_Delete(eva_json);
+}
+
+// Full spm state from the peripheral: replaces the spm section and marks the link alive
+void handle_spm_snapshot(const char* payload, int length, struct backend_data_t* backend) {
+	cJSON* snapshot = cJSON_ParseWithLength(payload, length);
+	if (!cJSON_IsObject(snapshot)) {
+		printf("Bad SPM snapshot (team %d)\n", backend->instance_index);
+		cJSON_Delete(snapshot);
+		return;
+	}
+
+	cJSON* eva_json = get_json_file(backend, "EVA");
+	if (!eva_json) {
+		cJSON_Delete(snapshot);
+		return;
+	}
+
+	if (!backend->spm_peripheral) {
+		printf("SPM peripheral connected (team %d)\n", backend->instance_index);
+	} else if (backend->server_up_time - backend->spm_last_snapshot > LINK_TIMEOUT) {
+		printf("SPM link restored (team %d)\n", backend->instance_index);
+	}
+	backend->spm_peripheral = true;
+	backend->spm_last_snapshot = backend->server_up_time;
+
+	cJSON_AddStringToObject(snapshot, "link", "connected");
+	cjson_set(eva_json, "spm", snapshot);   // eva_json now owns the snapshot
+
+	save_eva_json(backend, eva_json);
+	cJSON_Delete(eva_json);
+}
+
 
 /**
  * Calls the simulation engine to update all telemetry data based on elapsed time
@@ -1126,6 +1224,7 @@ void increment_simulation(struct backend_data_t *backend) {
             update_eva_station_timing(backend);
 
 			update_ssu(backend);
+			update_spm(backend);
         }
     }
 }
@@ -1165,6 +1264,33 @@ bool handle_ssu_button(struct backend_data_t* backend, const char* route, const 
         printf("SSU %s pressed (team %d)\n", is_deploy ? "deploy" : "retract", backend->instance_index);
     }
     return true;
+}
+
+bool handle_spm_button(struct backend_data_t* backend, const char* route, const char* value) {
+	if (strcmp(route, "eva.spm.unlock_pressed") == 0) {
+		backend->unlock_latch = true;
+	} else if (strcmp(route, "eva.spm.raise_pressed") == 0) {
+		backend->raise_latch = true;
+	} else if (strcmp(route, "eva.spm.lock_pressed") == 0) {
+		backend->lock_latch = true;
+	} else if (strcmp(route, "eva.spm.verify_pressed") == 0) {
+		backend->verify_latch = true;
+	} else if (strcmp(route, "eva.spm.nudge_left") == 0) {
+		backend->spm_test_stick = -SPM_NUDGE_STICK;
+		backend->spm_test_stick_ticks += SPM_NUDGE_TICKS;   // clicks add up
+	} else if (strcmp(route, "eva.spm.nudge_right") == 0) {
+		backend->spm_test_stick = SPM_NUDGE_STICK;
+		backend->spm_test_stick_ticks += SPM_NUDGE_TICKS;
+	} else if (strcmp(route, "eva.spm.push_left") == 0) {
+		backend->spm_test_stick = -1.0f;
+		backend->spm_test_stick_ticks += SPM_PUSH_TICKS;
+	} else if (strcmp(route, "eva.spm.push_right") == 0) {
+		backend->spm_test_stick = 1.0f;
+		backend->spm_test_stick_ticks += SPM_PUSH_TICKS;
+	} else {
+		return false;
+	}
+	return true;
 }
 
 /**
@@ -1271,6 +1397,8 @@ bool handle_udp_post_request(unsigned int command, unsigned char* data, struct b
     }
 
     if (handle_ssu_button(backend, mapping->path, value_str)) return true;
+    if (handle_spm_button(backend, mapping->path, value_str)) return true;
+
 
     // Create request content in the same format as HTML forms
     char request_content[256];
@@ -1736,6 +1864,8 @@ bool html_form_json_update(char* request_content, struct backend_data_t* backend
     }
 
 	if (handle_ssu_button(backend, route, value)) return true;
+	if (handle_spm_button(backend, route, value)) return true;
+
 
     // Parse the route (split by dots)
     char route_copy[256];

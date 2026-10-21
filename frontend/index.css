@@ -430,8 +430,8 @@ input:checked + .slider:before {
 
 /**************** Button CSS ****************/
 /* Base button styles */
-.btn-deploy,
-.btn-retract,
+.btn-ssu,
+.btn-spm,
 .btn-start,
 .btn-stop,
 .btn-ping {
@@ -480,17 +480,18 @@ input:checked + .slider:before {
   border: 2px solid #28e470ff;
 }
 
-.btn-deploy {
+.btn-ssu {
   background-color: var(--green);
   opacity: 0.75;
   border: 2px solid #28e470ff;
 }
 
-.btn-retract {
+.btn-spm {
   background-color: var(--green);
   opacity: 0.75;
   border: 2px solid #28e470ff;
 }
+
 
 .btn-ping-unlimited {
   background-color: var(--green);

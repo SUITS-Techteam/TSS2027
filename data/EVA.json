@@ -85,6 +85,25 @@
 		"bb_state":	"idle",
 		"bb_thermal":	"nominal"
 	},
+	"spm":	{
+		"power":	false,
+		"status":	"off",
+		"mode":	0,
+		"link":	"none",
+		"tilt":	{
+			"x":	0,
+			"y":	0
+		},
+		"level":	false,
+		"level_locked":	false,
+		"truss":	"stowed",
+		"truss_height":	0,
+		"azimuth":	0,
+		"sun_azimuth_approx":	0,
+		"azimuth_aligned":	false,
+		"orientation_locked":	false,
+		"voltage":	0
+	},
 	"spec":	{
 		"name":	"Default Rock",
 		"type":	"default_rock",

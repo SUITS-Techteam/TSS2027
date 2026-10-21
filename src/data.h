@@ -8,6 +8,7 @@
 #include "lib/cjson/cJSON.h"
 #include "lib/simulation/sim_engine.h"
 #include "lib/ssu_simulation/ssu_sim.h"
+#include "lib/spm_simulation/spm_sim.h"
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -20,6 +21,8 @@ typedef struct {
 
 
 #define SSU_SNAPSHOT_CMD 3000   // UDP: full SSU state from the peripheral
+#define SPM_SNAPSHOT_CMD 3001   // UDP: full SPM state from the peripheral
+
 
 struct backend_data_t {
     // Timing information
@@ -28,14 +31,26 @@ struct backend_data_t {
     uint32_t time_since_last_ping;
 
     int instance_index;
+	bool tss_test;               // testing drilling without analog input
 
 	// ssu simulation
 	ssu_ctx_t ssu_ctx;
-	bool tss_test;               // testing drilling without analog input
 	bool deploy_latch;
 	bool retract_latch;
 	bool ssu_peripheral;         // a Pi has sent a snapshot; it owns the simulation from now on
 	uint32_t ssu_last_snapshot;  // server_up_time of the last snapshot
+
+	// spm simulation
+	spm_ctx_t spm_ctx;
+	bool unlock_latch;        // test buttons, held until the next update
+	bool raise_latch;
+	bool lock_latch;
+	bool verify_latch;
+	bool spm_peripheral;          // a Pi has sent at least one snapshot
+	uint32_t spm_last_snapshot;        // use the same type as ssu_last_snapshot
+
+	float spm_test_stick;         // where the nudge buttons hold the stick
+	int spm_test_stick_ticks;     // how many more sim steps they hold it
 
     // Simulation engine
     sim_engine_t* sim_engine;
@@ -48,8 +63,11 @@ void cleanup_backend(struct backend_data_t*  backend);
 
 // UDP Request Handlers
 void update_ssu(struct backend_data_t* backend);
+void update_spm(struct backend_data_t* backend);
 void handle_ssu_snapshot(const char* payload, int length, struct backend_data_t* backend);
+void handle_spm_snapshot(const char* payload, int length, struct backend_data_t* backend);
 bool handle_ssu_button(struct backend_data_t* backend, const char* route, const char* value);
+bool handle_spm_button(struct backend_data_t* backend, const char* route, const char* value);
 void handle_udp_get_request(unsigned int command, unsigned char* data, struct backend_data_t* backend);
 bool handle_udp_post_request(unsigned int command, unsigned char* data, struct backend_data_t* backend);
 
