@@ -70,127 +70,160 @@ async function fetchData() {
 
 	if (path === "eva.ssu.status"){
 		const status = getNestedValue(evaData, "ssu.status");
-		const statusEl = document.getElementById("ssu-status");
+		const status_el = document.getElementById("ssu-status");
 
 		if (status === "off") {
-			statusEl.textContent = "OFF";
-			statusEl.className = "ssu-off";
+			status_el.textContent = "OFF";
+			status_el.className = "off";
 		}
 		else if (status === "booting") {
-			statusEl.textContent = "BOOTING";
-			statusEl.className = "ssu-booting";
+			status_el.textContent = "BOOTING";
+			status_el.className = "booting";
 		}
 		else {
-			statusEl.textContent = "READY";
-			statusEl.className = "ssu-ready";
+			status_el.textContent = "READY";
+			status_el.className = "ready";
 		}
 	}
 	if (path === "eva.ssu.sp_sensor") {
 		const sp = getNestedValue(evaData, "ssu.sp_sensor");
-		const spEl = document.getElementById("ssu-sp-sensor");
+		const sp_el = document.getElementById("ssu-sp-sensor");
 
 		if(sp === "not ready"){
-			spEl.textContent = "NOT READY";
-			spEl.className = "ssu-off"
+			sp_el.textContent = "NOT READY";
+			sp_el.className = "off"
 			return;
 		}
 		if (sp === "deployed"){
-			spEl.textContent = "DEPLOYED";
-			spEl.className = "ssu-deployed";
+			sp_el.textContent = "DEPLOYED";
+			sp_el.className = "deployed";
 		}
 		else {
-			spEl.textContent = "PRIMED";
-			spEl.className = "ssu-ready";
+			sp_el.textContent = "PRIMED";
+			sp_el.className = "ready";
 		}
 		return;
 	}
 	if (path === "eva.ssu.bb_sensor") {
 		const bb = getNestedValue(evaData, "ssu.bb_sensor");
-		const bbEl = document.getElementById("ssu-bb-sensor");
+		const bb_el = document.getElementById("ssu-bb-sensor");
 
 		if(bb === "not ready"){
-			bbEl.textContent = "NOT READY";
-			bbEl.className = "ssu-off"
+			bb_el.textContent = "NOT READY";
+			bb_el.className = "off"
 			return;
 		}
 		if (bb === "deployed"){
-			bbEl.textContent = "DEPLOYED";
-			bbEl.className = "ssu-deployed";
+			bb_el.textContent = "DEPLOYED";
+			bb_el.className = "deployed";
 		}
 		else {
-			bbEl.textContent = "PRIMED";
-			bbEl.className = "ssu-ready";
+			bb_el.textContent = "PRIMED";
+			bb_el.className = "ready";
 		}
 		return;
 	}
 	if (path === "eva.ssu.sp_state" || path === "eva.ssu.bb_state"){
-		const spState = getNestedValue(evaData, "ssu.sp_state");
-		const bbState = getNestedValue(evaData, "ssu.bb_state");
-		const spEl = document.getElementById("ssu-sp-state");
-		const bbEl = document.getElementById("ssu-bb-state");
+		const sp_state = getNestedValue(evaData, "ssu.sp_state");
+		const bb_state = getNestedValue(evaData, "ssu.bb_state");
+		const sp_el = document.getElementById("ssu-sp-state");
+		const bb_el = document.getElementById("ssu-bb-state");
 		const mode = getNestedValue(evaData, "ssu.mode");
 
 		if(mode === 0) {
-			bbEl.style.display = "none";
-			spEl.style.display = "inline";
-			switch (spState){
+			bb_el.style.display = "none";
+			sp_el.style.display = "inline";
+			switch (sp_state){
 				case "idle":
-					spEl.textContent = "IDLE";
-					spEl.className = "ssu-off";
+					sp_el.textContent = "IDLE";
+					sp_el.className = "off";
 					break;
 				case "drilling":
-					spEl.textContent = "DRILLING";
-					spEl.className = "ssu-ready";
+					sp_el.textContent = "DRILLING";
+					sp_el.className = "ready";
 					break;
 				case "overheated":
-					spEl.textContent = "OVERHEATED";
-					spEl.className = "ssu-off";
+					sp_el.textContent = "OVERHEATED";
+					sp_el.className = "off";
 					break;
 				case "retracting":
-					spEl.textContent = "RETRACTING";
-					spEl.className = "ssu-deployed";
+					sp_el.textContent = "RETRACTING";
+					sp_el.className = "deployed";
 					break;
 				case "retracted":
-					spEl.textContent = "RETRACTED";
-					spEl.className = "ssu-ready";
+					sp_el.textContent = "RETRACTED";
+					sp_el.className = "ready";
 					break;
 				case "deployed":
-					spEl.textContent = "DEPLOYED";
-					spEl.className = "ssu-deployed";
+					sp_el.textContent = "DEPLOYED";
+					sp_el.className = "deployed";
 					break;
 				default:
 			}
 		}
 		if(mode === 1) {
-			bbEl.style.display = "inline";
-			spEl.style.display = "none";
-			switch (bbState){
+			bb_el.style.display = "inline";
+			sp_el.style.display = "none";
+			switch (bb_state){
 				case "idle":
-					bbEl.textContent = "IDLE";
-					bbEl.className = "ssu-off";
+					bb_el.textContent = "IDLE";
+					bb_el.className = "off";
 					break;
 				case "drilling":
-					bbEl.textContent = "DRILLING";
-					bbEl.className = "ssu-ready";
+					bb_el.textContent = "DRILLING";
+					bb_el.className = "ready";
 					break;
 				case "overheated":
-					bbEl.textContent = "OVERHEATED";
-					bbEl.className = "ssu-off";
+					bb_el.textContent = "OVERHEATED";
+					bb_el.className = "off";
 					break;
 				case "retracting":
-					bbEl.textContent = "RETRACTING";
-					bbEl.className = "ssu-deployed";
+					bb_el.textContent = "RETRACTING";
+					bb_el.className = "deployed";
 					break;
 				case "retracted":
-					bbEl.textContent = "RETRACTED";
-					bbEl.className = "ssu-ready";
+					bb_el.textContent = "RETRACTED";
+					bb_el.className = "ready";
 					break;
 				case "deployed":
-					bbEl.textContent = "DEPLOYED";
-					bbEl.className = "ssu-deployed";
+					bb_el.textContent = "DEPLOYED";
+					bb_el.className = "deployed";
 					break;
 				default:
 			}
+		}
+		return;
+	}
+	if (path === "eva.spm.status") {
+		const spm_status = getNestedValue(evaData, "spm.status");
+		const spm_el = document.getElementById("spm-status");
+
+		switch (spm_status) {
+			case "off":
+				spm_el.textContent = "OFF";
+				spm_el.className = "off";
+				break;
+			case "booting":
+				spm_el.textContent = "BOOTING";
+				spm_el.className = "booting";
+				break;
+			case "leveling":
+				spm_el.textContent = "LEVELING";
+				spm_el.className = "on";
+				break;
+			case "deploying":
+				spm_el.textContent = "DEPLOYING";
+				spm_el.className = "on";
+				break;
+			case "orienting":
+				spm_el.textContent = "ORIENTING";
+				spm_el.className = "on";
+				break;
+			case "complete":
+				spm_el.textContent = "COMPLETE";
+				spm_el.className = "on";
+				break;
+			default:
 		}
 		return;
 	}
@@ -217,6 +250,7 @@ async function fetchData() {
 	  const ssu_mode = getNestedValue(evaData, "ssu.mode");
 
 	  const level = getNestedValue(evaData, "spm.level");
+	  const spm_status = getNestedValue(evaData, "spm.status");
 	  const truss = getNestedValue(evaData, "spm.truss");
 	  const locked = getNestedValue(evaData, "spm.orientation_locked");
 	  const aligned = getNestedValue(evaData, "spm.azimuth_aligned");
@@ -281,7 +315,7 @@ async function fetchData() {
       else if (action === "unlock") {
 		// UNLOCK button - enabled when platform is level and truss needs to be unlocked or orientation needs to be unlocked
 			if(spm_mode === 0) {
-				if(level === true && truss === "stowed") {
+				if(spm_status === "deploying" && level && truss === "stowed") {
 					el.disabled = false;
 					el.style.opacity = "1";
 				}
@@ -291,7 +325,7 @@ async function fetchData() {
 				}
 			}
 			else if(spm_mode === 1) {
-				if(locked) {
+				if(locked && !aligned) {
 					el.disabled = false;
 					el.style.opacity = "1";
 				}
@@ -302,9 +336,9 @@ async function fetchData() {
 			}
       }
       else if (action === "raise") {
-		// RAISE button - enabled when truss is unlocked
+		// RAISE button - enabled when spm is in deploying status and truss is unlocked
 			if(spm_mode === 0) {
-				if(level === true && truss === "stowed") {
+				if(spm_status === "deploying" && level && truss === "unlocked") {
 					el.disabled = false;
 					el.style.opacity = "1";
 				}
@@ -321,7 +355,7 @@ async function fetchData() {
 	  else if (action === "lock") {
 		// LOCK button - enabled when truss is raised or during orientation when not locked
 			if(spm_mode === 0) {
-				if(truss === "raised" || level === false) {
+				if(spm_status === "leveling" || truss === "deployed") {
 					el.disabled = false;
 					el.style.opacity = "1";
 				}
@@ -331,7 +365,7 @@ async function fetchData() {
 				}
 			}
 			else if (spm_mode === 1) {
-				if(locked === true) {
+				if(!locked && !aligned) {
 					el.disabled = false;
 					el.style.opacity = "1";
 				}
@@ -344,7 +378,7 @@ async function fetchData() {
 	  else if (action === "verify") {
 		// RAISE button - enabled during orientation
 			if(spm_mode === 1) {
-				if(locked === true && aligned === false) {
+				if(spm_status === "orienting" && locked && !aligned) {
 					el.disabled = false;
 					el.style.opacity = "1";
 				}

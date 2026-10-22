@@ -560,22 +560,22 @@ input:checked + .slider:before {
 }
 
 
-.ssu-ready {
+.ready {
 	color: #00cc00; // green
 	font-weight: bold;
 }
 
-.ssu-booting {
+.booting {
 	color: #ff3333; // red
 	font-weight: bold;
 }
 
-.ssu-off {
+.off {
 	color: #ff3333; // red
 	font-weight: bold;
 }
 
-.ssu-deployed {
+.deployed {
 	color: #2761f5; // blue
 	font-weight: bold;
 }

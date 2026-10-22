@@ -293,7 +293,7 @@ static void update_bubble(cJSON *state, spm_ctx_t *ctx)
     step_bubble_axis(&ctx->bubble_y, &ctx->bubble_vy, bubble_target(get_num(tilt, "y")));
 
 }
-static void update_level_flag(cJSON *state)
+static void update_level_flag(cJSON *state, const spm_inputs_t *in)
 {
     cJSON *tilt = cJSON_GetObjectItem(state, "tilt");
     if (!tilt) return;
@@ -458,7 +458,7 @@ void spm_tick(cJSON *state, spm_ctx_t *ctx, const spm_inputs_t *in)
     }
     update_tilt(state, ctx, in, status);
     update_bubble(state, ctx);
-    update_level_flag(state);
+    update_level_flag(state, in);
 
     if (status == LEVELING)       step_leveling(state, ctx, in);
     else if (status == DEPLOYING) step_deploying(state, in);
