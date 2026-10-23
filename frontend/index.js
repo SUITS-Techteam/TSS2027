@@ -1,5 +1,6 @@
 // GLOBAL VARIABLES
 let connectionFails = 0; // number of consecutive connection failures, resets on successful fetch
+const pendingSwitchChanges = {};
 
 
 /**
@@ -7,7 +8,8 @@ let connectionFails = 0; // number of consecutive connection failures, resets on
  */
 function onload() {
   updateClock(); // set clock immediately on load (will be updated every second later)
-  setupEventListeners();
+
+
   // Fetch fresh data from the backend every one second
   setInterval(() => {
     fetchData();
@@ -15,8 +17,8 @@ function onload() {
     updateTelemetryStatus();
   }, 1000);
 
+  setupEventListeners();  // Set up event listeners for switches and buttons
 
-  // Set up event listeners for switches and buttons
 }
 
 // DATA MANAGEMENT
@@ -230,7 +232,9 @@ async function fetchData() {
 
     // Handle checkboxes/switches (set checked property for boolean values)
     if (el.type === "checkbox") {
-      el.checked = Boolean(value);
+	  if (!isSwitchChangePending(path, value)) {
+	  	el.checked = Boolean(value);
+	  }
       return; // don't set textContent for checkboxes
     }
 
@@ -479,6 +483,7 @@ async function setupEventListeners() {
     // Listen for changes
     switchEl.addEventListener("change", (event) => {
       const value = event.target.checked;
+	  rememberSwitchChange(path, value);
 	  if(path === "eva.ssu.mode"){
 		if(value === false) {
 			updateServerData(path, 0);
@@ -538,6 +543,33 @@ async function setupEventListeners() {
 
 // HELPER FUNCTIONS
 
+
+/**
+ * Records a switch the user just flipped so polls don't undo it before the server catches up
+ *
+ * @param path Data path of the switch
+ * @param checked New checked state
+ */
+function rememberSwitchChange(path, checked) {
+  pendingSwitchChanges[path] = { checked: checked, expiresAt: Date.now() + 4000 };
+}
+
+/**
+ * True while the server still reports the old value for a switch the user just flipped
+ *
+ * @param path Data path of the switch
+ * @param serverValue Value from the latest EVA.json
+ */
+function isSwitchChangePending(path, serverValue) {
+  const pending = pendingSwitchChanges[path];
+  if (!pending) return false;
+
+  if (Boolean(serverValue) === pending.checked || Date.now() > pending.expiresAt) {
+    delete pendingSwitchChanges[path];
+    return false;
+  }
+  return true;
+}
 
 /**
  * Retrieves a nested value from an object/json using a dot-separated path

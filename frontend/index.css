@@ -561,22 +561,22 @@ input:checked + .slider:before {
 
 
 .ready {
-	color: #00cc00; // green
+	color: #00cc00; /* green */
 	font-weight: bold;
 }
 
 .booting {
-	color: #ff3333; // red
+	color: #ff3333; /* red */
 	font-weight: bold;
 }
 
 .off {
-	color: #ff3333; // red
+	color: #ff3333; 
 	font-weight: bold;
 }
 
 .deployed {
-	color: #2761f5; // blue
+	color: #2761f5; /* blue */
 	font-weight: bold;
 }
 
