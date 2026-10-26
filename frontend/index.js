@@ -1,7 +1,7 @@
 // GLOBAL VARIABLES
 let connectionFails = 0; // number of consecutive connection failures, resets on successful fetch
 const pendingSwitchChanges = {};
-
+let fetchDataWaiting = false;
 
 /**
  * Called when the index.html page is loaded, sets up the periodic data fetching
@@ -12,7 +12,7 @@ function onload() {
 
   // Fetch fresh data from the backend every one second
   setInterval(() => {
-    fetchData();
+    pollData();
     updateClock();
     updateTelemetryStatus();
   }, 1000);
@@ -22,6 +22,19 @@ function onload() {
 }
 
 // DATA MANAGEMENT
+
+// fixes an issue with fetchData calls slowly taking longer as the frontend is open
+async function pollData() {
+	if (fetchDataWaiting) return;
+	fetchDataWaiting = true;
+	try {
+		await fetchData();
+	}
+	finally {
+		fetchDataWaiting = false;
+	}
+}
+
 
 /**
  * Fetches the latest EVA  data and updates the DOM elements accordingly.
