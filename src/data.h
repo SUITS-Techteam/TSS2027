@@ -140,13 +140,6 @@ static const udp_command_mapping_t udp_command_mappings[] = {
 	// SPEC commands (sent from the peripheral device over UDP)
 	{2020, "spec.id", "float"},
 
-	// SEISMO commands (sent from the peripheral device over UDP)
-	{2022, "eva.ssu.power", "bool"},
-	{2023, "eva.ssu.umbilical", "bool"},
-	{2024, "eva.ssu.mode", "int"},
-	{2025, "eva.ssu.deploy_pressed", "bool"},
-	{2026, "eva.ssu.retract_pressed", "bool"},
-
     {0, NULL, NULL} // Sentinel
 };
 

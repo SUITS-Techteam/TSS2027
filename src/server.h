@@ -9,6 +9,7 @@
 #include "lib/cjson/cJSON.h"
 #include "network.h"
 #include "data.h"
+#include "groups.h"
 
 #define NUM_TEAMS 10
 extern struct profile_context_t profile_context;

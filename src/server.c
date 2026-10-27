@@ -60,6 +60,7 @@ int main(int argc, char *argv[]) {
         sprintf(char_port, "%d", port);
         udp_sockets[i] = create_udp_socket(hostname, char_port);
         backends[i] = init_backend(i);
+		load_group_assignments();
     }
 
 
@@ -157,6 +158,17 @@ int main(int argc, char *argv[]) {
                                 // Complete POST request received
                                 char *request_content = strstr(client->request, "\r\n\r\n");
                                 request_content += 4;  // Skip past header delimiter
+
+								if (strncmp(client->request, "POST /groups", 12) == 0) {
+                                    if (handle_group_request(request_content)) {
+                                        send_201(client);
+                                    } else {
+                                        send_400(client);
+                                    }
+                                    drop_tcp_client(&clients, client);
+                                    client = next_client;
+                                    continue;
+                                }
                                 //get team index
                                 while (*request_content != '=') {
                                     request_content++;
@@ -271,11 +283,11 @@ int main(int argc, char *argv[]) {
 
                     drop_udp_client(&udp_clients, client);
                 }
-                else if (command == SSU_SNAPSHOT_CMD && received_bytes > 12){
+                else if (command == 3000 && received_bytes > 12){
 					handle_ssu_snapshot(client->udp_request + 12, received_bytes - 12, backends[i]);
 					drop_udp_client(&udp_clients, client);
                 }
-                else if (command == SPM_SNAPSHOT_CMD && received_bytes > 12){
+                else if (command == 3001 && received_bytes > 12){
 					handle_spm_snapshot(client->udp_request + 12, received_bytes - 12, backends[i]);
 					drop_udp_client(&udp_clients, client);
                 }
@@ -285,6 +297,60 @@ int main(int argc, char *argv[]) {
             }
         }
 
+		// Peripheral port (14141): physical devices, routed device -> group -> team (see groups.c)
+        reads = wait_on_clients(clients, main_udp_socket);
+		int packets = 0;
+        while (FD_ISSET(main_udp_socket, &reads) && packets < 64) {
+			packets++;
+            struct client_info_t *udp_clients = NULL;
+            struct client_info_t *client = get_client(&udp_clients, -1);
+            if (client) {
+                int received_bytes =
+                    recvfrom(main_udp_socket, client->udp_request, MAX_UDP_REQUEST_SIZE, 0,
+                            (struct sockaddr *)&client->udp_addr, &client->address_length);
+
+                if (received_bytes >= 8) {
+                    // Always interpret UDP packets as big-endian, same as the team ports
+                    if (!big_endian()) {
+                        reverse_bytes(client->udp_request);
+                        reverse_bytes(client->udp_request + 4);
+                        if (received_bytes >= 12) {
+                            reverse_bytes(client->udp_request + 8);
+                        }
+                    }
+
+                    unsigned int time = 0;
+                    unsigned int command = 0;
+                    char data[4] = {0};
+                    get_contents(client->udp_request, &time, &command, data, received_bytes);
+
+                    int team = route_peripheral_packet(&client->udp_addr, command);
+
+                    if (command >= 1000 && command < 3000) {
+                        // Always answer POSTs, even unrouted ones, so a device waiting on a reply doesn't stall
+                        bool result = team != NO_TEAM &&
+                                      handle_udp_post_request(command, (unsigned char *)data, backends[team]);
+                        unsigned char response_buffer[4];
+                        unsigned int status = result ? 1 : 0;
+                        memcpy(response_buffer, &status, 4);
+                        sendto(main_udp_socket, response_buffer, sizeof(response_buffer), 0,
+                            (struct sockaddr *)&client->udp_addr, client->address_length);
+                    }
+                    else if (team != NO_TEAM && command == SSU_SNAPSHOT_CMD && received_bytes > 12) {
+                        handle_ssu_snapshot(client->udp_request + 12, received_bytes - 12, backends[team]);
+                    }
+                    else if (team != NO_TEAM && command == SPM_SNAPSHOT_CMD && received_bytes > 12) {
+                        handle_spm_snapshot(client->udp_request + 12, received_bytes - 12, backends[team]);
+                    }
+                }
+
+                drop_udp_client(&udp_clients, client);
+            }
+            struct timeval no_wait = {0,0};
+            FD_ZERO(&reads);
+            FD_SET(main_udp_socket, &reads);
+            select(main_udp_socket + 1, &reads,0, 0, &no_wait);
+        }
         // Check if user requested server shutdown by pressing ENTER
         if (!continue_server()) {
             break;
@@ -296,6 +362,9 @@ int main(int argc, char *argv[]) {
 
             // Sync simulation data to JSON files
             sync_simulation_to_json(backends[i]);
+
+            // Refresh peripheral online / needs-reset status for the frontend (once per second)
+        	update_group_status_file();
         }
     }
 
