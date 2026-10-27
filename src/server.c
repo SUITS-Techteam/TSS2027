@@ -60,8 +60,8 @@ int main(int argc, char *argv[]) {
         sprintf(char_port, "%d", port);
         udp_sockets[i] = create_udp_socket(hostname, char_port);
         backends[i] = init_backend(i);
-		load_group_assignments();
     }
+	load_group_assignments();
 
 
 
