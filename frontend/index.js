@@ -21,6 +21,7 @@ function onload() {
     updateTelemetryStatus();
   }, 1000);
 
+  // groups don't update often, fetch every 3 seconds
   setInterval(() => {
   	pollGroups();
   }, 3000);
@@ -303,6 +304,14 @@ async function fetchData() {
 				break;
 			default:
 		}
+		return;
+	}
+	if (path === "eva.spm.truss_height") {
+		const spm_height = getNestedValue(evaData, "spm.truss_height");
+		const spm_el = document.getElementById("spm-truss-height");
+		const height = spm_height * 100.00;
+		spm_el.textContent = height.toFixed(2);
+		spm_el.textContent = spm_el.textContent + ' \u0025';
 		return;
 	}
 	if (path === "eva.spm.azimuth_aligned") {
@@ -854,7 +863,7 @@ function renderGroups(groupsData) {
   const groups = groupsData.groups || [];
   const devices = groupsData.devices || [];
 
-  // One row per group: team picker + End run
+  // One row per group: team picker
   groupRows.replaceChildren();
   groups.forEach((group, groupIndex) => {
     const groupName = GROUP_NAMES[groupIndex];
@@ -874,11 +883,7 @@ function renderGroups(groupsData) {
     row.appendChild(buildText(`Group ${groupName}`, "group-name"));
 	row.appendChild(buildSelect(teamOptions, group.assigned_team, false, (team) => {
 	  if (Number(team) === -1) {
-	    if (running && confirm(`End Group ${groupName}'s run for team ${group.assigned_team}?`)) {
-	      sendGroupAction({ group: groupIndex, end: 1 });
-	    } else {
-	      fetchGroups();   // put the dropdown back
-	    }
+	    fetchGroups();   // put the dropdown back
 	    return;
 	  }
 	  if (running && !confirm(`Switch Group ${groupName} from team ${group.assigned_team} to team ${team}?`)) {

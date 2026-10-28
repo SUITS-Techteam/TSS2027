@@ -43,6 +43,8 @@ struct group_t {
 extern struct group_t             groups[NUM_GROUPS];
 extern struct peripheral_device_t devices[MAX_PERIPHERAL_DEVICES];
 extern int                        device_count;
+struct backend_data_t;
+
 
 // json file functions
 void load_group_assignments(void);
@@ -54,6 +56,6 @@ int route_peripheral_packet(const struct sockaddr_in* sender, unsigned int comma
 
 // frontend functions
 void end_group_run(int group_index);
-bool handle_group_request(const char* request_content);
+bool handle_group_request(const char* request_content, struct backend_data_t** backends);
 
 #endif // GROUPS_H

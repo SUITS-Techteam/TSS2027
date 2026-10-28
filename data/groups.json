@@ -1,11 +1,11 @@
 {
-	"server_time":	1793126846,
+	"server_time":	1793203585,
 	"groups":	[{
 			"name":	"A",
 			"assigned_team":	4
 		}, {
 			"name":	"B",
-			"assigned_team":	9
+			"assigned_team":	0
 		}],
 	"devices":	[{
 			"address":	"192.168.50.194",
@@ -22,8 +22,8 @@
 		}, {
 			"address":	"192.168.50.150",
 			"type":	"SPM",
-			"group":	1,
+			"group":	0,
 			"online":	false,
-			"last_seen":	"13:47:22"
+			"last_seen":	""
 		}]
 }

@@ -112,7 +112,8 @@ int route_peripheral_packet(const struct sockaddr_in* sender, unsigned int comma
 // frontend functions
 
 // maps teams to a group
-static bool assign_group_team(int group_index, int team) {
+static bool assign_group_team(int group_index, int team, struct backend_data_t** backends) {
+
     if (!is_valid_group(group_index) || team < 0 || team >= NUM_TEAMS) return false;
 
     for (int other = 0; other < NUM_GROUPS; other++) {
@@ -120,6 +121,12 @@ static bool assign_group_team(int group_index, int team) {
             printf("Team %d is already in group %s\n", team, group_names[other]);
             return false;
         }
+    }
+
+	// allow finished team to continue testing without restarting server
+	int previous_team = groups[group_index].assigned_team;
+    if (previous_team != NO_TEAM && previous_team != team) {
+        release_peripherals(backends[previous_team]);
     }
 
     groups[group_index].assigned_team = team;
@@ -154,7 +161,7 @@ static bool forget_device(int device_index) {
 //   "device=2&group=1"   put device 2 into group B (group=-1 removes it from its group)
 //   "device=2&forget=1"  remove device 2 from the list
 //   "group=0&team=3"     group A now feeds team 3
-bool handle_group_request(const char* request_content) {
+bool handle_group_request(const char* request_content, struct backend_data_t** backends) {
     int device_index, group_index, team, flag;
 
     if (read_form_int(request_content, "device", &device_index)) {
@@ -169,7 +176,7 @@ bool handle_group_request(const char* request_content) {
 
     if (read_form_int(request_content, "group", &group_index)) {
         if (read_form_int(request_content, "team", &team)) {
-            return assign_group_team(group_index, team);
+            return assign_group_team(group_index, team, backends);
         }
     }
 
@@ -280,6 +287,7 @@ void load_group_assignments(void) {
     cJSON_Delete(root);
     printf("Loaded %d peripherals, Group A team %d, Group B team %d\n",
            device_count, groups[0].assigned_team, groups[1].assigned_team);
+	save_group_assignments();
 }
 
 // updates group json file

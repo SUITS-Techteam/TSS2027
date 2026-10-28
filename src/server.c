@@ -160,7 +160,7 @@ int main(int argc, char *argv[]) {
                                 request_content += 4;  // Skip past header delimiter
 
 								if (strncmp(client->request, "POST /groups", 12) == 0) {
-                                    if (handle_group_request(request_content)) {
+                                    if (handle_group_request(request_content, backends)) {
                                         send_201(client);
                                     } else {
                                         send_400(client);
@@ -437,8 +437,7 @@ static bool continue_server(void) {
  * @param command Pointer to store command code
  * @param data Pointer to store 4-byte data payload
  */
-static void get_contents(char *buffer, unsigned int *time, unsigned int *command,
-                         unsigned char *data, int packet_size) {
+static void get_contents(char *buffer, unsigned int *time, unsigned int *command, unsigned char *data, int packet_size) {
     // Always extract timestamp and command (present in both GET and POST)
     memcpy(time, buffer, 4);
     memcpy(command, buffer + 4, 4);

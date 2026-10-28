@@ -61,13 +61,16 @@ struct backend_data_t* init_backend(int instanceIndex);
 void increment_simulation(struct backend_data_t* backend);
 void cleanup_backend(struct backend_data_t*  backend);
 
-// UDP Request Handlers
+// Simulation Functions
 void update_ssu(struct backend_data_t* backend);
 void update_spm(struct backend_data_t* backend);
 void handle_ssu_snapshot(const char* payload, int length, struct backend_data_t* backend);
 void handle_spm_snapshot(const char* payload, int length, struct backend_data_t* backend);
 bool handle_ssu_button(struct backend_data_t* backend, const char* route, const char* value);
 bool handle_spm_button(struct backend_data_t* backend, const char* route, const char* value);
+void release_peripherals(struct backend_data_t* backend);
+
+// UDP Request Handlers
 void handle_udp_get_request(unsigned int command, unsigned char* data, struct backend_data_t* backend);
 bool handle_udp_post_request(unsigned int command, unsigned char* data, struct backend_data_t* backend);
 

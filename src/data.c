@@ -1178,7 +1178,7 @@ void handle_spm_snapshot(const char* payload, int length, struct backend_data_t*
 		printf("SPM peripheral connected (team %d)\n", backend->instance_index);
 	} else if (backend->server_up_time - backend->spm_last_snapshot > LINK_TIMEOUT) {
 		printf("SPM link restored (team %d)\n", backend->instance_index);
-	}
+ 	}
 	backend->spm_peripheral = true;
 	backend->spm_last_snapshot = backend->server_up_time;
 
@@ -1189,6 +1189,72 @@ void handle_spm_snapshot(const char* payload, int length, struct backend_data_t*
 	cJSON_Delete(eva_json);
 }
 
+
+/**
+ * Hands a team's SSU and SPM back to the TSS simulation, starting over from the
+ * data/EVA.json template, so the team can test them from the frontend again.
+ * Called when the team's peripheral group moves on to another team.
+ *
+ * @param backend Team that no longer has the physical peripherals
+ */
+void release_peripherals(struct backend_data_t* backend) {
+	if (!backend->ssu_peripheral && !backend->spm_peripheral) return;
+
+	// Fresh ssu and spm sections, exactly as the team had them at server start
+	FILE* template_file = fopen("data/EVA.json", "rb");
+	if (!template_file) {
+		printf("Error: could not open data/EVA.json to release team %d's peripherals\n", backend->instance_index);
+		return;
+	}
+	fseek(template_file, 0L, SEEK_END);
+	long template_size = ftell(template_file);
+	rewind(template_file);
+	char* template_text = malloc(template_size + 1);
+	size_t bytes_read = fread(template_text, 1, template_size, template_file);
+	template_text[bytes_read] = '\0';
+	fclose(template_file);
+
+	cJSON* template_json = cJSON_Parse(template_text);
+	free(template_text);
+	cJSON* eva_json = get_json_file(backend, "EVA");
+	if (!template_json || !eva_json) {
+		cJSON_Delete(template_json);
+		cJSON_Delete(eva_json);
+		return;
+	}
+
+	if (backend->ssu_peripheral) {
+		cJSON* fresh_ssu = cJSON_DetachItemFromObjectCaseSensitive(template_json, "ssu");
+		if (fresh_ssu) cJSON_ReplaceItemInObjectCaseSensitive(eva_json, "ssu", fresh_ssu);
+
+		backend->ssu_peripheral = false;
+		backend->ssu_ctx.boot_ticks = 0;
+		backend->ssu_ctx.last_mode = -1;
+		backend->deploy_latch = false;
+		backend->retract_latch = false;
+		printf("SSU back on TSS simulation (team %d)\n", backend->instance_index);
+	}
+
+	if (backend->spm_peripheral) {
+		cJSON* fresh_spm = cJSON_DetachItemFromObjectCaseSensitive(template_json, "spm");
+		if (fresh_spm) cJSON_ReplaceItemInObjectCaseSensitive(eva_json, "spm", fresh_spm);
+
+		backend->spm_peripheral = false;
+		uint32_t rng = backend->spm_ctx.rng;   // keep this team's random sequence
+		memset(&backend->spm_ctx, 0, sizeof(backend->spm_ctx));
+		backend->spm_ctx.rng = rng;
+		backend->unlock_latch = false;
+		backend->raise_latch = false;
+		backend->lock_latch = false;
+		backend->verify_latch = false;
+		backend->spm_test_stick_ticks = 0;
+		printf("SPM back on TSS simulation (team %d)\n", backend->instance_index);
+	}
+
+	save_eva_json(backend, eva_json);
+	cJSON_Delete(eva_json);
+	cJSON_Delete(template_json);
+}
 
 /**
  * Calls the simulation engine to update all telemetry data based on elapsed time
