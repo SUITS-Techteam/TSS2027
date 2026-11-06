@@ -102,41 +102,16 @@
                                     </div>
                                     <div class="sensor-container">
                                         <label class="switch">
-                                            <input type="checkbox" data-path="eva.uia.eva2_power">
+                                            <input type="checkbox" data-path="eva.uia.eva1_oxy">
                                             <span class="slider round"></span>
                                         </label>
                                     </div>
                                     <div class="info-container">
                                         <span class="info-text">
-                                            EMU2 Power
+                                            EMU1 Oxygen
                                         </span>
                                     </div>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="card-content">
-                                    <div class="sensor-container">
-                                        <label class="switch">
-                                            <input type="checkbox" data-path="eva.uia.eva1_water_supply">
-                                            <span class="slider round"></span>
-                                        </label>
-                                    </div>
-                                    <div class="info-container">
-                                        <span class="info-text">
-                                            EV1 Supply
-                                        </span>
-                                    </div>
-                                    <div class="sensor-container">
-                                        <label class="switch">
-                                            <input type="checkbox" data-path="eva.uia.eva2_water_supply">
-                                            <span class="slider round"></span>
-                                        </label>
-                                    </div>
-                                    <div class="info-container">
-                                        <span class="info-text">
-                                            EV2 Supply
-                                        </span>
-                                    </div>
+                                    
                                 </div>
                             </div>
                             <div class="card-body">
@@ -149,44 +124,18 @@
                                     </div>
                                     <div class="info-container">
                                         <span class="info-text">
-                                            EV1 Waste
+                                            Water Waste
                                         </span>
                                     </div>
                                     <div class="sensor-container">
                                         <label class="switch">
-                                            <input type="checkbox" data-path="eva.uia.eva2_water_waste">
+                                            <input type="checkbox" data-path="eva.uia.eva1_water_supply">
                                             <span class="slider round"></span>
                                         </label>
                                     </div>
                                     <div class="info-container">
                                         <span class="info-text">
-                                            EV2 Waste
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="card-content">
-                                    <div class="sensor-container">
-                                        <label class="switch">
-                                            <input type="checkbox" data-path="eva.uia.eva1_oxy">
-                                            <span class="slider round"></span>
-                                        </label>
-                                    </div>
-                                    <div class="info-container">
-                                        <span class="info-text">
-                                            EMU1 Oxygen
-                                        </span>
-                                    </div>
-                                    <div class="sensor-container">
-                                        <label class="switch">
-                                            <input type="checkbox" data-path="eva.uia.eva2_oxy">
-                                            <span class="slider round"></span>
-                                        </label>
-                                    </div>
-                                    <div class="info-container">
-                                        <span class="info-text">
-                                            EMU2 Oxygen
+                                            Water Supply
                                         </span>
                                     </div>
                                 </div>
@@ -290,15 +239,15 @@
                                 <div class="card-content">
                                     <div class="dcu-control-row">
                                         <div class="dcu-switch-container">
-                                            <span class="dcu-label-left">SEC</span>
+                                            <span class="dcu-label-left">A</span>
                                             <label class="switch">
                                                 <input type="checkbox" data-path="eva.dcu.batt.ps">
                                                 <span class="slider round"></span>
                                             </label>
-                                            <span class="dcu-label-right">PRI</span>
+                                            <span class="dcu-label-right">B</span>
                                         </div>
                                         <div class="dcu-control-label">
-                                            <span class="info-text">BATTERY</span>
+                                            <span class="info-text">COMM</span>
                                         </div>
                                     </div>
                                     <div class="dcu-control-row">
@@ -351,11 +300,11 @@
 	                                        </div>
 										</div>
 										<div class="card-body">
-											<button data-path="eva.ssu.deploy_pressed" data-action="deploy" class="btn-ssu">
+											<button data-path="eva.ssu.deploy_pressed" data-action="peripheral-btn" class="btn-ssu">
 			                                    <svg style="pointer-events: none;" data-testid="geist-icon" height="16" stroke-linejoin="round" viewBox="0 0 16 16" width="16" style="color: currentcolor;"><path fill-rule="evenodd" clip-rule="evenodd" d="M14.5528 7.77638C14.737 7.86851 14.737 8.13147 14.5528 8.2236L1.3618 14.8191C1.19558 14.9022 1 14.7813 1 14.5955L1 1.4045C1 1.21865 1.19558 1.09778 1.3618 1.18089L14.5528 7.77638Z" fill="currentColor"></path></svg>
 			                                    DEPLOY
 			                                </button>
-			                                <button data-path="eva.ssu.retract_pressed" data-action="retract" class="btn-ssu">
+			                                <button data-path="eva.ssu.retract_pressed" data-action="peripheral-btn" class="btn-ssu">
 			                                    <svg style="pointer-events: none;" data-testid="geist-icon" height="16" stroke-linejoin="round" viewBox="0 0 16 16" width="16" style="color: currentcolor;"><path fill-rule="evenodd" clip-rule="evenodd" d="M14.5528 7.77638C14.737 7.86851 14.737 8.13147 14.5528 8.2236L1.3618 14.8191C1.19558 14.9022 1 14.7813 1 14.5955L1 1.4045C1 1.21865 1.19558 1.09778 1.3618 1.18089L14.5528 7.77638Z" fill="currentColor"></path></svg>
 			                                    RETRACT
 			                                </button>
@@ -549,19 +498,19 @@
 	                                        </div>
 										</div>
 										<div class="card-body">
-											<button data-path="eva.spm.unlock_pressed" data-action="unlock" class="btn-spm">
+											<button data-path="eva.spm.unlock_pressed" data-action="peripheral-btn" class="btn-spm">
 			                                    <svg style="pointer-events: none;" data-testid="geist-icon" height="16" stroke-linejoin="round" viewBox="0 0 16 16" width="16" style="color: currentcolor;"><path fill-rule="evenodd" clip-rule="evenodd" d="M14.5528 7.77638C14.737 7.86851 14.737 8.13147 14.5528 8.2236L1.3618 14.8191C1.19558 14.9022 1 14.7813 1 14.5955L1 1.4045C1 1.21865 1.19558 1.09778 1.3618 1.18089L14.5528 7.77638Z" fill="currentColor"></path></svg>
 			                                    UNLOCK
-			                                </button>
-			                                <button data-path="eva.spm.raise_pressed" data-action="raise" class="btn-spm">
+			                                </button> 
+			                                <button data-path="eva.spm.raise_pressed" data-action="peripheral-btn" class="btn-spm">
 			                                    <svg style="pointer-events: none;" data-testid="geist-icon" height="16" stroke-linejoin="round" viewBox="0 0 16 16" width="16" style="color: currentcolor;"><path fill-rule="evenodd" clip-rule="evenodd" d="M14.5528 7.77638C14.737 7.86851 14.737 8.13147 14.5528 8.2236L1.3618 14.8191C1.19558 14.9022 1 14.7813 1 14.5955L1 1.4045C1 1.21865 1.19558 1.09778 1.3618 1.18089L14.5528 7.77638Z" fill="currentColor"></path></svg>
 			                                    RAISE
 			                                </button>
-                                            <button data-path="eva.spm.lock_pressed" data-action="lock" class="btn-spm">
+                                            <button data-path="eva.spm.lock_pressed" data-action="peripheral-btn" class="btn-spm">
 			                                    <svg style="pointer-events: none;" data-testid="geist-icon" height="16" stroke-linejoin="round" viewBox="0 0 16 16" width="16" style="color: currentcolor;"><path fill-rule="evenodd" clip-rule="evenodd" d="M14.5528 7.77638C14.737 7.86851 14.737 8.13147 14.5528 8.2236L1.3618 14.8191C1.19558 14.9022 1 14.7813 1 14.5955L1 1.4045C1 1.21865 1.19558 1.09778 1.3618 1.18089L14.5528 7.77638Z" fill="currentColor"></path></svg>
 			                                    LOCK
 			                                </button>
-                                             <button data-path="eva.spm.verify_pressed" data-action="verify" class="btn-spm">
+                                             <button data-path="eva.spm.verify_pressed" data-action="peripheral-btn" class="btn-spm">
 			                                    <svg style="pointer-events: none;" data-testid="geist-icon" height="16" stroke-linejoin="round" viewBox="0 0 16 16" width="16" style="color: currentcolor;"><path fill-rule="evenodd" clip-rule="evenodd" d="M14.5528 7.77638C14.737 7.86851 14.737 8.13147 14.5528 8.2236L1.3618 14.8191C1.19558 14.9022 1 14.7813 1 14.5955L1 1.4045C1 1.21865 1.19558 1.09778 1.3618 1.18089L14.5528 7.77638Z" fill="currentColor"></path></svg>
 			                                    VERIFY
 			                                </button>
@@ -669,8 +618,22 @@
 			                                    </div>
 											</div>
 										</div>
+										<div class="card-body">
+											<button data-path="eva.spm.push_left" data-action="spm-control" class="btn-spm">
+		                                   		<<
+		                                	</button>
+		                                	<button data-path="eva.spm.nudge_left" data-action="spm-control" class="btn-spm">
+		                                   		<
+		                                	</button>
+		                                	<button data-path="eva.spm.nudge_right" data-action="spm-control" class="btn-spm">
+		                                   		>
+		                                	</button>
+		                                	<button data-path="eva.spm.push_right" data-action="spm-control" class="btn-spm">
+		                                   		>>
+		                                	</button>
+										</div>
 								</div>
-						<!-----------------------EV1 Spectroscopy Section---------------------------------------------------->
+						<!-----------------------EV Spectroscopy Section---------------------------------------------------->
 	                         	<div class="card" style="border-bottom: 2px solid var(--sharp-blue);">
 	                                    <div class="card-header">
 	                                        <span class="card-title">

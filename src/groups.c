@@ -7,25 +7,27 @@ int                        device_count = 0;
 static const char* group_names[NUM_GROUPS] = { "A", "B" };
 
 // maps command ids to peripheral
-static enum peripheral_type_t peripheral_type_for_command(unsigned int command) {
-    if (command >= 2001 && command <= 2010) return PERIPHERAL_UIA;
-    if (command >= 2011 && command <= 2016) return PERIPHERAL_DCU;
-    if (command >= 2017 && command <= 2019) return PERIPHERAL_IMU;
-    if (command == 2020)                    return PERIPHERAL_SPEC;
-    if (command == 3000)        			return PERIPHERAL_SSU;
-    if (command == 3001)        			return PERIPHERAL_SPM;
+static enum peripheral_type_t peripheral_command_mapping(unsigned int command) {
+    if (command == 1) return PERIPHERAL_DCU;
+    if (command == 2) return PERIPHERAL_UIA;
+    if (command == 3) return PERIPHERAL_SPM;
+	if (command == 4) return PERIPHERAL_SSU;
+	if (command == 5) return PERIPHERAL_CTS;
+    if (command == 6) return PERIPHERAL_SPEC;
+	if (command == 15) return UNIVERSITY_DEVICE;
     return PERIPHERAL_UNKNOWN;
 }
 
 // maps peripheral enum to peripheral name
-static const char* peripheral_type_name(enum peripheral_type_t type) {
+static const char* peripheral_name_mapping(enum peripheral_type_t type) {
     switch (type) {
-        case PERIPHERAL_UIA:  return "UIA";
         case PERIPHERAL_DCU:  return "DCU";
-        case PERIPHERAL_IMU:  return "IMU";
-        case PERIPHERAL_SPEC: return "SPEC";
-        case PERIPHERAL_SSU:  return "SSU";
+        case PERIPHERAL_UIA:  return "UIA";
         case PERIPHERAL_SPM:  return "SPM";
+        case PERIPHERAL_SSU:  return "SSU";
+        case PERIPHERAL_CTS:  return "CTS";
+        case PERIPHERAL_SPEC: return "SPEC";
+        case UNIVERSITY_DEVICE: return "UNI DEV";
         default:              return "UNKNOWN";
     }
 }
@@ -33,12 +35,13 @@ static const char* peripheral_type_name(enum peripheral_type_t type) {
 // translates peripheral name to peripheral enum
 static enum peripheral_type_t peripheral_type_from_name(const char* name) {
     if (!name) return PERIPHERAL_UNKNOWN;
-    if (strcmp(name, "UIA") == 0)  return PERIPHERAL_UIA;
     if (strcmp(name, "DCU") == 0)  return PERIPHERAL_DCU;
-    if (strcmp(name, "IMU") == 0)  return PERIPHERAL_IMU;
-    if (strcmp(name, "SPEC") == 0) return PERIPHERAL_SPEC;
-    if (strcmp(name, "SSU") == 0)  return PERIPHERAL_SSU;
+    if (strcmp(name, "UIA") == 0)  return PERIPHERAL_UIA;
     if (strcmp(name, "SPM") == 0)  return PERIPHERAL_SPM;
+    if (strcmp(name, "SSU") == 0)  return PERIPHERAL_SSU;
+    if (strcmp(name, "CTS") == 0)  return PERIPHERAL_CTS;
+    if (strcmp(name, "SPEC") == 0) return PERIPHERAL_SPEC;
+    if (strcmp(name, "UNI DEV") == 0) return UNIVERSITY_DEVICE;
     return PERIPHERAL_UNKNOWN;
 }
 
@@ -61,7 +64,7 @@ static struct peripheral_device_t* add_device(struct in_addr address, enum perip
     device->type        = type;
     device->group_index = NO_GROUP;
 
-    printf("New %s peripheral at %s, waiting for a group\n", peripheral_type_name(type), inet_ntoa(address));
+    printf("New %s peripheral at %s, waiting for a group\n", peripheral_name_mapping(type), inet_ntoa(address));
     save_group_assignments();
     return device;
 }
@@ -92,7 +95,7 @@ static bool is_device_online(const struct peripheral_device_t* device, time_t no
 
 // returns the team this packet belongs to, or NO_TEAM to drop it
 int route_peripheral_packet(const struct sockaddr_in* sender, unsigned int command) {
-    enum peripheral_type_t type = peripheral_type_for_command(command);
+    enum peripheral_type_t type = peripheral_command_mapping(command);
     if (type == PERIPHERAL_UNKNOWN) return NO_TEAM;
 
     struct peripheral_device_t* device = add_device(sender->sin_addr, type);
@@ -211,7 +214,7 @@ void save_group_assignments(void) {
 
         cJSON* device_json = cJSON_CreateObject();
         cJSON_AddStringToObject(device_json, "address", inet_ntoa(device->address));
-        cJSON_AddStringToObject(device_json, "type", peripheral_type_name(device->type));
+        cJSON_AddStringToObject(device_json, "type", peripheral_name_mapping(device->type));
         cJSON_AddNumberToObject(device_json, "group", device->group_index);
         cJSON_AddBoolToObject(device_json, "online", device->was_online);
         cJSON_AddStringToObject(device_json, "last_seen", last_seen_text);

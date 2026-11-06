@@ -20,12 +20,13 @@
 
 enum peripheral_type_t {
     PERIPHERAL_UNKNOWN,
-    PERIPHERAL_UIA,
     PERIPHERAL_DCU,
-    PERIPHERAL_IMU,
-    PERIPHERAL_SPEC,
+    PERIPHERAL_UIA,
     PERIPHERAL_SSU,
     PERIPHERAL_SPM,
+    PERIPHERAL_CTS,
+    PERIPHERAL_SPEC,
+	UNIVERSITY_DEVICE
 };
 
 struct peripheral_device_t {

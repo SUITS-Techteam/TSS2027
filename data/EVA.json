@@ -83,17 +83,18 @@
 		"bb_temp":	-25,
 		"bb_rpm":	0,
 		"bb_state":	"idle",
-		"bb_thermal":	"nominal"
+		"bb_thermal":	"nominal",
+		"keepout": false,
+		"keepout_timer": 5,
+		"launch_lock": false,
 	},
 	"spm":	{
 		"power":	false,
 		"status":	"off",
 		"mode":	0,
 		"link":	"none",
-		"tilt":	{
-			"x":	0,
-			"y":	0
-		},
+		"tilt_x": 0,
+		"tilt_y": 0,
 		"level":	false,
 		"level_locked":	false,
 		"truss":	"stowed",

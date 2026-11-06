@@ -372,7 +372,7 @@ async function fetchData() {
         el.disabled = !is_running;
         el.style.opacity = !is_running ? "0.5" : "1";
       }
-      else if (action === "deploy") {
+      else if (path === "eva.ssu.deploy_pressed") {
 		// DEPLOY button - enabled when NOT deployed and state is retracted and depth is 0.0 for respective mode
 			if(ssu_mode === 0) {
 				if (sp_state === "retracted" && sp_depth === 0 && sp === "primed"){
@@ -395,7 +395,7 @@ async function fetchData() {
 			    }
 			}
       }
-      else if (action === "retract") {
+      else if (path === "eva.ssu.retract_pressed") {
 		// RETRACT button - enabled when depth is at target (50) and state is not overheated or sensor already deployed
 			if(ssu_mode === 0) {
 				if (sp_state !== "drilling" && sp_state !== "deployed" && sp_state !== "overheated" && sp_depth >= 50){
@@ -418,7 +418,7 @@ async function fetchData() {
 			    }
 			}
       }
-      else if (action === "unlock") {
+      else if (path === "eva.spm.unlock_pressed") {
 		// UNLOCK button - enabled when platform is level and truss needs to be unlocked or orientation needs to be unlocked
 			if(spm_mode === 0) {
 				if(spm_status === "deploying" && level && truss === "stowed") {
@@ -441,7 +441,7 @@ async function fetchData() {
 				}
 			}
       }
-      else if (action === "raise") {
+      else if (path === "eva.spm.raise_pressed") {
 		// RAISE button - enabled when spm is in deploying status and truss is unlocked
 			if(spm_mode === 0) {
 				if(spm_status === "deploying" && level && truss === "unlocked") {
@@ -458,7 +458,7 @@ async function fetchData() {
 				el.style.opacity = "0.5";
 			}
 	  }
-	  else if (action === "lock") {
+	  else if (path === "eva.spm.lock_pressed") {
 		// LOCK button - enabled when truss is raised or during orientation when not locked
 			if(spm_mode === 0) {
 				if(spm_status === "leveling" || truss === "deployed") {
@@ -481,8 +481,8 @@ async function fetchData() {
 				}
 			}
 	  }
-	  else if (action === "verify") {
-		// RAISE button - enabled during orientation
+	  else if (path === "eva.spm.verify_pressed") {
+		// VERIFY button - enabled during orientation
 			if(spm_mode === 1) {
 				if(spm_status === "orienting" && locked && !aligned) {
 					el.disabled = false;
@@ -492,6 +492,16 @@ async function fetchData() {
 					el.disabled = true;
 					el.style.opacity = "0.5";
 				}
+			}
+			else {
+				el.disabled = true;
+				el.style.opacity = "0.5";
+			}
+	  }
+	  else if (action === "spm-control"){
+			if(spm_status === "leveling" || spm_status === "orienting") {
+				el.disabled = false;
+				el.style.opacity = "1";
 			}
 			else {
 				el.disabled = true;
@@ -586,7 +596,7 @@ async function setupEventListeners() {
     switchEl.addEventListener("change", (event) => {
       const value = event.target.checked;
 	  rememberSwitchChange(path, value);
-	  if(path === "eva.ssu.mode"){
+	  if(path === "eva.ssu.mode" || path === "eva.spm.mode"){
 		if(value === false) {
 			updateServerData(path, 0);
 		}
@@ -614,8 +624,7 @@ async function setupEventListeners() {
       } else if (action === "reset") {
         // Reset: set the field to false
         updateServerData(path, false);
-      } else if (action === "deploy" || action === "retract" || action == "unlock"
-      	|| action === "raise" || action === "lock" || action === "verify") {
+      } else if (action === "peripheral-btn" || action === "spm-control") {
 		updateServerData(path, true);
       }
       	else {

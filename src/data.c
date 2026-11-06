@@ -1100,9 +1100,6 @@ void handle_ssu_snapshot(const char* payload, int length, struct backend_data_t*
 	cJSON_Delete(eva_json);
 }
 
-#define SPM_NUDGE_TICKS   2
-#define SPM_NUDGE_STICK   0.5f
-#define SPM_PUSH_TICKS  SPM_TICK_HZ
 
 // Runs the SPM simulation here, or only reports the link once a Pi has taken over
 void update_spm(struct backend_data_t* backend) {
@@ -1133,13 +1130,14 @@ void update_spm(struct backend_data_t* backend) {
 			in.mode = mode;
 
 			if (backend->spm_test_stick_ticks > 0) {
-				in.joy_x = backend->spm_test_stick;
+				if (mode == 0) in.joy_x = backend->spm_test_stick;
+				if (mode == 1) in.joy_z = backend->spm_test_stick;
 				backend->spm_test_stick_ticks--;
 			}
 
 			if (step == 0) {
 				in.unlock_pressed = backend->unlock_latch;
-				in.deploy_pressed = backend->deploy_latch;
+				in.raise_pressed = backend->raise_latch;
 				in.lock_pressed   = backend->lock_latch;
 				in.verify_pressed = backend->verify_latch;
 			}
@@ -1342,17 +1340,17 @@ bool handle_spm_button(struct backend_data_t* backend, const char* route, const 
 	} else if (strcmp(route, "eva.spm.verify_pressed") == 0) {
 		backend->verify_latch = true;
 	} else if (strcmp(route, "eva.spm.nudge_left") == 0) {
-		backend->spm_test_stick = -SPM_NUDGE_STICK;
-		backend->spm_test_stick_ticks += SPM_NUDGE_TICKS;   // clicks add up
+		backend->spm_test_stick = -0.5;
+		backend->spm_test_stick_ticks += 2;   // clicks add up
 	} else if (strcmp(route, "eva.spm.nudge_right") == 0) {
-		backend->spm_test_stick = SPM_NUDGE_STICK;
-		backend->spm_test_stick_ticks += SPM_NUDGE_TICKS;
+		backend->spm_test_stick = 0.5;
+		backend->spm_test_stick_ticks += 2;
 	} else if (strcmp(route, "eva.spm.push_left") == 0) {
 		backend->spm_test_stick = -1.0f;
-		backend->spm_test_stick_ticks += SPM_PUSH_TICKS;
+		backend->spm_test_stick_ticks += 4;
 	} else if (strcmp(route, "eva.spm.push_right") == 0) {
 		backend->spm_test_stick = 1.0f;
-		backend->spm_test_stick_ticks += SPM_PUSH_TICKS;
+		backend->spm_test_stick_ticks += 4;
 	} else {
 		return false;
 	}

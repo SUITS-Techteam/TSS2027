@@ -20,8 +20,8 @@ typedef struct {
 } udp_command_mapping_t;
 
 
-#define SSU_SNAPSHOT_CMD 3000   // UDP: full SSU state from the peripheral
-#define SPM_SNAPSHOT_CMD 3001   // UDP: full SPM state from the peripheral
+#define SSU_SNAPSHOT_CMD 4
+#define SPM_SNAPSHOT_CMD 3
 
 
 struct backend_data_t {

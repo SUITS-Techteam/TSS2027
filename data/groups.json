@@ -1,8 +1,8 @@
 {
-	"server_time":	1793203585,
+	"server_time":	1793911268,
 	"groups":	[{
 			"name":	"A",
-			"assigned_team":	4
+			"assigned_team":	8
 		}, {
 			"name":	"B",
 			"assigned_team":	0
@@ -14,15 +14,9 @@
 			"online":	false,
 			"last_seen":	""
 		}, {
-			"address":	"192.168.50.116",
-			"type":	"DCU",
-			"group":	1,
-			"online":	false,
-			"last_seen":	""
-		}, {
 			"address":	"192.168.50.150",
 			"type":	"SPM",
-			"group":	0,
+			"group":	1,
 			"online":	false,
 			"last_seen":	""
 		}]
