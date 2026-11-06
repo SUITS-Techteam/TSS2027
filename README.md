@@ -117,9 +117,7 @@ The comms tower station (SSU) is one of the planned peripheral hardware devices 
 
 The telemetry server is an important part of the challenge as it will serve as the main way to fetch telemetry for the EVA. You'll take this telemetry data and use it within the respective interfaces that you are designing and developing ahead of test week. This section will outline how to connect to the data stream, data formats, and other helpful information for development.
 
-To create a more realistic scenario, we require that you request and send commands over the [user datagram protocol](https://www.cloudflare.com/learning/ddos/glossary/user-datagram-protocol-udp/) (UDP) instead of a HTTPS connection. Please note that all requests should be formatted in [big endian](https://www.geeksforgeeks.org/dsa/little-and-big-endian-mystery/) format.
-
-Instead of requesting data over and over, your device **subscribes** to the devices it needs. Once subscribed, TSS sends you that device's data every second until you unsubscribe.
+To create a more realistic scenario, we require that you request and send commands over [user datagram protocol](https://www.cloudflare.com/learning/ddos/glossary/user-datagram-protocol-udp/) (UDP) instead of a HTTPS connection. Please note that all requests should be formatted in [big endian](https://www.geeksforgeeks.org/dsa/little-and-big-endian-mystery/) format.
 
 ### Packet structure
 
@@ -132,7 +130,7 @@ Every packet you send and every packet TSS sends you has the structure below
 | 6      | 2 bytes | Device ID     | The device the packet is from or about, see <a href="#device-ids">Device IDs</a> (uint16) |
 | 8      | 2 bytes | Message code  | What the packet is for, see <a href="#message-codes">Message Codes</a> (uint16) |
 | 10     | x bytes | Data          | Depends on the message code, can be empty                                   |
-| 10 + x | 1 byte  | Checksum      | XOR of every byte before it (uint8                                              |
+| 10 + x | 1 byte  | Checksum      | XOR of every byte before it (uint8)                                              |
 
 The smallest possible packet is 11 bytes: a header and a checksum with no data. TSS ignores any packet whose length field doesn't match the number of bytes it received, or whose checksum is wrong. You should do the same with packets you receive.
 
@@ -171,10 +169,14 @@ TSS sends its replies back to the IP address and port your packets came from, so
 
 #### Subscribing
 
+Instead of requesting data over and over, your device **subscribes** to the devices it needs. 
+
 - You can subscribe to the **UIA** and **DCU** at any time. They don't count toward your POI limit.
 - You can be subscribed to **one POI device** at a time: SPM, SSU, CTS or XRF. Subscribing to a new POI device replaces the one you had.
 - **Unsubscribe** removes your POI subscription. Your UIA and DCU subscriptions stay active.
 - Every Subscribe and Unsubscribe gets an Ack back. If you don't receive one, resend the packet, since UDP packets can be lost.
+  
+Your system should subscribe to a POI device when you arrive at that station and unsubscribe when you leave it.
 
 #### Example Packets
 
