@@ -46,7 +46,7 @@ void clock_setup(struct profile_context_t *ptContext) {
 /**
  * Discovers the first non-loopback IP address of the local machine.
  * Falls back to 127.0.0.1 if no network interface is found.
- * 
+ *
  * @param hostname_out Buffer to store the IP address (minimum 16 bytes)
  */
 void get_ip_address(char *hostname_out) {
@@ -54,7 +54,7 @@ void get_ip_address(char *hostname_out) {
         fprintf(stderr, "get_ip_address: hostname_out is NULL\n");
         return;
     }
-    
+
     memset(hostname_out, 0, 16);
     strcpy(hostname_out, "127.0.0.1"); // set default to localhost
 
@@ -128,7 +128,7 @@ void get_ip_address(char *hostname_out) {
 /**
  * Determines the MIME content type based on file extension.
  * Used for HTTP responses to set proper Content-Type headers.
- * 
+ *
  * @param path File path with extension
  * @return MIME type string, defaults to "application/octet-stream"
  */
@@ -136,7 +136,7 @@ const char *get_content_type(const char *path) {
     if (!path) {
         return "application/octet-stream";
     }
-    
+
     const char *last_dot = strstr(path, ".");
     if (last_dot) {
         if (strcmp(last_dot, ".css") == 0)
@@ -173,7 +173,7 @@ const char *get_content_type(const char *path) {
 /**
  * Creates and binds a UDP socket for datagram communication.
  * Used for real-time telemetry data exchange with clients.
- * 
+ *
  * @param hostname IP address to bind to
  * @param port Port number to bind to
  * @return Socket descriptor, or -1 on failure
@@ -204,9 +204,9 @@ SOCKET create_udp_socket(char *hostname, char *port) {
 /**
  * Creates and configures a TCP listening socket for HTTP connections.
  * Sets up socket options for reuse and begins listening for connections.
- * 
+ *
  * @param hostname IP address to bind to
- * @param port Port number to bind to  
+ * @param port Port number to bind to
  * @return Socket descriptor, exits on failure
  */
 SOCKET create_tcp_socket(char *hostname, char *port) {
@@ -255,7 +255,7 @@ SOCKET create_tcp_socket(char *hostname, char *port) {
 /**
  * Finds an existing client by socket or creates a new client entry.
  * Maintains a linked list of active client connections.
- * 
+ *
  * @param clients Pointer to head of client list
  * @param socket Socket descriptor to search for
  * @return Client structure, newly allocated if not found
@@ -335,53 +335,53 @@ void drop_tcp_client(struct client_info_t **clients, struct client_info_t *clien
 /**
  * Converts client's TCP socket address to a readable IP string.
  * Uses a static buffer, so subsequent calls overwrite previous results.
- * 
+ *
  * @param client Client structure with address information
  * @return IP address string or "unknown" on error
  */
 const char *get_client_address(struct client_info_t *client) {
     static char address_buffer[100];
-    
+
     if (!client) {
         strcpy(address_buffer, "unknown");
         return address_buffer;
     }
-    
+
     if (getnameinfo((struct sockaddr *)&client->address, client->address_length, address_buffer,
                     sizeof(address_buffer), 0, 0, NI_NUMERICHOST) != 0) {
         strcpy(address_buffer, "unknown");
     }
-    
+
     return address_buffer;
 }
 
 /**
  * Converts client's UDP address to a readable IP string.
  * Separate from TCP address as UDP clients can have different addressing.
- * 
- * @param client Client structure with UDP address information  
+ *
+ * @param client Client structure with UDP address information
  * @return IP address string or "unknown" on error
  */
 const char *get_client_udp_address(struct client_info_t *client) {
     static char address_buffer[100];
-    
+
     if (!client) {
         strcpy(address_buffer, "unknown");
         return address_buffer;
     }
-    
+
     if (getnameinfo((struct sockaddr *)&client->udp_addr, client->address_length, address_buffer,
                     sizeof(address_buffer), 0, 0, NI_NUMERICHOST) != 0) {
         strcpy(address_buffer, "unknown");
     }
-    
+
     return address_buffer;
 }
 
 /**
  * Sets up a select() call to monitor multiple sockets for activity.
  * Monitors the server listening socket, UDP socket, and all client connections.
- * 
+ *
  * @param clients Linked list of active clients
  * @param server listening socket
  * @return File descriptor set with sockets ready for I/O
@@ -479,7 +479,7 @@ void reset_client_request_buffer(struct client_info_t *client) {
 /**
  * Serves static files from the frontend directory via HTTP.
  * Handles path validation, file reading, and proper HTTP headers.
- * 
+ *
  * @param client Client requesting the resource
  * @param path Requested file path (relative to frontend/)
  */
@@ -569,3 +569,68 @@ void serve_resource(struct client_info_t *client, const char *path) {
     fclose(fp);
 }
 
+///////////////////////////
+// new data packet stuff //
+///////////////////////////
+static unsigned char xor_checksum(const unsigned char* bytes, int byte_count) {
+    unsigned char checksum = 0;
+    for (int i = 0; i < byte_count; i++) {
+        checksum ^= bytes[i];
+    }
+    return checksum;
+}
+
+/**
+ * Builds a packet in the new format.
+ * @return Total packet size, or -1 if it doesn't fit in packet_capacity
+ */
+
+int build_header_packet(uint32_t timestamp, uint16_t device_id, uint16_t message_code,
+                     const uint8_t* data, uint16_t data_length, uint8_t* packet_out, int packet_capacity) {
+
+    int packet_length = 10 + data_length + 1; // 10 bytes before data_length arg
+    if (packet_length > packet_capacity) {
+    	return -1;
+	}
+
+    packet_out[0] = timestamp >> 24;
+    packet_out[1] = timestamp >> 16;
+    packet_out[2] = timestamp >> 8;
+    packet_out[3] = timestamp;
+    packet_out[4] = packet_length >> 8;
+    packet_out[5] = packet_length;
+    packet_out[6] = device_id >> 8;
+    packet_out[7] = device_id;
+    packet_out[8] = message_code >> 8;
+    packet_out[9] = message_code;
+    if (data_length > 0) {
+        memcpy(packet_out + 10, data, data_length);
+    }
+    packet_out[packet_length - 1] = xor_checksum(packet_out, packet_length - 1);
+    return packet_length;
+}
+
+
+/**
+ * Checks a received packet and pulls out its fields.
+ * @return 1 if the packet is valid, 0 if it is too short, its length field is wrong, or the checksum does not match
+ */
+int read_header_packet(const uint8_t* packet, int packet_size, uint16_t* device_id,
+                       uint16_t* message_code, const uint8_t** data, uint16_t* data_length) {
+
+    if (packet_size < 10 + 1) {
+    	return 0;
+    }
+    if (((packet[4] << 8) | packet[5]) != packet_size) {
+    	return 0;
+    }
+    if (xor_checksum(packet, packet_size - 1) != packet[packet_size - 1]) {
+    	return 0;
+	}
+
+    *device_id = (packet[6] << 8) | packet[7];
+    *message_code  = (packet[8] << 8) | packet[9];
+    *data          = packet + 10;
+    *data_length   = packet_size - 9;
+    return 1;
+}

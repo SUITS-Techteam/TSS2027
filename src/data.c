@@ -47,7 +47,6 @@ struct backend_data_t *init_backend(int instanceIndex) {
 	backend->retract_latch = false;
 
 	// spm sim variables
-	backend->spm_ctx.rng = (uint32_t)time(NULL) ^ ((uint32_t)(backend->instance_index + 1) * 2654435761u); // rng seeding for each team
 	backend->unlock_latch = false;
 	backend->raise_latch = false;
 	backend->lock_latch = false;
@@ -1126,7 +1125,7 @@ void update_spm(struct backend_data_t* backend) {
 
 		for (int step = 0; step < SPM_TICK_HZ; step++) {
 			spm_inputs_t in = {0};
-			in.switches_on = power;
+			in.power = power;
 			in.mode = mode;
 
 			if (backend->spm_test_stick_ticks > 0) {
@@ -1142,7 +1141,7 @@ void update_spm(struct backend_data_t* backend) {
 				in.verify_pressed = backend->verify_latch;
 			}
 
-			spm_tick(spm, &backend->spm_ctx, &in);
+			spm_sim_tick(spm, &backend->spm_ctx, &in);
 		}
 		cjson_set(spm, "link", cJSON_CreateString("none"));
 	}
@@ -1238,9 +1237,7 @@ void release_peripherals(struct backend_data_t* backend) {
 		if (fresh_spm) cJSON_ReplaceItemInObjectCaseSensitive(eva_json, "spm", fresh_spm);
 
 		backend->spm_peripheral = false;
-		uint32_t rng = backend->spm_ctx.rng;   // keep this team's random sequence
 		memset(&backend->spm_ctx, 0, sizeof(backend->spm_ctx));
-		backend->spm_ctx.rng = rng;
 		backend->unlock_latch = false;
 		backend->raise_latch = false;
 		backend->lock_latch = false;

@@ -37,6 +37,7 @@
 
 #include <math.h>
 #include <stdio.h>
+#include <stdint.h>
 
 ///////////////////////////////////////////////////////////////////////////////////
 //                                  Structs
@@ -80,6 +81,11 @@ void send_304(struct client_info_t* client);
 void reset_client_request_buffer(struct client_info_t* client);
 void serve_resource(struct client_info_t* client, const char* path);
 
+int build_header_packet(uint32_t timestamp, uint16_t device_id, uint16_t message_code,
+                     const uint8_t* data, uint16_t data_length, uint8_t* packet_out, int packet_capacity);
+int read_header_packet(const uint8_t* packet, int packet_size, uint16_t* device_id,
+                    uint16_t* message_code, const uint8_t** data, uint16_t* data_length);
+
 ///////////////////////////////////////////////////////////////////////////////////
 //                        Cross-Platform High-Precision Timing
 ///////////////////////////////////////////////////////////////////////////////////
@@ -90,7 +96,6 @@ void serve_resource(struct client_info_t* client, const char* path);
     #include <time.h>
 #else
     #include <time.h>
-    #include <stdint.h>
 #endif
 
 struct profile_context_t {
