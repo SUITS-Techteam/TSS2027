@@ -77,18 +77,14 @@ The umbilical interface assembly (UIA) is a component used at the beginning of a
 
 <img src="documents/peripherals/uia.jpeg" style="height: 400px"/>
 
-| Sensor       | Value True | Value False | Description                        |
-| ------------ | ---------- | ----------- | ---------------------------------- |
-| EMU1 POWER   | ON         | OFF         | Remotely powers the suit for EVA 1 |
-| EV1 SUPPLY   | OPEN       | CLOSED      | Fills EVA 1's liquid coolant       |
-| EV1 WASTE    | OPEN       | CLOSED      | Flushes EVA 1's liquid coolant     |
-| EV1 OXYGEN   | OPEN       | CLOSED      | Fills EVA 1's oxygen tanks         |
-| EMU2 POWER   | ON         | OFF         | Remotely powers the suit for EVA 2 |
-| EV2 SUPPLY   | OPEN       | CLOSED      | Fills EVA 2's liquid coolant       |
-| EV2 WASTE    | OPEN       | CLOSED      | Flushes EVA 2's liquid coolant     |
-| EV2 OXYGEN   | OPEN       | CLOSED      | Fills EVA 2's oxygen tanks         |
-| O2 Vent      | OPEN       | CLOSED      | Flushes both EVAs oxygen tanks     |
-| DEPRESS PUMP | ON         | OFF         | Pressurizes both EVA suits         |
+| Sensor       | Value False | Value True | Description                      |
+| ------------ | ----------- | ---------- | ---------------------------------|
+| POWER        | OFF         | ON         | Remotely powers the suit for EVA |
+| OXYGEN       | CLOSED      | OPEN       | Fills suit oxygen tanks          |
+| WATER SUPPLY | CLOSED      | OPEN       | Fills suit liquid coolant        |
+| WATER WASTE  | CLOSED      | OPEN       | Flushes suit liquid coolant      |
+| O2 Vent      | CLOSED      | OPEN       | Flushes suit oxygen tank         |
+| DEPRESS PUMP | OFF         | ON         | Pressurizes EVA suit             |
 
 ### DCU
 
@@ -96,14 +92,14 @@ The display and control unit (DCU) used for this challenge is a component that a
 
 <img src="documents/peripherals/dcu_front_new.jpg" style="height: 200px"/> <img src="documents/peripherals/dcu_top_new.jpg" style="height: 200px"/>
 
-| Sensor  | Value True | Value False     | Description                                                                                           |
-| ------- | ---------- | --------------- | ----------------------------------------------------------------------------------------------------- |
-| BATTERY | SUIT BATT  | UMBILICAL POWER | Describes if the suit is running off its local battery or UIA power                                   |
-| OXYGEN  | PRI TANK   | SEC TANK        | Describes if the suit is pulling from primary or secondary oxygen tanks                               |
-| BATTERY   | PRI BATT  | SEC BATT       | Describes if the suit is connected to primary or secondary battery                                 |
-| FAN     | PRI FAN    | SEC FAN         | Describes if the suit is using the primary fan or secondary fan                                       |
-| PUMP    | OPEN       | CLOSED          | Describes if the coolant pump for the suit is open or closed (allows water to be flushed or supplied) |
-| CO2     | Scrubber A | Scrubber B      | Describes which scrubber is currently filling with CO2 (other is venting)                             |
+| Sensor  | Value False | Value True     | Description                                                                                           |
+| ------- | ----------- | --------------- | ----------------------------------------------------------------------------------------------------- |
+| BATTERY | LOCAL BATT  | UMBILICAL POWER | Describes if the suit is running off its local battery or UIA power                                   |
+| OXYGEN  | PRI TANK    | SEC TANK        | Describes if the suit is pulling from primary or secondary oxygen tanks                               |
+| COMM    | A           | B               | Describes which communications channel the suit is currently connected to                             |
+| FAN     | PRI FAN     | SEC FAN         | Describes if the suit is using the primary fan or secondary fan                                       |
+| PUMP    | CLOSED      | OPEN            | Describes if the coolant pump for the suit is open or closed (allows water to be flushed or supplied) |
+| CO2     | PRI SCRUB   | SEC SCRUB       | Describes which scrubber is currently filling with CO2 (other is venting)                             |
 
 ### SPM
 
@@ -121,46 +117,97 @@ The comms tower station (SSU) is one of the planned peripheral hardware devices 
 
 The telemetry server is an important part of the challenge as it will serve as the main way to fetch telemetry for the EVA. You'll take this telemetry data and use it within the respective interfaces that you are designing and developing ahead of test week. This section will outline how to connect to the data stream, data formats, and other helpful information for development.
 
-### UDP socket communication
+To create a more realistic scenario, we require that you request and send commands over the [user datagram protocol](https://www.cloudflare.com/learning/ddos/glossary/user-datagram-protocol-udp/) (UDP) instead of a HTTPS connection. Please note that all requests should be formatted in [big endian](https://www.geeksforgeeks.org/dsa/little-and-big-endian-mystery/) format.
 
-To create a more realistic scenario, we require that you request and send commands over the [user datagram protocol](https://www.cloudflare.com/learning/ddos/glossary/user-datagram-protocol-udp/) (UDP) instead of a HTTPS connection. For fetching data and issuing commands, you will use a specified command number, more details can be found below. Please note that all requests should be formatted in [big endian](https://www.geeksforgeeks.org/dsa/little-and-big-endian-mystery/) format.
+Instead of requesting data over and over, your device **subscribes** to the devices it needs. Once subscribed, TSS sends you that device's data every second until you unsubscribe.
 
-The request packet should contain two different integers, the first is a UNIX timestamp, and the second is a command number. If you are requesting to change the value of a field, then you will use an additional 4 bytes to set a new value for that field.
+### Packet structure
 
-| Timestamp (unit32) | Command number (uint32) | Input Data (float) |
-| ------------------ | ----------------------- | ------------------ |
-| 4 bytes            | 4 bytes                 | 4 bytes (optional) |
+Every packet you send and every packet TSS sends you has the structure below
 
-The server will always respond back with a UDP packet to acknowledge a request or change. If you are sending a packet to change a value , then you will receive a 4 byte response where a successful change will be indicated as true `(01000000)` and false as `(00000000)`. If requesting a JSON file (command numbers 0, 1, and 2), then the UDP response will be a variable number of bytes based on the JSON file length. You can convert these bytes back to JSON for use within your interfaces.
+| Offset | Size    | Field         | Description                                                                 |
+| ------ | ------- | ------------- | --------------------------------------------------------------------------- |
+| 0      | 4 bytes | Timestamp     | UNIX timestamp (uint32)                                                     |
+| 4      | 2 bytes | Packet length | Size of the whole packet in bytes, including the header and checksum (uint16) |
+| 6      | 2 bytes | Device ID     | The device the packet is from or about, see <a href="#device-ids">Device IDs</a> (uint16) |
+| 8      | 2 bytes | Message code  | What the packet is for, see <a href="#message-codes">Message Codes</a> (uint16) |
+| 10     | x bytes | Data          | Depends on the message code, can be empty                                   |
+| 10 + x | 1 byte  | Checksum      | XOR of every byte before it (uint8                                              |
 
-| Output Data    |
-| -------------- |
-| Variable # of bytes |
+The smallest possible packet is 11 bytes: a header and a checksum with no data. TSS ignores any packet whose length field doesn't match the number of bytes it received, or whose checksum is wrong. You should do the same with packets you receive.
 
-These are the commands you can send to the server to fetch the telemetry data as JSON files. They directly correspond to the fields in the EVA.JSON file in `/data` folder in the root directory. Please note that the response from the UDP socket will be in byte format and you will need to convert it back to a human readable JSON format for processing.
+To calculate the checksum, start at `0` and XOR it with each byte of the packet in order, stopping before the checksum byte. The result is the checksum.
 
-| Command number |   Command   |
-| -- | ----------------------- |
-| 1  | Get telemetry values    |
-| 2  | Get TSS status          |
-| 3  | Get DCU states          | 
-| 4  | Get ERROR states        | 
-| 5  | Get IMU states          | 
-| 6  | Get UIA states          | 
-| 7  | Get SSU states          |
-| 8  | Get SPEC states         | 
+### Device IDs
 
+Every packet your device sends must use device ID `15`. 
 
-When fetching data, we recommend doing so in one second intervals. Telemetry data is calculated and updated in one second increments, so increasing the request rate in your programs will not make any difference.
+| Device ID |               Device                |
+| --------- | ----------------------------------- |
+| 1         | DCU (Display and Control Unit)      | 
+| 2         | UIA (Umbilical Interface Assembly)  | 
+| 3         | SPM (Solar Power Module)            | 
+| 4         | SSU (Seismometer Sensing Unit       |
+| 5         | CTS (Comm Tower Station             |
+| 6         | XRF (X-ray Frequency) Scanner       | 
+| 15        | University Team Device              | 
 
-Here is an example packet you can could send to fetch the EVA.json file:
+### Message Codes
+
+These are the message codes that can be in a header packet.
+
+| Code | Message     | Sent by | Data |
+| ---- | ----------- | ------- | ---- |
+| 1    | Subscribe   | Team    | 2 bytes: the device ID to subscribe to (uint16) |
+| 2    | Unsubscribe | Team    | None |
+| 3    | Telemetry   | TSS     | The device's data, see <a href="#telemetry-data">Telemetry data</a>. The header's device ID says which device it is. |
+| 4    | Ack         | TSS     | 1 byte: `0` = success, `1` = your team isn't assigned to a group yet, `2` = unknown device ID |
+
+#### Connecting your device
+
+TSS recognizes your team by your device's IP address. The first time your device sends a packet, it shows up on the TSS website as an unassigned device. Until it's assigned to your team, every reply you get is an Ack with result `1`. During test week, staff assign your devices. On your own instance of TSS, you can assign your device yourself from the website.
+
+TSS sends its replies back to the IP address and port your packets came from, so listen on the same socket you send from. **Teams can only have one device connected to TSS** 
+
+#### Subscribing
+
+- You can subscribe to the **UIA** and **DCU** at any time. They don't count toward your POI limit.
+- You can be subscribed to **one POI device** at a time: SPM, SSU, CTS or XRF. Subscribing to a new POI device replaces the one you had.
+- **Unsubscribe** removes your POI subscription. Your UIA and DCU subscriptions stay active.
+- Every Subscribe and Unsubscribe gets an Ack back. If you don't receive one, resend the packet, since UDP packets can be lost.
+
+#### Example Packets
+
+Here is an example packet you can could send to subscribe to the SSU telemetry data feed. The TSS responds back with a packet with the Ack message code for if your packet was successful. It will respond with Device ID 15 when sending the Ack packet.
+```
+Timestamp: 1763414183 -> bytes: 69 1b 90 a7
+Packet Length: 13 -> bytes: 00 0a
+Device ID: University Device (15) -> bytes: 00 0f
+Message Code: Subscribe (1) -> bytes: 00 01
+Data: SSU (4) -> bytes: 00 04
+Checksum: 42 -> bytes: 42
+
+Full packet bytes: 691b90a7000a000f0001000442
+Response bytes: 691b90a7000a000f0005000042
+```
+
+Then, every second, a Telemetry packet with the SSU's data:
 
 ```
-Timestamp: 1763414183 -> bytes: 691b90a7
-Command: 0 -> bytes: 00000000
+Response bytes: 691b90a7001a0004000301020041480000c04000004316000087
 
-Full packet bytes: 691b90a700000000
-Response bytes: 6041a0c26f7400007b0a092274656c656d65747279223a097b0 (+742 more bytes, decode the bytes as JSON)
+Timestamp: 1763414183 -> bytes: 69 1b 90 a7
+Packet Length: 13 -> bytes: 00 0a
+Device ID: 4 (SSU) -> bytes: 00 04
+Message Code 3 (Telemetry) -> bytes: 00 03
+Data:
+  Power: ON (1) -> byte: 01
+  Status: READY (2) -> byte: 02
+  Mode: 0 -> byte: 00
+  Depth: 12.5 -> bytes: 41 48 00 00
+  Drill Temp:-3.0 -> bytes: c0 40 00 00
+  RPM: 150.0 -> bytes: 43 16 00 00 
+Checksum: 97 -> bytes: 97
 ```
 
 ## Testing
