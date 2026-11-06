@@ -191,7 +191,7 @@ Full packet bytes: 691b90a7000a000f0001000442
 Response bytes: 691b90a7000a000f0005000042
 ```
 
-Then, every second, a Telemetry packet with the SSU's data:
+Once subscribed, you will receive a Telemetry packet with the SSU's data every second:
 
 ```
 Response bytes: 691b90a7001a0004000301020041480000c04000004316000087
@@ -203,11 +203,11 @@ Message Code 3 (Telemetry) -> bytes: 00 03
 Data:
   Power: ON (1) -> byte: 01
   Status: READY (2) -> byte: 02
-  Mode: 0 -> byte: 00
+  Mode: SP (0) -> byte: 00
   Depth: 12.5 -> bytes: 41 48 00 00
   Drill Temp:-3.0 -> bytes: c0 40 00 00
   RPM: 150.0 -> bytes: 43 16 00 00 
-Checksum: 97 -> bytes: 97
+Checksum: 97 -> byte: 97
 ```
 
 ## Testing
