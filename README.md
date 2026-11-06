@@ -147,8 +147,8 @@ Every packet your device sends must use device ID `15`.
 | 1         | DCU (Display and Control Unit)      | 
 | 2         | UIA (Umbilical Interface Assembly)  | 
 | 3         | SPM (Solar Power Module)            | 
-| 4         | SSU (Seismometer Sensing Unit       |
-| 5         | CTS (Comm Tower Station             |
+| 4         | SSU (Seismometer Sensing Unit)      |
+| 5         | CTS (Comm Tower Station)            |
 | 6         | XRF (X-ray Frequency) Scanner       | 
 | 15        | University Team Device              | 
 
@@ -160,7 +160,7 @@ These are the message codes that can be in a header packet.
 | ---- | ----------- | ------- | ---- |
 | 1    | Subscribe   | Team    | 2 bytes: the device ID to subscribe to (uint16) |
 | 2    | Unsubscribe | Team    | None |
-| 3    | Telemetry   | TSS     | The device's data, see <a href="#telemetry-data">Telemetry data</a>. The header's device ID says which device it is. |
+| 3    | Telemetry   | TSS     | The device's data. The header's device ID says which device it is. |
 | 4    | Ack         | TSS     | 1 byte: `0` = success, `1` = your team isn't assigned to a group yet, `2` = unknown device ID |
 
 #### Connecting your device
