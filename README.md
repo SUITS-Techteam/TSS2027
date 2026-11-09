@@ -1,4 +1,4 @@
-# 🚨 **Note:** This is not the final version of TSS 2027 but has most functional capabilities of the final version. More information can be found under [documents/updates/](./documents/updates/). 🚨
+# 🚨 **Note:** This is not the final version of TSS 2027 but has most functional capabilities of the final version. All information in this repository is subject to change. More information can be found under [documents/updates/](./documents/updates/). 🚨
 
 
 # TSS 2027
@@ -177,6 +177,53 @@ Instead of requesting data over and over, your device **subscribes** to the devi
 - Every Subscribe and Unsubscribe gets an Ack back. If you don't receive one, resend the packet, since UDP packets can be lost.
   
 Your system should subscribe to a POI device when you arrive at that station and unsubscribe when you leave it.
+
+#### Telemetry data
+
+Each Telemetry packet's data is the current state of one device, in the byte order below. Floats are 4-byte IEEE-754 values, sent big-endian.
+
+**DCU (device ID 1):** 6 bytes
+
+| Byte | Field   | Value          |
+| ---- | ------- | -------------- |
+| 0    | Battery | 0 = SUIT, 1 = UMB |
+| 1    | Oxygen  | 0 = SEC, 1 = PRI |
+| 2    | Comm    | 0 = CH_A, 1 = CH_B |
+| 3    | Fan     | 0 = SEC, 1 = PRI |
+| 4    | Pump    | 0 = CLOSED, 1 = OPEN |
+| 5    | CO2     | 0 = SEC, 1 = PRI |
+
+**UIA (device ID 2):** 6 bytes
+
+| Byte             | Field        | Value                  |
+| ---------------- | ------------ | ---------------------- |
+| 0                | EMU Power    | 0 = OFF, 1 = ON        |
+| 1                | Water Supply | 0 = CLOSED, 1 = OPEN   |
+| 2                | Water Waste  | 0 = CLOSED, 1 = OPEN   |
+| 3                | O2 Supply    | 0 = CLOSED, 1 = OPEN   |
+| 4                | O2 Vent      | 0 = CLOSED, 1 = OPEN   |
+| 5                | Depress      | 0 = OFF, 1 = ON        |
+
+**SSU (device ID 4):** 15 bytes
+
+| Byte(s) | Field      | Value                         |
+| ------- | ---------- | ----------------------------- |
+| 0       | Power      | 0 = OFF, 1 = ON               |
+| 1       | Status     | 0 = OFF, 1 = BOOT, 2 = READY  |
+| 2       | Mode       | 0 = SP, 1 = BB                |
+| 3 - 6   | Depth      | float                         |
+| 7 - 10  | Drill Temp | float                         |
+| 11 - 14 | RPM        | float                         |
+
+**SPM (device ID 3):** 11 bytes
+
+| Byte(s)| Field  | Value                         |
+| ------ | ------ | ----------------------------- |
+| 0      | Power  | 0 = OFF, 1 = ON               |
+| 1      | Status | 0 = OFF, 1 = BOOT, 2 = READY  |
+| 2      | Mode   | 0 = LEVEL, 1 = ORIENT         |
+| 3 - 6  | Tilt X | float                         |
+| 7 - 10 | Tilt Y | float                         |
 
 #### Example Packets
 
