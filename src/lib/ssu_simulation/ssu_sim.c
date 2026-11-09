@@ -14,7 +14,7 @@
 
 
 static const char* SSU_STATES[] = { "off", "booting", "ready" };
-static const char* SENSORS[]    = { "not ready", "primed", "deployed" };
+static const char* SENSORS[]    = { "stowed", "primed", "deployed" };
 static const char* STATES[]     = { "idle", "drilling", "overheated", "retracting", "retracted", "deployed" };
 static const char* THERMALS[]   = { "nominal", "warning", "critical" };
 
@@ -188,13 +188,13 @@ static void drill_tick(cJSON* ssu, const drill_cfg_t* d, const ssu_inputs_t* in)
 
 void ssu_sim_reset(cJSON* ssu, ssu_ctx_t* ctx) {
     cjson_set(ssu, "status",     cJSON_CreateString(SSU_STATES[SSU_OFF]));
-    cjson_set(ssu, "sp_sensor",  cJSON_CreateString(SENSORS[NOT_READY]));
+    cjson_set(ssu, "sp_sensor",  cJSON_CreateString(SENSORS[STOWED]));
     cjson_set(ssu, "sp_depth",   cJSON_CreateNumber(0.0));
     cjson_set(ssu, "sp_temp",    cJSON_CreateNumber(-25.0));
     cjson_set(ssu, "sp_rpm",     cJSON_CreateNumber(0));
     cjson_set(ssu, "sp_state",   cJSON_CreateString(STATES[IDLE]));
     cjson_set(ssu, "sp_thermal", cJSON_CreateString(THERMALS[THERMAL_NOMINAL]));
-    cjson_set(ssu, "bb_sensor",  cJSON_CreateString(SENSORS[NOT_READY]));
+    cjson_set(ssu, "bb_sensor",  cJSON_CreateString(SENSORS[STOWED]));
     cjson_set(ssu, "bb_depth",   cJSON_CreateNumber(0.0));
     cjson_set(ssu, "bb_temp",    cJSON_CreateNumber(-25.0));
     cjson_set(ssu, "bb_rpm",     cJSON_CreateNumber(0));
@@ -215,13 +215,13 @@ cJSON* ssu_sim_create(void) {
     cJSON_AddNumberToObject(ssu, "ambient_temp", -25);
     cJSON_AddStringToObject(ssu, "keepout", "inactive");
     cJSON_AddNumberToObject(ssu, "keepout_timer", 0);
-    cJSON_AddStringToObject(ssu, "sp_sensor", "not ready");
+    cJSON_AddStringToObject(ssu, "sp_sensor", "stowed");
     cJSON_AddNumberToObject(ssu, "sp_depth", 0);
     cJSON_AddNumberToObject(ssu, "sp_temp", -25);
     cJSON_AddNumberToObject(ssu, "sp_rpm", 0);
     cJSON_AddStringToObject(ssu, "sp_state", "idle");
     cJSON_AddStringToObject(ssu, "sp_thermal", "nominal");
-    cJSON_AddStringToObject(ssu, "bb_sensor", "not ready");
+    cJSON_AddStringToObject(ssu, "bb_sensor", "stowed");
     cJSON_AddNumberToObject(ssu, "bb_depth", 0);
     cJSON_AddNumberToObject(ssu, "bb_temp", -25);
     cJSON_AddNumberToObject(ssu, "bb_rpm", 0);

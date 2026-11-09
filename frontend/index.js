@@ -6,6 +6,39 @@ const NUMBER_OF_TEAMS = 10;
 let fetchDataWaiting = false;
 let fetchGroupsWaiting = false;
 
+const SSU_STATUS = { off: ["OFF", "off"], booting: ["BOOTING", "booting"], ready: ["READY", "ready"], };
+const SSU_SENSOR = { stowed: ["STOWED", "off"], primed: ["PRIMED", "ready"], deployed: ["DEPLOYED", "ready"],};
+const SSU_DRILL = {
+  idle:       ["IDLE", "off"],
+  drilling:   ["DRILLING", "ready"],
+  overheated: ["OVERHEATED", "off"],
+  retracting: ["RETRACTING", "deployed"],
+  retracted:  ["RETRACTED", "ready"],
+  deployed:   ["DEPLOYED", "ready"],
+};
+
+const SPM_STATUS = {
+  off:       ["OFF", "off"],
+  booting:   ["BOOTING", "booting"],
+  leveling:  ["LEVELING", "ready"],
+  deploying: ["DEPLOYING", "ready"],
+  orienting: ["ORIENTING", "ready"],
+  complete:  ["COMPLETE", "ready"],
+};
+
+const SPM_TRUSS = {
+  stowed:   ["STOWED", "off"],
+  unlocked: ["UNLOCKED", "ready"],
+  raising:  ["RAISING", "deployed"],
+  deployed: ["DEPLOYED", "deployed"],
+  locked:   ["LOCKED", "ready"],
+};
+
+const BOOL_STATUS = {
+  true:  ["YES", "ready"],
+  false: ["NO", "off"],
+};
+
 /**
  * Called when the index.html page is loaded, sets up the periodic data fetching
  */
@@ -53,6 +86,23 @@ async function pollGroups() {
 	}
 }
 
+/**
+ * Sets an element's text and CSS class from a status lookup table.
+ *
+ * @param elementId id of the element to update
+ * @param value the field's value from EVA.json
+ * @param labels lookup table: value -> [text, CSS class]
+ * @param defaultLabel optional [text, CSS class] for values not in the table
+ */
+function setStatusLabel(elementId, value, labels) {
+  const element = document.getElementById(elementId);
+  const key = String(value);
+  const label = labels[key];
+  if (!element || !label) return;
+
+  element.textContent = label[0];
+  element.className = label[1];
+}
 
 /**
  * Fetches the latest EVA  data and updates the DOM elements accordingly.
@@ -100,210 +150,45 @@ async function fetchData() {
     if (path.startsWith("eva.")) {
       value = getNestedValue(evaData, path.slice(4));
     }
-
-	if (path === "eva.ssu.status"){
-		const status = getNestedValue(evaData, "ssu.status");
-		const status_el = document.getElementById("ssu-status");
-
-		if (status === "off") {
-			status_el.textContent = "OFF";
-			status_el.className = "off";
-		}
-		else if (status === "booting") {
-			status_el.textContent = "BOOTING";
-			status_el.className = "booting";
-		}
-		else {
-			status_el.textContent = "READY";
-			status_el.className = "ready";
-		}
+	if (path === "eva.ssu.status") {
+		setStatusLabel("ssu-status", getNestedValue(evaData, "ssu.status"), SSU_STATUS);
+		return;
 	}
 	if (path === "eva.ssu.sp_sensor") {
-		const sp = getNestedValue(evaData, "ssu.sp_sensor");
-		const sp_el = document.getElementById("ssu-sp-sensor");
-
-		if(sp === "not ready"){
-			sp_el.textContent = "NOT READY";
-			sp_el.className = "off"
-			return;
-		}
-		if (sp === "deployed"){
-			sp_el.textContent = "DEPLOYED";
-			sp_el.className = "deployed";
-		}
-		else {
-			sp_el.textContent = "PRIMED";
-			sp_el.className = "ready";
-		}
+		setStatusLabel("ssu-sp-sensor", getNestedValue(evaData, "ssu.sp_sensor"), SSU_SENSOR);
 		return;
 	}
 	if (path === "eva.ssu.bb_sensor") {
-		const bb = getNestedValue(evaData, "ssu.bb_sensor");
-		const bb_el = document.getElementById("ssu-bb-sensor");
-
-		if(bb === "not ready"){
-			bb_el.textContent = "NOT READY";
-			bb_el.className = "off"
-			return;
-		}
-		if (bb === "deployed"){
-			bb_el.textContent = "DEPLOYED";
-			bb_el.className = "deployed";
-		}
-		else {
-			bb_el.textContent = "PRIMED";
-			bb_el.className = "ready";
-		}
+		setStatusLabel("ssu-bb-sensor", getNestedValue(evaData, "ssu.bb_sensor"), SSU_SENSOR);
 		return;
 	}
-	if (path === "eva.ssu.sp_state" || path === "eva.ssu.bb_state"){
-		const sp_state = getNestedValue(evaData, "ssu.sp_state");
-		const bb_state = getNestedValue(evaData, "ssu.bb_state");
+	if (path === "eva.ssu.sp_state" || path === "eva.ssu.bb_state") {
+		const mode = getNestedValue(evaData, "ssu.mode");
 		const sp_el = document.getElementById("ssu-sp-state");
 		const bb_el = document.getElementById("ssu-bb-state");
-		const mode = getNestedValue(evaData, "ssu.mode");
 
-		if(mode === 0) {
+		if (mode === 0) {
 			bb_el.style.display = "none";
 			sp_el.style.display = "inline";
-			switch (sp_state){
-				case "idle":
-					sp_el.textContent = "IDLE";
-					sp_el.className = "off";
-					break;
-				case "drilling":
-					sp_el.textContent = "DRILLING";
-					sp_el.className = "ready";
-					break;
-				case "overheated":
-					sp_el.textContent = "OVERHEATED";
-					sp_el.className = "off";
-					break;
-				case "retracting":
-					sp_el.textContent = "RETRACTING";
-					sp_el.className = "deployed";
-					break;
-				case "retracted":
-					sp_el.textContent = "RETRACTED";
-					sp_el.className = "ready";
-					break;
-				case "deployed":
-					sp_el.textContent = "DEPLOYED";
-					sp_el.className = "deployed";
-					break;
-				default:
-			}
+			setStatusLabel("ssu-sp-state", getNestedValue(evaData, "ssu.sp_state"), SSU_DRILL);
 		}
-		if(mode === 1) {
+		if (mode === 1) {
 			bb_el.style.display = "inline";
 			sp_el.style.display = "none";
-			switch (bb_state){
-				case "idle":
-					bb_el.textContent = "IDLE";
-					bb_el.className = "off";
-					break;
-				case "drilling":
-					bb_el.textContent = "DRILLING";
-					bb_el.className = "ready";
-					break;
-				case "overheated":
-					bb_el.textContent = "OVERHEATED";
-					bb_el.className = "off";
-					break;
-				case "retracting":
-					bb_el.textContent = "RETRACTING";
-					bb_el.className = "deployed";
-					break;
-				case "retracted":
-					bb_el.textContent = "RETRACTED";
-					bb_el.className = "ready";
-					break;
-				case "deployed":
-					bb_el.textContent = "DEPLOYED";
-					bb_el.className = "deployed";
-					break;
-				default:
-			}
+			setStatusLabel("ssu-bb-state", getNestedValue(evaData, "ssu.bb_state"), SSU_DRILL);
 		}
 		return;
 	}
 	if (path === "eva.spm.status") {
-		const spm_status = getNestedValue(evaData, "spm.status");
-		const spm_el = document.getElementById("spm-status");
-
-		switch (spm_status) {
-			case "off":
-				spm_el.textContent = "OFF";
-				spm_el.className = "off";
-				break;
-			case "booting":
-				spm_el.textContent = "BOOTING";
-				spm_el.className = "booting";
-				break;
-			case "leveling":
-				spm_el.textContent = "LEVELING";
-				spm_el.className = "ready";
-				break;
-			case "deploying":
-				spm_el.textContent = "DEPLOYING";
-				spm_el.className = "ready";
-				break;
-			case "orienting":
-				spm_el.textContent = "ORIENTING";
-				spm_el.className = "ready";
-				break;
-			case "complete":
-				spm_el.textContent = "COMPLETE";
-				spm_el.className = "ready";
-				break;
-			default:
-		}
+		setStatusLabel("spm-status", getNestedValue(evaData, "spm.status"), SPM_STATUS);
 		return;
 	}
 	if (path === "eva.spm.level") {
-		const spm_level = getNestedValue(evaData, "spm.level");
-		const spm_el = document.getElementById("spm-level");
-
-		switch (spm_level) {
-			case true:
-				spm_el.textContent = "YES";
-				spm_el.className = "ready";
-				break;
-			case false:
-				spm_el.textContent = "NO";
-				spm_el.className = "off";
-				break;
-			default:
-		}
+		setStatusLabel("spm-level", getNestedValue(evaData, "spm.level"), BOOL_STATUS);
 		return;
 	}
 	if (path === "eva.spm.truss") {
-		const spm_truss = getNestedValue(evaData, "spm.truss");
-		const spm_el = document.getElementById("spm-truss");
-
-		switch (spm_truss) {
-			case "stowed":
-				spm_el.textContent = "STOWED";
-				spm_el.className = "off";
-				break;
-			case "unlocked":
-				spm_el.textContent = "UNLOCKED";
-				spm_el.className = "ready";
-				break;
-			case "raising":
-				spm_el.textContent = "RAISING";
-				spm_el.className = "deployed";
-				break;
-			case "deployed":
-				spm_el.textContent = "DEPLOYED";
-				spm_el.className = "deployed";
-				break;
-			case "locked":
-				spm_el.textContent = "LOCKED";
-				spm_el.className = "ready";
-				break;
-			default:
-		}
+		setStatusLabel("spm-truss", getNestedValue(evaData, "spm.truss"), SPM_TRUSS);
 		return;
 	}
 	if (path === "eva.spm.truss_height") {
@@ -315,20 +200,7 @@ async function fetchData() {
 		return;
 	}
 	if (path === "eva.spm.azimuth_aligned") {
-		const spm_aligned = getNestedValue(evaData, "spm.azimuth_aligned");
-		const spm_el = document.getElementById("spm-oriented");
-
-		switch (spm_aligned) {
-			case true:
-				spm_el.textContent = "YES";
-				spm_el.className = "ready";
-				break;
-			case false:
-				spm_el.textContent = "NO";
-				spm_el.className = "off";
-				break;
-			default:
-		}
+		setStatusLabel("spm-oriented", getNestedValue(evaData, "spm.azimuth_aligned"), BOOL_STATUS);
 		return;
 	}
 
@@ -639,9 +511,23 @@ async function setupEventListeners() {
   sliders.forEach((slider) => {
     const path = slider.getAttribute("data-path");
 
+    let sendInFlight = false;
+    let latestValue = null;
+
+    async function sendLatestValue() {
+      if (sendInFlight || latestValue === null) return;
+      sendInFlight = true;
+      const value = latestValue;
+      latestValue = null;
+      await updateServerData(path, value);
+      sendInFlight = false;
+      sendLatestValue();   // send whatever arrived while that request was pending
+    }
+
     slider.addEventListener("input", (event) => {
       const value = event.target.value;
-      updateServerData(path, value);
+      latestValue = value;
+      sendLatestValue();
 
       const valueEl = document.getElementById(slider.id + "-value");
       if (valueEl) {

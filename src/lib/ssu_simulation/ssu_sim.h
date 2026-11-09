@@ -5,7 +5,7 @@
 #include "cJSON.h"
 
 typedef enum { SSU_OFF, SSU_BOOTING, SSU_READY } ssu_state_t;
-typedef enum { NOT_READY, SENSOR_PRIMED, SENSOR_DEPLOYED } sensor_t;
+typedef enum { STOWED, SENSOR_PRIMED, SENSOR_DEPLOYED } sensor_t;
 typedef enum { IDLE, DRILLING, OVERHEATED, RETRACTING, RETRACTED, DEPLOYED } state_t;
 typedef enum { THERMAL_NOMINAL, THERMAL_WARNING, THERMAL_CRITICAL } thermal_t;
 
