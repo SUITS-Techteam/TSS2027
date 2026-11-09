@@ -108,7 +108,6 @@ int route_peripheral_packet(const struct sockaddr_in* sender, unsigned int comma
     int team = groups[device->group_index].assigned_team;
     if (team == NO_TEAM) return NO_TEAM;
 
-
     return team;
 }
 

@@ -283,11 +283,11 @@ int main(int argc, char *argv[]) {
 
                     drop_udp_client(&udp_clients, client);
                 }
-                else if (command == 4 && received_bytes > 12){
+                else if (command == 3004 && received_bytes > 12){
 					handle_ssu_snapshot(client->udp_request + 12, received_bytes - 12, backends[i]);
 					drop_udp_client(&udp_clients, client);
                 }
-                else if (command == 3 && received_bytes > 12){
+                else if (command == 3003 && received_bytes > 12){
 					handle_spm_snapshot(client->udp_request + 12, received_bytes - 12, backends[i]);
 					drop_udp_client(&udp_clients, client);
                 }

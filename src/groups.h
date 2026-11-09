@@ -12,7 +12,7 @@
 // specific group.
 
 #define NUM_GROUPS               2      // group A = 0, group B = 1
-#define MAX_PERIPHERAL_DEVICES   32
+#define MAX_PERIPHERAL_DEVICES   64
 #define NO_GROUP                -1
 #define NO_TEAM                 -1
 #define LINK_TIMEOUT 			 3
@@ -29,6 +29,12 @@ enum peripheral_type_t {
 	UNIVERSITY_DEVICE
 };
 
+struct subscriptions_t {
+	bool dcu;
+	bool uia;
+	int poi;
+};
+
 struct peripheral_device_t {
     struct in_addr         address;             // source IP, identifies the device
     enum peripheral_type_t type;
@@ -38,7 +44,8 @@ struct peripheral_device_t {
 };
 
 struct group_t {
-    int assigned_team;                          // NO_TEAM between rotations
+    int assigned_team;
+    struct subscriptions_t subs;
 };
 
 extern struct group_t             groups[NUM_GROUPS];
