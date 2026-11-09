@@ -84,7 +84,7 @@ static void set_state(cJSON* ssu, const drill_cfg_t* d, state_t s) {
 }
 
 static float random_ambient(void) {
-	return AMBIENT_MIN + rand() % (AMBIENT_MAX - AMBIENT_MIN - 1);
+	return AMBIENT_MIN + rand() % (AMBIENT_MAX - AMBIENT_MIN + 1);
 }
 
 

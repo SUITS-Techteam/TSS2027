@@ -572,8 +572,8 @@ void serve_resource(struct client_info_t *client, const char *path) {
 ///////////////////////////
 // new data packet stuff //
 ///////////////////////////
-static unsigned char xor_checksum(const unsigned char* bytes, int byte_count) {
-    unsigned char checksum = 0;
+static uint8_t xor_checksum(const uint8_t* bytes, int byte_count) {
+    uint8_t checksum = 0;
     for (int i = 0; i < byte_count; i++) {
         checksum ^= bytes[i];
     }
@@ -582,31 +582,41 @@ static unsigned char xor_checksum(const unsigned char* bytes, int byte_count) {
 
 /**
  * Builds a packet in the new format.
- * @return Total packet size, or -1 if it doesn't fit in packet_capacity
+ * All values bigger than 1 byte are in big endian.
+ * @return Total packet size, or -1 if it doesn't fit in buf_capacity
  */
-
 int build_header_packet(uint32_t timestamp, uint16_t device_id, uint16_t message_code,
-                     const uint8_t* data, uint16_t data_length, uint8_t* packet_out, int packet_capacity) {
+                     const uint8_t* data, uint16_t data_length, uint8_t* packet_buf, int buf_capacity) {
 
-    int packet_length = 10 + data_length + 1; // 10 bytes before data_length arg
-    if (packet_length > packet_capacity) {
+    int packet_length = 10 + data_length + 1; // 10 header bytes + data length + 1 checksum byte
+    if (packet_length > buf_capacity) {
     	return -1;
 	}
 
-    packet_out[0] = timestamp >> 24;
-    packet_out[1] = timestamp >> 16;
-    packet_out[2] = timestamp >> 8;
-    packet_out[3] = timestamp;
-    packet_out[4] = packet_length >> 8;
-    packet_out[5] = packet_length;
-    packet_out[6] = device_id >> 8;
-    packet_out[7] = device_id;
-    packet_out[8] = message_code >> 8;
-    packet_out[9] = message_code;
+	// 4 timestamp bytes
+	// start with highest byte first (big endian)
+    packet_buf[0] = timestamp >> 24;
+    packet_buf[1] = timestamp >> 16;
+    packet_buf[2] = timestamp >> 8;
+    packet_buf[3] = timestamp;
+
+	// 2 packet length bytes
+    packet_buf[4] = packet_length >> 8;
+    packet_buf[5] = packet_length;
+
+	// 2 device_id bytes
+    packet_buf[6] = device_id >> 8;
+    packet_buf[7] = device_id;
+
+	// 2 message_code bytes
+    packet_buf[8] = message_code >> 8;
+    packet_buf[9] = message_code;
+
     if (data_length > 0) {
-        memcpy(packet_out + 10, data, data_length);
+        memcpy(packet_buf + 10, data, data_length);
     }
-    packet_out[packet_length - 1] = xor_checksum(packet_out, packet_length - 1);
+
+    packet_buf[packet_length - 1] = xor_checksum(packet_buf, packet_length - 1);
     return packet_length;
 }
 
@@ -630,7 +640,7 @@ int read_header_packet(const uint8_t* packet, int packet_size, uint16_t* device_
 
     *device_id = (packet[6] << 8) | packet[7];
     *message_code  = (packet[8] << 8) | packet[9];
+    *data_length   = packet_size - 11; // 10 header bytes + 1 checksum byte
     *data          = packet + 10;
-    *data_length   = packet_size - 9;
     return 1;
 }
