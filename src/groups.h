@@ -26,7 +26,7 @@ enum peripheral_type_t {
     PERIPHERAL_SPM,
     PERIPHERAL_CTS,
     PERIPHERAL_SPEC,
-	UNIVERSITY_DEVICE
+	PERIPHERAL_TEAM_DEVICE
 };
 
 struct subscriptions_t {
@@ -37,6 +37,7 @@ struct subscriptions_t {
 
 struct peripheral_device_t {
     struct in_addr         address;             // source IP, identifies the device
+ 	struct sockaddr_in     reply_address;		// for student devices
     enum peripheral_type_t type;
     int                    group_index;         // NO_GROUP until set on the frontend
     time_t                 last_seen;
@@ -45,7 +46,13 @@ struct peripheral_device_t {
 
 struct group_t {
     int assigned_team;
+<<<<<<< Updated upstream
     struct subscriptions_t subs;
+=======
+	bool dcu;
+	bool uia;
+	uint16_t poi;	// 2 byte device id
+>>>>>>> Stashed changes
 };
 
 extern struct group_t             groups[NUM_GROUPS];
@@ -61,6 +68,9 @@ void update_group_status_file(void);   // call every loop; writes when device st
 
 // returns the team a peripheral packet belongs to, or NO_TEAM to drop it
 int route_peripheral_packet(const struct sockaddr_in* sender, unsigned int command);
+void handle_team_packet(SOCKET udp_socket, const struct sockaddr_in* sender, uint16_t message_code,
+                        const uint8_t* data, uint16_t data_length);
+void send_group_telemetry(SOCKET udp_socket, struct backend_data_t** backends);
 
 // frontend functions
 void end_group_run(int group_index);

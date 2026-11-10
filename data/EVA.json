@@ -32,10 +32,8 @@
 		"fan":	false,
 		"pump":	false,
 		"co2":	false,
-		"batt":	{
-			"lu":	false,
-			"ps":	false
-		}
+		"batt":	false,
+		"comm":	false
 	},
 	"error":	{
 		"fan_error":	false,
@@ -49,14 +47,10 @@
 		"heading":	125.453674
 	},
 	"uia":	{
-		"eva1_power":	false,
-		"eva1_oxy":	false,
-		"eva1_water_supply":	false,
-		"eva1_water_waste":	false,
-		"eva2_power":	false,
-		"eva2_oxy":	false,
-		"eva2_water_supply":	false,
-		"eva2_water_waste":	false,
+		"eva_power":	false,
+		"eva_oxy":	false,
+		"eva_water_supply":	false,
+		"eva_water_waste":	false,
 		"oxy_vent":	false,
 		"depress":	false
 	},
@@ -73,17 +67,17 @@
 		"sp_depth":	0,
 		"sp_sensor":	"not ready",
 		"sp_target_depth":	50,
+		"sp_thermal":	"nominal",
 		"sp_temp":	-25,
 		"sp_rpm":	0,
 		"sp_state":	"idle",
-		"sp_thermal":	"nominal",
 		"bb_depth":	0,
 		"bb_sensor":	"not ready",
 		"bb_target_depth":	80,
+		"bb_thermal":	"nominal",
 		"bb_temp":	-25,
 		"bb_rpm":	0,
 		"bb_state":	"idle",
-		"bb_thermal":	"nominal",
 		"keepout":	false,
 		"keepout_timer":	5,
 		"launch_lock":	false

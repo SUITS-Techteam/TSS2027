@@ -123,7 +123,7 @@ int main(int argc, char *argv[]) {
 
                     // Check if we have a complete HTTP request
                     char *q = strstr(client->request, "\r\n\r\n");
-                    if (q) { 
+                    if (q) {
                         if (strncmp(client->request, "GET /", 5) == 0) { // HTTP GET request
                             char *path = client->request + 4;
                             char *end_path = strstr(path, " ");
@@ -309,7 +309,15 @@ int main(int argc, char *argv[]) {
                     recvfrom(main_udp_socket, client->udp_request, MAX_UDP_REQUEST_SIZE, 0,
                             (struct sockaddr *)&client->udp_addr, &client->address_length);
 
-                if (received_bytes >= 8) {
+                uint16_t tss_device_id, tss_message_code, tss_data_length;
+                const uint8_t* tss_data;
+                if (received_bytes > 0 &&
+                    read_header_packet((const uint8_t *)client->udp_request, received_bytes, &tss_device_id,
+                                    &tss_message_code, &tss_data, &tss_data_length) &&
+                    tss_device_id == 15) {
+                    handle_team_packet(main_udp_socket, &client->udp_addr, tss_message_code, tss_data, tss_data_length);
+                }
+                else if (received_bytes >= 8) {
                     // Always interpret UDP packets as big-endian, same as the team ports
                     if (!big_endian()) {
                         reverse_bytes(client->udp_request);
@@ -336,10 +344,10 @@ int main(int argc, char *argv[]) {
                         sendto(main_udp_socket, response_buffer, sizeof(response_buffer), 0,
                             (struct sockaddr *)&client->udp_addr, client->address_length);
                     }
-                    else if (team != NO_TEAM && command == SSU_SNAPSHOT_CMD && received_bytes > 12) {
+                    else if (team != NO_TEAM && command == 3004 && received_bytes > 12) {
                         handle_ssu_snapshot(client->udp_request + 12, received_bytes - 12, backends[team]);
                     }
-                    else if (team != NO_TEAM && command == SPM_SNAPSHOT_CMD && received_bytes > 12) {
+                    else if (team != NO_TEAM && command == 3003 && received_bytes > 12) {
                         handle_spm_snapshot(client->udp_request + 12, received_bytes - 12, backends[team]);
                     }
                 }
@@ -365,6 +373,9 @@ int main(int argc, char *argv[]) {
 
             // Refresh peripheral online / needs-reset status for the frontend (once per second)
         	update_group_status_file();
+
+			// send subscribed telemetry to groups
+			send_group_telemetry(main_udp_socket, backends);
         }
     }
 

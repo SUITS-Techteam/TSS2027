@@ -2,6 +2,7 @@
 let connectionFails = 0; // number of consecutive connection failures, resets on successful fetch
 const pendingSwitchChanges = {};
 const GROUP_NAMES = ["A", "B"];
+const POI_OPTIONS = [[0, "No POI"], [3, "SPM"], [4, "SSU"], [5, "CTS"], [6, "XRF"]];
 const NUMBER_OF_TEAMS = 10;
 let fetchDataWaiting = false;
 let fetchGroupsWaiting = false;
@@ -103,6 +104,12 @@ function setStatusLabel(elementId, value, labels) {
   element.textContent = label[0];
   element.className = label[1];
 }
+
+function setButtonEnabled(button, enabled) {
+	button.disabled = !enabled;
+	button.style.opacity = enabled ? "1" : "0.5"
+}
+
 
 /**
  * Fetches the latest EVA  data and updates the DOM elements accordingly.
@@ -236,34 +243,27 @@ async function fetchData() {
 
       if (action === "start") {
         // START button: enabled when NOT running
-        el.disabled = is_running;
-        el.style.opacity = is_running ? "0.5" : "1";
+		setButtonEnabled(el, is_running);
       }
       else if (action === "reset") {
-        // RESET button: enabled when IS running
-        el.disabled = !is_running;
-        el.style.opacity = !is_running ? "0.5" : "1";
+		setButtonEnabled(el, !is_running);
       }
       else if (path === "eva.ssu.deploy_pressed") {
 		// DEPLOY button - enabled when NOT deployed and state is retracted and depth is 0.0 for respective mode
 			if(ssu_mode === 0) {
 				if (sp_state === "retracted" && sp_depth === 0 && sp === "primed"){
-					el.disabled = false;
-					el.style.opacity = "1";
+					setButtonEnabled(el, true);
 			    }
 			    else {
-					el.disabled = true;
-					el.style.opacity = "0.5";
+					setButtonEnabled(el, false);
 			    }
 			}
 			else if(ssu_mode === 1) {
 				if (bb_state === "retracted" && bb_depth === 0 && bb === "primed"){
-					el.disabled = false;
-					el.style.opacity = "1";
+					setButtonEnabled(el, true);
 			    }
 			    else {
-					el.disabled = true;
-					el.style.opacity = "0.5";
+					setButtonEnabled(el, false);
 			    }
 			}
       }
@@ -271,22 +271,18 @@ async function fetchData() {
 		// RETRACT button - enabled when depth is at target (50) and state is not overheated or sensor already deployed
 			if(ssu_mode === 0) {
 				if (sp_state !== "drilling" && sp_state !== "deployed" && sp_state !== "overheated" && sp_depth >= 50){
-					el.disabled = false;
-					el.style.opacity = "1";
+					setButtonEnabled(el, true);
 			    }
 			    else {
-					el.disabled = true;
-					el.style.opacity = "0.5";
+					setButtonEnabled(el, false);
 			    }
 			}
 			else if(ssu_mode === 1) {
 				if (bb_state !== "drilling" && bb_state !== "deployed" && bb_state !== "overheated" && bb_depth >= 100){
-					el.disabled = false;
-					el.style.opacity = "1";
+					setButtonEnabled(el, true);
 			    }
 			    else {
-					el.disabled = true;
-					el.style.opacity = "0.5";
+					setButtonEnabled(el, false);
 			    }
 			}
       }
@@ -294,22 +290,18 @@ async function fetchData() {
 		// UNLOCK button - enabled when platform is level and truss needs to be unlocked or orientation needs to be unlocked
 			if(spm_mode === 0) {
 				if(spm_status === "deploying" && level && truss === "stowed") {
-					el.disabled = false;
-					el.style.opacity = "1";
+					setButtonEnabled(el, true);
 				}
 				else {
-					el.disabled = true;
-					el.style.opacity = "0.5";
+					setButtonEnabled(el, false);
 				}
 			}
 			else if(spm_mode === 1) {
 				if(locked && !aligned) {
-					el.disabled = false;
-					el.style.opacity = "1";
+					setButtonEnabled(el, true);
 				}
 				else {
-					el.disabled = true;
-					el.style.opacity = "0.5";
+					setButtonEnabled(el, false);
 				}
 			}
       }
@@ -317,39 +309,32 @@ async function fetchData() {
 		// RAISE button - enabled when spm is in deploying status and truss is unlocked
 			if(spm_mode === 0) {
 				if(spm_status === "deploying" && level && truss === "unlocked") {
-					el.disabled = false;
-					el.style.opacity = "1";
+					setButtonEnabled(el, true);
 				}
 				else {
-					el.disabled = true;
-					el.style.opacity = "0.5";
+					setButtonEnabled(el, false);
 				}
 			}
 			else {
-				el.disabled = true;
-				el.style.opacity = "0.5";
+				setButtonEnabled(el, false);
 			}
 	  }
 	  else if (path === "eva.spm.lock_pressed") {
 		// LOCK button - enabled when truss is raised or during orientation when not locked
 			if(spm_mode === 0) {
 				if(spm_status === "leveling" || truss === "deployed") {
-					el.disabled = false;
-					el.style.opacity = "1";
+					setButtonEnabled(el, true);
 				}
 				else {
-					el.disabled = true;
-					el.style.opacity = "0.5";
+					setButtonEnabled(el, false);
 				}
 			}
 			else if (spm_mode === 1) {
 				if(!locked && !aligned) {
-					el.disabled = false;
-					el.style.opacity = "1";
+					setButtonEnabled(el, true);
 				}
 				else {
-					el.disabled = true;
-					el.style.opacity = "0.5";
+					setButtonEnabled(el, false);
 				}
 			}
 	  }
@@ -357,27 +342,22 @@ async function fetchData() {
 		// VERIFY button - enabled during orientation
 			if(spm_mode === 1) {
 				if(spm_status === "orienting" && locked && !aligned) {
-					el.disabled = false;
-					el.style.opacity = "1";
+					setButtonEnabled(el, true);
 				}
 				else {
-					el.disabled = true;
-					el.style.opacity = "0.5";
+					setButtonEnabled(el, false);
 				}
 			}
 			else {
-				el.disabled = true;
-				el.style.opacity = "0.5";
+				setButtonEnabled(el, false);
 			}
 	  }
 	  else if (action === "spm-control"){
 			if(spm_status === "leveling" || spm_status === "orienting") {
-				el.disabled = false;
-				el.style.opacity = "1";
+				setButtonEnabled(el, true);
 			}
 			else {
-				el.disabled = true;
-				el.style.opacity = "0.5";
+				setButtonEnabled(el, false);
 			}
 	  }
       return; // don't set textContent for action buttons
@@ -731,6 +711,22 @@ function buildButton(label, disabled, onClick) {
   return button;
 }
 
+function buildSwitch(checked, disabled, onChange) {
+  const label = document.createElement("label");
+  label.className = "switch";
+  const checkbox = document.createElement("input");
+  checkbox.type = "checkbox";
+  checkbox.checked = checked;
+  checkbox.disabled = disabled;
+  checkbox.addEventListener("change", (event) => onChange(event.target.checked));
+  const slider = document.createElement("span");
+  slider.className = "slider round";
+  label.appendChild(checkbox);
+  label.appendChild(slider);
+  return label;
+}
+
+
 function buildText(text, className) {
   const span = document.createElement("span");
   span.textContent = text;
@@ -789,6 +785,23 @@ function renderGroups(groupsData) {
 	    `Group ${groupName} couldn't take team ${team}. Check the team isn't in the other group.`);
 	}));
     groupRows.appendChild(row);
+
+    // what the group's team devices receive each second (only while the group has a team)
+    const subscriptionRow = document.createElement("div");
+    subscriptionRow.className = "group-row subscription-row";
+    subscriptionRow.appendChild(buildText("Subscriptions", "subscription-label"));
+    subscriptionRow.appendChild(buildText("DCU", "device-quiet"));
+    subscriptionRow.appendChild(buildSwitch(group.dcu, !running, (on) => {
+      sendGroupAction({ group: groupIndex, dcu: on ? 1 : 0 }, `Couldn't change Group ${groupName}'s DCU subscription.`);
+    }));
+    subscriptionRow.appendChild(buildText("UIA", "device-quiet"));
+    subscriptionRow.appendChild(buildSwitch(group.uia, !running, (on) => {
+      sendGroupAction({ group: groupIndex, uia: on ? 1 : 0 }, `Couldn't change Group ${groupName}'s UIA subscription.`);
+    }));
+    subscriptionRow.appendChild(buildSelect(POI_OPTIONS, group.poi || 0, !running, (poi) => {
+      sendGroupAction({ group: groupIndex, poi: poi }, `Couldn't change Group ${groupName}'s POI subscription.`);
+    }));
+    groupRows.appendChild(subscriptionRow);
   });
 
   // One row per device: status + group picker

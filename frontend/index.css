@@ -1,4 +1,4 @@
-@font-face {
+b@font-face {
   font-family: "Geist Mono";
   font-style: normal;
   font-weight: 100 900;
@@ -649,4 +649,15 @@ input:checked + .slider:before {
 .btn-group-action:disabled {
   opacity: 0.3;
   cursor: not-allowed;
+}
+
+.subscription-row {
+  padding-left: 5.75rem;   /* lines up under the team picker */
+  margin-top: -0.15rem;
+  margin-bottom: 0.35rem;
+}
+
+.subscription-label {
+  color: var(--light-grey);
+  min-width: 6rem;
 }

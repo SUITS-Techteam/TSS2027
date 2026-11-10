@@ -154,66 +154,34 @@ bool initialize_EVA_json_switch_states(struct backend_data_t* backend) {
         return false;
     }
 
-    //change eva1_power to false
-    cJSON_ReplaceItemInObject(uia, "eva1_power", cJSON_CreateBool(0));
-    if (!cJSON_GetObjectItem(uia, "eva1_power")) {
-        printf("Error: Failed to set eva1_power in EVA config file in initialize_json_switch_states\n");
+    //change eva_power to false
+    cJSON_ReplaceItemInObject(uia, "eva_power", cJSON_CreateBool(0));
+    if (!cJSON_GetObjectItem(uia, "eva_power")) {
+        printf("Error: Failed to set eva_power in EVA config file in initialize_json_switch_states\n");
         cJSON_Delete(eva_json);
         return false;
     }
 
-    //change eva1_oxy to false
-    cJSON_ReplaceItemInObject(uia, "eva1_oxy", cJSON_CreateBool(0));
-    if (!cJSON_GetObjectItem(uia, "eva1_oxy")) {
-        printf("Error: Failed to set eva1_oxy in EVA config file in initialize_json_switch_states\n");
+    //change eva_oxy to false
+    cJSON_ReplaceItemInObject(uia, "eva_oxy", cJSON_CreateBool(0));
+    if (!cJSON_GetObjectItem(uia, "eva_oxy")) {
+        printf("Error: Failed to set eva_oxy in EVA config file in initialize_json_switch_states\n");
         cJSON_Delete(eva_json);
         return false;
     }
 
-    //change eva1_water_supply to false
-    cJSON_ReplaceItemInObject(uia, "eva1_water_supply", cJSON_CreateBool(0));
-    if (!cJSON_GetObjectItem(uia, "eva1_water_supply")) {
-        printf("Error: Failed to set eva1_water_supply in EVA config file in initialize_json_switch_states\n");
+    //change eva_water_supply to false
+    cJSON_ReplaceItemInObject(uia, "eva_water_supply", cJSON_CreateBool(0));
+    if (!cJSON_GetObjectItem(uia, "eva_water_supply")) {
+        printf("Error: Failed to set eva_water_supply in EVA config file in initialize_json_switch_states\n");
         cJSON_Delete(eva_json);
         return false;
     }
 
-    //change eva1_water_waste to false
-    cJSON_ReplaceItemInObject(uia, "eva1_water_waste", cJSON_CreateBool(0));
-    if (!cJSON_GetObjectItem(uia, "eva1_water_waste")) {
-        printf("Error: Failed to set eva1_water_waste in EVA config file in initialize_json_switch_states\n");
-        cJSON_Delete(eva_json);
-        return false;
-    }
-
-    //change eva2_power to false
-    cJSON_ReplaceItemInObject(uia, "eva2_power", cJSON_CreateBool(0));
-    if (!cJSON_GetObjectItem(uia, "eva2_power")) {
-        printf("Error: Failed to set eva2_power in EVA config file in initialize_json_switch_states\n");
-        cJSON_Delete(eva_json);
-        return false;
-    }
-
-    //change eva2_oxy to false
-    cJSON_ReplaceItemInObject(uia, "eva2_oxy", cJSON_CreateBool(0));
-    if (!cJSON_GetObjectItem(uia, "eva2_oxy")) {
-        printf("Error: Failed to set eva2_oxy in EVA config file in initialize_json_switch_states\n");
-        cJSON_Delete(eva_json);
-        return false;
-    }
-
-    //change eva2_water_supply to false
-    cJSON_ReplaceItemInObject(uia, "eva2_water_supply", cJSON_CreateBool(0));
-    if (!cJSON_GetObjectItem(uia, "eva2_water_supply")) {
-        printf("Error: Failed to set eva2_water_supply in EVA config file in initialize_json_switch_states\n");
-        cJSON_Delete(eva_json);
-        return false;
-    }
-
-    //change eva2_water_waste to false
-    cJSON_ReplaceItemInObject(uia, "eva2_water_waste", cJSON_CreateBool(0));
-    if (!cJSON_GetObjectItem(uia, "eva2_water_waste")) {
-        printf("Error: Failed to set eva2_water_waste in EVA config file in initialize_json_switch_states\n");
+    //change eva_water_waste to false
+    cJSON_ReplaceItemInObject(uia, "eva_water_waste", cJSON_CreateBool(0));
+    if (!cJSON_GetObjectItem(uia, "eva_water_waste")) {
+        printf("Error: Failed to set eva_water_waste in EVA config file in initialize_json_switch_states\n");
         cJSON_Delete(eva_json);
         return false;
     }
@@ -274,29 +242,24 @@ bool initialize_EVA_json_switch_states(struct backend_data_t* backend) {
         return false;
     }
 
-    //get batt object from dcu
-    cJSON* batt_dcu = cJSON_GetObjectItem(dcu, "batt");
-    if (!batt_dcu) {
-        printf("Error: Failed to get batt from eva in dcu in EVA config file in initialize_json_switch_states\n");
+    //change batt to false
+    cJSON_ReplaceItemInObject(dcu, "batt", cJSON_CreateBool(0));
+    if (!cJSON_GetObjectItem(dcu, "batt")) {
+        printf("Error: Failed to set eva.batt in EVA config file in initialize_json_switch_states\n");
         cJSON_Delete(eva_json);
         return false;
     }
 
-    //change lu to false
-    cJSON_ReplaceItemInObject(batt_dcu, "lu", cJSON_CreateBool(0));
-    if (!cJSON_GetObjectItem(batt_dcu, "lu")) {
-        printf("Error: Failed to set dcu.batt.lu in EVA config file in initialize_json_switch_states\n");
+    //change comm to false
+    cJSON_ReplaceItemInObject(dcu, "comm", cJSON_CreateBool(0));
+    if (!cJSON_GetObjectItem(dcu, "comm")) {
+        printf("Error: Failed to set eva.comm in EVA config file in initialize_json_switch_states\n");
         cJSON_Delete(eva_json);
         return false;
     }
 
-    //change ps to false
-    cJSON_ReplaceItemInObject(batt_dcu, "ps", cJSON_CreateBool(0));
-    if (!cJSON_GetObjectItem(batt_dcu, "ps")) {
-        printf("Error: Failed to set dcu.batt.ps in EVA config file in initialize_json_switch_states\n");
-        cJSON_Delete(eva_json);
-        return false;
-    }
+
+
 
 	cJSON* spec = cJSON_GetObjectItem(eva_json, "spec");
     if (!spec) {
@@ -1404,6 +1367,133 @@ void handle_udp_get_request(unsigned int command, unsigned char* data, struct ba
         free(json_str);
     }
     cJSON_Delete(eva);
+}
+
+// true/false or 0/1 in EVA.json both become one byte, 0 or 1
+static uint8_t payload_flag(cJSON* section, const char* field_name) {
+	cJSON* field = cJSON_GetObjectItemCaseSensitive(section, field_name);
+	if (cJSON_IsBool(field)) {
+		if (cJSON_IsTrue(field)) return 1;
+	}
+	if (cJSON_IsNumber(field)){
+		if (field->valuedouble != 0) return 1;
+	}
+	return 0;
+}
+
+static uint8_t payload_enum(cJSON* section, const char* field_name, const char* const names[], int name_count) {
+	const char* value = cJSON_GetStringValue(cJSON_GetObjectItemCaseSensitive(section, field_name));
+	if (!value) return 255;
+	for (int i = 0; i < name_count; i++) {
+		if (strcmp(value, names[i]) == 0) return (uint8_t)i;
+	}
+	return 255;
+}
+
+static const char* const SSU_STATUSES[]     = { "off", "booting", "ready" };
+static const char* const SSU_SENSOR_STATES[] = { "stowed", "primed", "deployed" };
+static const char* const SSU_DRILL_STATES[]  = { "idle", "drilling", "overheated", "retracting", "retracted", "deployed" };
+static const char* const SSU_THERMAL_STATES[] = { "nominal", "warning", "critical" };
+static const char* const SPM_STATUSES[]     = { "off", "booting", "leveling", "deploying", "orienting", "complete" };
+static const char* const SPM_TRUSS_STATES[] = { "stowed", "unlocked", "raising", "deployed", "locked" };
+#define NAME_COUNT(names) ((int)(sizeof(names) / sizeof(names[0])))
+
+// writes a float as 4 big-endian bytes
+static void payload_float(uint8_t* out, cJSON* section, const char* field_name) {
+	cJSON* field = cJSON_GetObjectItemCaseSensitive(section, field_name);
+	float value = 0.0f;
+	if(cJSON_IsNumber(field)) {
+		value = (float)field->valuedouble;
+	}
+	uint32_t bits;
+	memcpy(&bits, &value, sizeof(bits));
+	out[0] = bits >> 24;
+	out[1] = bits >> 16;
+	out[2] = bits >> 8;
+	out[3] = bits;
+}
+
+/**
+ * Packs one device's section of a team's EVA.json into a 2027 telemetry payload.
+ *
+ * @param device_id 1(DCU), 2(UIA), 3(SPM) or 4(SSU)
+ * @param eva the team's EVA.json, as get_json_file returns it
+ * @param payload_out buffer of at least 128 bytes
+ * @return payload size in bytes, or -1 if the device has no payload layout yet (CTS, XRF) or its section is missing
+ */
+int build_telemetry_payload(uint16_t device_id, cJSON* eva, uint8_t* payload_out) {
+	if (device_id == 1) {
+		// Battery (0 = SUIT, 1 = UMB), oxygen, comm, fan, pump, CO2
+		cJSON* dcu = cJSON_GetObjectItemCaseSensitive(eva, "dcu");
+		if (!dcu) return -1;
+		payload_out[0] = payload_flag(cJSON_GetObjectItemCaseSensitive(dcu, "batt"), "lu");
+		payload_out[1] = payload_flag(dcu, "oxy");
+		payload_out[2] = payload_flag(dcu, "comm");
+		payload_out[3] = payload_flag(dcu, "fan");
+		payload_out[4] = payload_flag(dcu, "pump");
+		payload_out[5] = payload_flag(dcu, "co2");
+		return 6;
+	}
+	if (device_id == 2) {
+		cJSON* uia = cJSON_GetObjectItemCaseSensitive(eva, "uia");
+		if (!uia) return -1;
+		payload_out[0]  = payload_flag(uia, "eva_power");
+		payload_out[1]  = payload_flag(uia, "eva_water_supply");
+		payload_out[2]  = payload_flag(uia, "eva_water_waste");
+		payload_out[3]  = payload_flag(uia, "eva_oxy");
+		payload_out[4]  = payload_flag(uia, "oxy_vent");
+		payload_out[5]  = payload_flag(uia, "depress");
+		return 12;
+	}
+	if (device_id == 3) {
+		cJSON* spm = cJSON_GetObjectItemCaseSensitive(eva, "spm");
+		if (!spm) return -1;
+		cJSON* tilt = cJSON_GetObjectItemCaseSensitive(spm, "tilt");
+		payload_out[0] = payload_flag(spm, "power");
+		payload_out[1] = payload_enum(spm, "status", SPM_STATUSES, NAME_COUNT(SPM_STATUSES));
+		payload_out[2] = payload_flag(spm, "mode"); // 0 = LEVEL, 1 = ORIENT
+		payload_out[3] = payload_flag(spm, "level");
+		payload_out[4] = payload_flag(spm, "level_locked");
+		payload_out[5] = payload_enum(spm, "truss", SPM_TRUSS_STATES, NAME_COUNT(SPM_TRUSS_STATES));
+		payload_out[6] = payload_flag(spm, "azimuth_aligned");
+		payload_out[7] = payload_flag(spm, "orientation_locked");
+		payload_float(payload_out + 8,  tilt, "x");
+		payload_float(payload_out + 12, tilt, "y");
+		payload_float(payload_out + 16, spm,  "truss_height");    // 0.0 to 1.0
+		payload_float(payload_out + 20, spm,  "azimuth");
+		payload_float(payload_out + 24, spm,  "voltage");
+		return 28;
+	}
+	if (device_id == 4) {
+		cJSON* ssu = cJSON_GetObjectItemCaseSensitive(eva, "ssu");
+		if (!ssu) return -1;
+
+		// 3 bytes for power, status, mode
+		payload_out[0] = payload_flag(ssu, "power");
+		payload_out[1] = payload_enum(ssu, "status", SSU_STATUSES, NAME_COUNT(SSU_STATUSES));
+		payload_out[2] = payload_flag(ssu, "mode"); // 0 = SP, 1 = BB
+
+		const char* drill_prefixes[2] = { "sp", "bb" };
+		for (int drill = 0; drill < 2; drill++) {
+			uint8_t* drill_out = payload_out + 3 + drill * 15;   // 15 bytes per drill
+			char field_name[32];
+
+			snprintf(field_name, sizeof(field_name), "%s_sensor", drill_prefixes[drill]);
+			drill_out[0] = payload_enum(ssu, field_name, SSU_SENSOR_STATES, NAME_COUNT(SSU_SENSOR_STATES));
+			snprintf(field_name, sizeof(field_name), "%s_state", drill_prefixes[drill]);
+			drill_out[1] = payload_enum(ssu, field_name, SSU_DRILL_STATES, NAME_COUNT(SSU_DRILL_STATES));
+			snprintf(field_name, sizeof(field_name), "%s_thermal", drill_prefixes[drill]);
+			drill_out[2] = payload_enum(ssu, field_name, SSU_THERMAL_STATES, NAME_COUNT(SSU_THERMAL_STATES));
+			snprintf(field_name, sizeof(field_name), "%s_depth", drill_prefixes[drill]);
+			payload_float(drill_out + 3, ssu, field_name);
+			snprintf(field_name, sizeof(field_name), "%s_temp", drill_prefixes[drill]);
+			payload_float(drill_out + 7, ssu, field_name);
+			snprintf(field_name, sizeof(field_name), "%s_rpm", drill_prefixes[drill]);
+			payload_float(drill_out + 11, ssu, field_name);
+		}
+		return 33;
+	}
+	return -1;   // CTS and XRF: layouts still to define
 }
 
 /**

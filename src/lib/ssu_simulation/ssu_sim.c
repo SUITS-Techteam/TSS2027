@@ -3,7 +3,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define BOOT_TICKS     5
 #define TEMP_MIN      -25.0f
 #define TEMP_WARNING   15.0f
 #define TEMP_CRITICAL  35.0f
@@ -283,8 +282,8 @@ void ssu_sim_tick(cJSON* ssu, ssu_ctx_t* ctx, const ssu_inputs_t* in) {
             break;
 
         case SSU_BOOTING:
-            // >= so a skipped second can't leave the SSU stuck booting
-            if (++ctx->boot_ticks >= BOOT_TICKS) {
+
+            if (++ctx->boot_ticks >= 5) {
                 cjson_set(ssu, "status",    cJSON_CreateString(SSU_STATES[SSU_READY]));
                 cjson_set(ssu, "sp_sensor", cJSON_CreateString(SENSORS[SENSOR_PRIMED]));
                 cjson_set(ssu, "bb_sensor", cJSON_CreateString(SENSORS[SENSOR_PRIMED]));

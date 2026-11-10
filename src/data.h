@@ -20,10 +20,6 @@ typedef struct {
 } udp_command_mapping_t;
 
 
-#define SSU_SNAPSHOT_CMD 4
-#define SPM_SNAPSHOT_CMD 3
-
-
 struct backend_data_t {
     // Timing information
     uint32_t start_time;
@@ -73,6 +69,7 @@ void release_peripherals(struct backend_data_t* backend);
 // UDP Request Handlers
 void handle_udp_get_request(unsigned int command, unsigned char* data, struct backend_data_t* backend);
 bool handle_udp_post_request(unsigned int command, unsigned char* data, struct backend_data_t* backend);
+int build_telemetry_payload(uint16_t device_id, cJSON* eva, uint8_t* payload_out);
 
 // Data management
 void copy_data_file_to_instance(int instance_index, const char* filename);

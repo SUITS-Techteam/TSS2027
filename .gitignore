@@ -1,5 +1,8 @@
 /.vscode/*
+/data/groups.json
 /data/instances/*
+fake_team_device.py
+packet*
 *.exe
 *.lib
 *.exp
