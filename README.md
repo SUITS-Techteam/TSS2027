@@ -211,9 +211,19 @@ Each Telemetry packet's data is the current state of one device, in the byte ord
 | 0       | Power      | 0 = OFF, 1 = ON               |
 | 1       | Status     | 0 = OFF, 1 = BOOT, 2 = READY  |
 | 2       | Mode       | 0 = SP, 1 = BB                |
-| 3 - 6   | Depth      | float                         |
-| 7 - 10  | Drill Temp | float                         |
-| 11 - 14 | RPM        | float                         |
+| 3 - 17   | SP Drill      | 15 bytes, see drill layout below                         |
+| 18 - 32   | BB Drill      | 15 bytes, see drill layout below                         |
+
+Each drill (byte offsets within its 15 bytes):
+
+| Byte    | Field      | Value |
+| ------- | ---------- | ----- |
+| 0       | Sensor     | 0 = NOT READY, 1 = PRIMED, 2 = DEPLOYED |
+| 1       | State      | 0 = IDLE, 1 = DRILLING, 2 = OVERHEATED, 3 = RETRACTING, 4 = RETRACTED, 5 = DEPLOYED |
+| 2       | Thermal    | 0 = NOMINAL, 1 = WARNING, 2 = CRITICAL |
+| 3 - 6   | Depth      | float |
+| 7 - 10  | Drill Temp | float |
+| 11 - 14 | RPM        | float |
 
 **SPM (device ID 3):** 11 bytes
 
@@ -240,23 +250,18 @@ Full packet bytes: 691b90a7000a000f0001000442
 Response bytes: 691b90a7000a000f0005000042
 ```
 
-Once subscribed, you will receive a Telemetry packet with the SSU's data every second:
+Then, every second, a Telemetry packet with the SSU's data:
 
 ```
-Response bytes: 691b90a7001a0004000301020041480000c04000004316000087
+Response bytes: 691b90a7002c0004000301020001010041480000c04000004316000000000000000000c1c8000000000000b8
 
-Timestamp: 1763414183 -> bytes: 69 1b 90 a7
-Packet Length: 13 -> bytes: 00 0a
-Device ID: 4 (SSU) -> bytes: 00 04
-Message Code 3 (Telemetry) -> bytes: 00 03
-Data:
-  Power: ON (1) -> byte: 01
-  Status: READY (2) -> byte: 02
-  Mode: SP (0) -> byte: 00
-  Depth: 12.5 -> bytes: 41 48 00 00
-  Drill Temp:-3.0 -> bytes: c0 40 00 00
-  RPM: 150.0 -> bytes: 43 16 00 00 
-Checksum: 97 -> byte: 97
+Header: timestamp: 691b90a7, length: 002c (44 bytes), device id: 0004 (SSU), message code: 0003 (Telemetry)
+power: 01 (ON), status: 02 (READY), mode: 00 (SP)
+SP drill: sensor: 01 (PRIMED), state: 01 (DRILLING), thermal: 00 (NOMINAL),
+          depth: 41480000 (12.5), drill temp: c0400000 (-3.0), RPM: 43160000 (150.0)
+BB drill: sensor: 00 (NOT READY), state:00 (IDLE), thermal: 00 (NOMINAL),
+          depth: 00000000 (0.0), Drill Temp c1c80000 (-25.0), RPM 00000000 (0.0)
+Checksum: b8
 ```
 
 ## Testing
