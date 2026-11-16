@@ -7,7 +7,6 @@
 
 #define SPM_TICK_HZ       20
 #define SPM_DT            (1.0f / SPM_TICK_HZ)
-#define SPM_SNAPSHOT_CMD  3
 
 typedef enum { SPM_OFF, SPM_BOOTING, SPM_LEVELING, SPM_DEPLOYING, SPM_ORIENTING, SPM_COMPLETE } spm_state_t;
 typedef enum { TRUSS_STOWED, TRUSS_UNLOCKED, TRUSS_RAISING, TRUSS_DEPLOYED, TRUSS_LOCKED } truss_t;
