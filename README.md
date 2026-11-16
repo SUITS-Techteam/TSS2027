@@ -204,7 +204,7 @@ Each Telemetry packet's data is the current state of one device, in the byte ord
 | 4                | O2 Vent      | 0 = CLOSED, 1 = OPEN   |
 | 5                | Depress      | 0 = OFF, 1 = ON        |
 
-**SSU (device ID 4):** 15 bytes
+**SSU (device ID 4):** 33 bytes
 
 | Byte(s) | Field      | Value                         |
 | ------- | ---------- | ----------------------------- |
@@ -246,22 +246,29 @@ Here is an example packet you can could send to subscribe to the SSU telemetry d
 > Data: SSU (4) -> bytes: 00 04 \
 > Checksum: 42 -> bytes: 42 
 
-> Full packet bytes: 691b90a7000a000f0001000442 \
-> Response bytes: 691b90a7000a000f0005000042 
+> Full packet bytes: 691b90a7000a000f0001000445 \
+> Response bytes: 691b90a7000a000f0004000044 \
+> Message Code: Ack (4) -> bytes: 00 04 \
+> Data: Success (0) -> bytes: 00 00 \
+> Checksum: 42 -> bytes: 42 
 
 
 Then, every second, a Telemetry packet with the SSU's data:
 
 > Response bytes: 691b90a7002c0004000301020001010041480000c04000004316000000000000000000c1c8000000000000b8
 >
-> Header: timestamp: 691b90a7, length: 002c (44 bytes), device id: 0004 (SSU), message code: 0003 (Telemetry) \
+> Timestamp: 1763414183 -> bytes: 69 1b 90 a7\
+> Packet length 44 -> bytes: 00 2c \
+> Device ID: SSU (4) -> bytes: 00 04 \
+> Message Code: Telemetry (3) -> bytes: 00 03 \
+> Data: SSU Data (33 bytes) -> bytes: \
 > &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;power: 01 (ON), status: 02 (READY), mode: 00 (SP) \
 > SP drill: sensor: 01 (PRIMED), state: 01 (DRILLING), thermal: 00 (NOMINAL), \
-> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depth: 41480000 (12.5), drill temp: c0400000 (-3.0), RPM: 43160000 (150.0) \
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depth: 41 48 00 00 (12.5), drill temp: c0 40 00 00 (-3.0), RPM: 43 16 00 00 (150.0) \
 > BB drill: sensor: 00 (NOT READY), state:00 (IDLE), thermal: 00 (NOMINAL), \
-> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depth: 00000000 (0.0), Drill Temp c1c80000 (-25.0), RPM 00000000 (0.0) \
-> Checksum: b8 
->
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depth: 00 00 00 00 (0.0), Drill Temp c1 c8 00 00 (-25.0), RPM 00 00 00 00 (0.0) \
+> Checksum: 184 -> bytes: b8 
+
 
 ## Testing
 
