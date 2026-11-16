@@ -244,13 +244,13 @@ Here is an example packet you can could send to subscribe to the SSU telemetry d
 > Device ID: University Device (15) -> bytes: 00 0f \
 > Message Code: Subscribe (1) -> bytes: 00 01 \
 > Data: SSU (4) -> bytes: 00 04 \
-> Checksum: 42 -> bytes: 42 
+> Checksum: 45 -> bytes: 45 
 
 > Full packet bytes: 691b90a7000a000f0001000445 \
 > Response bytes: 691b90a7000a000f0004000044 \
 > Message Code: Ack (4) -> bytes: 00 04 \
 > Data: Success (0) -> bytes: 00 00 \
-> Checksum: 42 -> bytes: 42 
+> Checksum: 44 -> bytes: 44 
 
 
 Then, every second, a Telemetry packet with the SSU's data:
