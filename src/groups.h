@@ -29,11 +29,6 @@ enum peripheral_type_t {
 	PERIPHERAL_TEAM_DEVICE
 };
 
-struct subscriptions_t {
-	bool dcu;
-	bool uia;
-	int poi;
-};
 
 struct peripheral_device_t {
     struct in_addr         address;             // source IP, identifies the device
@@ -46,13 +41,9 @@ struct peripheral_device_t {
 
 struct group_t {
     int assigned_team;
-<<<<<<< Updated upstream
-    struct subscriptions_t subs;
-=======
 	bool dcu;
 	bool uia;
 	uint16_t poi;	// 2 byte device id
->>>>>>> Stashed changes
 };
 
 extern struct group_t             groups[NUM_GROUPS];
