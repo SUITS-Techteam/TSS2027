@@ -238,31 +238,30 @@ Each drill (byte offsets within its 15 bytes):
 #### Example Packets
 
 Here is an example packet you can could send to subscribe to the SSU telemetry data feed. The TSS responds back with a packet with the Ack message code for if your packet was successful. It will respond with Device ID 15 when sending the Ack packet.
-```
-Timestamp: 1763414183 -> bytes: 69 1b 90 a7
-Packet Length: 13 -> bytes: 00 0a
-Device ID: University Device (15) -> bytes: 00 0f
-Message Code: Subscribe (1) -> bytes: 00 01
-Data: SSU (4) -> bytes: 00 04
-Checksum: 42 -> bytes: 42
 
-Full packet bytes: 691b90a7000a000f0001000442
-Response bytes: 691b90a7000a000f0005000042
-```
+> Timestamp: 1763414183 -> bytes: 69 1b 90 a7 \
+> Packet Length: 13 -> bytes: 00 0a \
+> Device ID: University Device (15) -> bytes: 00 0f \
+> Message Code: Subscribe (1) -> bytes: 00 01 \
+> Data: SSU (4) -> bytes: 00 04 \
+> Checksum: 42 -> bytes: 42 
+
+> Full packet bytes: 691b90a7000a000f0001000442 \
+> Response bytes: 691b90a7000a000f0005000042 
+
 
 Then, every second, a Telemetry packet with the SSU's data:
 
-```
-Response bytes: 691b90a7002c0004000301020001010041480000c04000004316000000000000000000c1c8000000000000b8
-
-Header: timestamp: 691b90a7, length: 002c (44 bytes), device id: 0004 (SSU), message code: 0003 (Telemetry)
-power: 01 (ON), status: 02 (READY), mode: 00 (SP)
-SP drill: sensor: 01 (PRIMED), state: 01 (DRILLING), thermal: 00 (NOMINAL),
-          depth: 41480000 (12.5), drill temp: c0400000 (-3.0), RPM: 43160000 (150.0)
-BB drill: sensor: 00 (NOT READY), state:00 (IDLE), thermal: 00 (NOMINAL),
-          depth: 00000000 (0.0), Drill Temp c1c80000 (-25.0), RPM 00000000 (0.0)
-Checksum: b8
-```
+> Response bytes: 691b90a7002c0004000301020001010041480000c04000004316000000000000000000c1c8000000000000b8
+>
+> Header: timestamp: 691b90a7, length: 002c (44 bytes), device id: 0004 (SSU), message code: 0003 (Telemetry) \
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;power: 01 (ON), status: 02 (READY), mode: 00 (SP) \
+> SP drill: sensor: 01 (PRIMED), state: 01 (DRILLING), thermal: 00 (NOMINAL), \
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depth: 41480000 (12.5), drill temp: c0400000 (-3.0), RPM: 43160000 (150.0) \
+> BB drill: sensor: 00 (NOT READY), state:00 (IDLE), thermal: 00 (NOMINAL), \
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depth: 00000000 (0.0), Drill Temp c1c80000 (-25.0), RPM 00000000 (0.0) \
+> Checksum: b8 
+>
 
 ## Testing
 
