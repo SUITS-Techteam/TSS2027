@@ -1,6 +1,6 @@
 #include "server.h"
 
-struct group_t             groups[NUM_GROUPS] = { { NO_TEAM }, { NO_TEAM } };
+struct group_t             groups[NUM_GROUPS] = { { .assigned_team = NO_TEAM }, { .assigned_team = NO_TEAM } };
 struct peripheral_device_t devices[MAX_PERIPHERAL_DEVICES];
 int                        device_count = 0;
 

@@ -64,7 +64,6 @@ void handle_team_packet(SOCKET udp_socket, const struct sockaddr_in* sender, uin
 void send_group_telemetry(SOCKET udp_socket, struct backend_data_t** backends);
 
 // frontend functions
-void end_group_run(int group_index);
 bool handle_group_request(const char* request_content, struct backend_data_t** backends);
 
 #endif // GROUPS_H

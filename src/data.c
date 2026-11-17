@@ -1221,7 +1221,7 @@ void release_peripherals(struct backend_data_t* backend) {
  */
 void increment_simulation(struct backend_data_t *backend) {
     // Increment server time
-    int new_time = time(NULL) - backend->start_time;
+    int new_time = (uint32_t)time(NULL) - backend->start_time;
     bool time_incremented = false;
     if (new_time != backend->server_up_time) {
         backend->server_up_time = new_time;
@@ -1443,7 +1443,7 @@ int build_telemetry_payload(uint16_t device_id, cJSON* eva, uint8_t* payload_out
 		payload_out[3]  = payload_flag(uia, "eva_oxy");
 		payload_out[4]  = payload_flag(uia, "oxy_vent");
 		payload_out[5]  = payload_flag(uia, "depress");
-		return 12;
+		return 6;
 	}
 	if (device_id == 3) {
 		cJSON* spm = cJSON_GetObjectItemCaseSensitive(eva, "spm");
@@ -1457,8 +1457,8 @@ int build_telemetry_payload(uint16_t device_id, cJSON* eva, uint8_t* payload_out
 		payload_out[5] = payload_enum(spm, "truss", SPM_TRUSS_STATES, NAME_COUNT(SPM_TRUSS_STATES));
 		payload_out[6] = payload_flag(spm, "azimuth_aligned");
 		payload_out[7] = payload_flag(spm, "orientation_locked");
-		payload_float(payload_out + 8,  tilt, "x");
-		payload_float(payload_out + 12, tilt, "y");
+		payload_float(payload_out + 8,  spm, "tilt_x");
+		payload_float(payload_out + 12, spm, "tilt_y");
 		payload_float(payload_out + 16, spm,  "truss_height");    // 0.0 to 1.0
 		payload_float(payload_out + 20, spm,  "azimuth");
 		payload_float(payload_out + 24, spm,  "voltage");
@@ -1523,28 +1523,18 @@ bool handle_udp_post_request(unsigned int command, unsigned char* data, struct b
     // Extract value from UDP data
     char value_str[32];
 
-    if (mapping->data_type == "bool") {
-        // Special case for Unreal Engine commands where bool is sent as float
+    if (strcmp(mapping->data_type, "bool") == 0) {
+        // Bools arrive as a float (Unreal Engine sends them that way), extract_bool_value handles it
+        bool value = extract_bool_value(data);
+        strcpy(value_str, value ? "true" : "false");
+    } else if (strcmp(mapping->data_type, "float") == 0) {
+        float value = extract_float_value(data);
+        sprintf(value_str, "%.6f", value);
+    } else if (strcmp(mapping->data_type, "int") == 0) {
         float bool_float;
         memcpy(&bool_float, data, 4);
-        bool value = bool_float != 0.0f;
-        strcpy(value_str, value ? "true" : "false");
-    } else {
-        // Other commands extract float value from packet format
-        if (strcmp(mapping->data_type, "bool") == 0) {
-            bool value = extract_bool_value(data);
-
-            strcpy(value_str, value ? "true" : "false");
-        } else if (strcmp(mapping->data_type, "float") == 0) {
-            float value = extract_float_value(data);
-            sprintf(value_str, "%.6f", value);
-        }
-		else if (strcmp(mapping->data_type, "int") == 0) {
-			float bool_float;
-			memcpy(&bool_float, data, 4);
-			bool b = bool_float != 0.0f;
-			sprintf(value_str, "%d", b ? 1 : 0);
-		}
+        bool b = bool_float != 0.0f;
+        sprintf(value_str, "%d", b ? 1 : 0);
     }
 
     if (handle_ssu_button(backend, mapping->path, value_str)) return true;

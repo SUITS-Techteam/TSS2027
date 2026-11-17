@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
     SOCKET* udp_sockets = malloc(sizeof(SOCKET) * NUM_TEAMS);
     // Initialize backends data system
     struct backend_data_t **backends = malloc(sizeof(struct backend_data_t*) * NUM_TEAMS);
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < NUM_TEAMS; i++) {
         int port = 14141 + 1 + i;
         char char_port[10];
 
@@ -169,19 +169,19 @@ int main(int argc, char *argv[]) {
                                     client = next_client;
                                     continue;
                                 }
-                                //get team index
-                                while (*request_content != '=') {
-                                    request_content++;
+                                                                // Body looks like "team=3&eva.dcu.fan=true"
+                                char *team_value = strchr(request_content, '=');
+                                char *after_number = NULL;
+                                long instance_index = -1;
+                                if (team_value) {
+                                    instance_index = strtol(team_value + 1, &after_number, 10);
                                 }
-                                request_content++;
-                                //Only handles single digit team numbers
-                                int instance_index = *request_content - '0';
-                                request_content += 2;
 
-                                if (!request_content) {
+                                if (!team_value || *after_number != '&' || instance_index < 0 || instance_index >= NUM_TEAMS) {
                                     send_400(client);
                                     drop_tcp_client(&clients, client);
                                 } else {
+                                    request_content = after_number + 1;
                                     printf("%s\n", request_content);
                                     if (html_form_json_update(request_content, backends[instance_index])) {
                                         send_304(client);
@@ -223,12 +223,12 @@ int main(int argc, char *argv[]) {
                 // Always interpret UDP packets as big-endian
                 if (!big_endian()) {
                     // System is little-endian, so convert big-endian UDP to little-endian
-                    reverse_bytes(client->udp_request);     // timestamp (bytes 0-3)
-                    reverse_bytes(client->udp_request + 4); // command (bytes 4-7)
+                    reverse_bytes((unsigned char *)client->udp_request);     // timestamp (bytes 0-3)
+                    reverse_bytes((unsigned char *)client->udp_request + 4); // command (bytes 4-7)
 
                     // Only convert value bytes if this is a POST request (12 bytes)
                     if (received_bytes >= 12) {
-                        reverse_bytes(client->udp_request + 8); // value (bytes 8-11)
+                        reverse_bytes((unsigned char *)client->udp_request + 8); // value (bytes 8-11)
                     }
                 }
 
@@ -262,9 +262,8 @@ int main(int argc, char *argv[]) {
                     memcpy(response_buffer, json_data, json_len);
 
                     // Send response
-                    int bytes_sent =
-                        sendto(udp_sockets[i], response_buffer, buffer_size, 0,
-                            (struct sockaddr *)&client->udp_addr, client->address_length);
+                    sendto(udp_sockets[i], response_buffer, buffer_size, 0,
+                           (struct sockaddr *)&client->udp_addr, client->address_length);
 
 
                     // UDP requests are one-off, so drop client after the response
@@ -273,7 +272,7 @@ int main(int argc, char *argv[]) {
                 } else if (command < 3000) {  // POST requests, primarily the TSS peripherals
                     //TODO: Move all post commands to the main_udp_socket and use perphial mapping to control which backend to send data to
                     bool result = handle_udp_post_request(command, (unsigned char *)data, backends[i]);
-                
+
                     // Send status of POST request back to client with just boolean response flag
                     unsigned char response_buffer[4];
                     unsigned int status = result ? 1 : 0;
@@ -320,16 +319,16 @@ int main(int argc, char *argv[]) {
                 else if (received_bytes >= 8) {
                     // Always interpret UDP packets as big-endian, same as the team ports
                     if (!big_endian()) {
-                        reverse_bytes(client->udp_request);
-                        reverse_bytes(client->udp_request + 4);
+                        reverse_bytes((unsigned char *)client->udp_request);
+                        reverse_bytes((unsigned char *)client->udp_request + 4);
                         if (received_bytes >= 12) {
-                            reverse_bytes(client->udp_request + 8);
+                            reverse_bytes((unsigned char *)client->udp_request + 8);
                         }
                     }
 
                     unsigned int time = 0;
                     unsigned int command = 0;
-                    char data[4] = {0};
+                    unsigned char data[4] = {0};
                     get_contents(client->udp_request, &time, &command, data, received_bytes);
 
                     int team = route_peripheral_packet(&client->udp_addr, command);
@@ -371,13 +370,13 @@ int main(int argc, char *argv[]) {
             // Sync simulation data to JSON files
             sync_simulation_to_json(backends[i]);
 
-            // Refresh peripheral online / needs-reset status for the frontend (once per second)
-        	update_group_status_file();
-
-			// send subscribed telemetry to groups
-			send_group_telemetry(main_udp_socket, backends);
         }
-    }
+        // Refresh peripheral online / needs-reset status for the frontend (once per second)
+        update_group_status_file();
+
+		// send subscribed telemetry to groups
+		send_group_telemetry(main_udp_socket, backends);
+	}
 
     // Cleanup phase - shutdown server gracefully
     printf("Clean up Database...\n");
@@ -388,30 +387,16 @@ int main(int argc, char *argv[]) {
 
     printf("Closing Sockets...\n");
     CLOSESOCKET(server);
-
-    // Windows specific socket close
-    #if defined(_WIN32)
-    #else
-        for (int i = 0; i < NUM_TEAMS; i++) {
-            close(udp_sockets[i]);
-        }
-    #endif
+    CLOSESOCKET(main_udp_socket);
+    free(udp_sockets);
+    free(backends);
 
     printf("Cleaned up server listen sockets\n");
     int leftover_clients = 0;
-    struct client_info_t *client = clients;
-    while (client) {
-        drop_tcp_client(&clients, client);
+    while (clients) {
+        drop_tcp_client(&clients, clients);
         leftover_clients++;
-        client = client->next;
     }
-    printf("Cleaned up %d client sockets\n", leftover_clients);
-
-    // Windows specific cleanup
-    #if defined(_WIN32)
-        WSACleanup();
-    #endif
-
     printf("\nGoodbye World\n");
     return 0;
 }
