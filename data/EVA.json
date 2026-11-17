@@ -78,7 +78,7 @@
 		"bb_temp":	-25,
 		"bb_rpm":	0,
 		"bb_state":	"idle",
-		"keepout":	false,
+		"keepout":	"inactive",
 		"keepout_timer":	5,
 		"launch_lock":	false
 	},

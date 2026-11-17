@@ -33,6 +33,8 @@ struct backend_data_t {
 	ssu_ctx_t ssu_ctx;
 	bool deploy_latch;
 	bool retract_latch;
+	bool launch_lock_latch;
+	bool keepout_clear;
 	bool ssu_peripheral;         // a Pi has sent a snapshot; it owns the simulation from now on
 	uint32_t ssu_last_snapshot;  // server_up_time of the last snapshot
 

@@ -12,7 +12,7 @@
 #define AMBIENT_MAX	  -10
 
 
-static const char* SSU_STATES[] = { "off", "booting", "ready" };
+static const char* SSU_STATES[] = { "off", "booting", "ready", "complete" };
 static const char* SENSORS[]    = { "stowed", "primed", "deployed" };
 static const char* STATES[]     = { "idle", "drilling", "overheated", "retracting", "retracted", "deployed" };
 static const char* THERMALS[]   = { "nominal", "warning", "critical" };
@@ -50,7 +50,7 @@ static float get_num(cJSON* obj, const char* key) {
 
 static ssu_state_t get_ssu_state(cJSON* ssu) {
     const char* s = cJSON_GetStringValue(cjson_get(ssu, "status"));
-    for (int i = SSU_OFF; i <= SSU_READY; ++i) {
+    for (int i = SSU_OFF; i <= SSU_COMPLETE; ++i) {
         if (s && strcmp(s, SSU_STATES[i]) == 0) return i;
     }
     return SSU_OFF;
@@ -83,7 +83,8 @@ static void set_state(cJSON* ssu, const drill_cfg_t* d, state_t s) {
 }
 
 static float random_ambient(void) {
-	return AMBIENT_MIN + rand() % (AMBIENT_MAX - AMBIENT_MIN + 1);
+	return -6000.0f;
+	// return AMBIENT_MIN + rand() % (AMBIENT_MAX - AMBIENT_MIN + 1);
 }
 
 
@@ -144,7 +145,7 @@ static void drill_tick(cJSON* ssu, const drill_cfg_t* d, const ssu_inputs_t* in)
 
         // retracting: depth decreases until back to 0
         case RETRACTING: {
-            float new_depth = depth - 10.0f;
+            float new_depth = depth - 50.0f;
             if (new_depth <= 0.0f) {
                 new_depth = 0.0f;
                 set_state(ssu, d, RETRACTED);
@@ -230,7 +231,7 @@ cJSON* ssu_sim_create(void) {
     return ssu;
 }
 
-static void update_keepout(cJSON* ssu, const ssu_inputs_t* in, int team) {
+static void update_keepout(cJSON* ssu, const ssu_inputs_t* in) {
     const char* keepout = cJSON_GetStringValue(cjson_get(ssu, "keepout"));
     if (keepout == NULL || strcmp(keepout, "inactive") == 0) {
         return;   // the zone isn't watched until the launch lock is released
@@ -245,14 +246,14 @@ static void update_keepout(cJSON* ssu, const ssu_inputs_t* in, int team) {
             return;   // still counting down
         }
         cjson_set(ssu, "keepout_timer", cJSON_CreateNumber(0));
-        printf("Keep-out zone armed for Team %d\n", team);
+        printf("Keep-out zone armed\n");
     }
 
     if (in->keepout_clear) {
         cjson_set(ssu, "keepout", cJSON_CreateString("active"));
     } else {
         if (!was_breached) {
-            printf("KEEP-OUT ZONE BREACHED for Team %d\n", team);
+            printf("KEEP-OUT ZONE BREACHED\n");
         }
         cjson_set(ssu, "keepout", cJSON_CreateString("breached"));
     }
@@ -301,7 +302,7 @@ void ssu_sim_tick(cJSON* ssu, ssu_ctx_t* ctx, const ssu_inputs_t* in) {
             drill_tick(ssu, in->mode == 0 ? &SP : &BB, in);
 
             // keep-out runs before the lock check, so the release tick still shows the full countdown
-            update_keepout(ssu, in, ctx->team);
+            update_keepout(ssu, in);
 
             // launch lock: a held press releases it once both sensors are deployed, which starts the keep-out countdown
             if (in->launch_lock_pressed) {
@@ -314,9 +315,13 @@ void ssu_sim_tick(cJSON* ssu, ssu_ctx_t* ctx, const ssu_inputs_t* in) {
                     cjson_set(ssu, "launch_lock", cJSON_CreateString("released"));
                     cjson_set(ssu, "keepout", cJSON_CreateString("arming"));
                     cjson_set(ssu, "keepout_timer", cJSON_CreateNumber(5));
-                    printf("Launch lock released for Team %d, keep-out zone arms in %d s\n", ctx->team, 5);
+                    printf("Launch lock released, keep-out zone arms in %d s\n", 5);
                 }
+                cjson_set(ssu, "status", cJSON_CreateString("complete"));
             }
             break;
+        case SSU_COMPLETE:
+			update_keepout(ssu, in);
+          	break;
     }
 }

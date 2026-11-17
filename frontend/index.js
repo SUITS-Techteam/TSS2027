@@ -7,8 +7,9 @@ const NUMBER_OF_TEAMS = 10;
 let fetchDataWaiting = false;
 let fetchGroupsWaiting = false;
 
-const SSU_STATUS = { off: ["OFF", "off"], booting: ["BOOTING", "booting"], ready: ["READY", "ready"], };
+const SSU_STATUS = { off: ["OFF", "off"], booting: ["BOOTING", "booting"], ready: ["READY", "ready"], complete: ["COMPLETE", "ready"], };
 const SSU_SENSOR = { stowed: ["STOWED", "off"], primed: ["PRIMED", "ready"], deployed: ["DEPLOYED", "ready"],};
+const SSU_KEEPOUT = { inactive: ["INACTIVE", "off", ], arming: ["ARMING", "booting"], active: ["ACTIVE", "ready"], breached: ["BREACHED", "ready"],}
 const SSU_DRILL = {
   idle:       ["IDLE", "off"],
   drilling:   ["DRILLING", "ready"],
@@ -161,6 +162,10 @@ async function fetchData() {
 		setStatusLabel("ssu-status", getNestedValue(evaData, "ssu.status"), SSU_STATUS);
 		return;
 	}
+	if (path === "eva.ssu.keepout") {
+		setStatusLabel("ssu-keepout", getNestedValue(evaData, "ssu.keepout"), SSU_KEEPOUT);
+		return;
+	}
 	if (path === "eva.ssu.sp_sensor") {
 		setStatusLabel("ssu-sp-sensor", getNestedValue(evaData, "ssu.sp_sensor"), SSU_SENSOR);
 		return;
@@ -233,6 +238,7 @@ async function fetchData() {
 	  const bb_depth = getNestedValue(evaData, "ssu.bb_depth");
 
 	  const ssu_mode = getNestedValue(evaData, "ssu.mode");
+	  const keepout = getNestedValue(evaData, "ssu.keepout");
 
 	  const level = getNestedValue(evaData, "spm.level");
 	  const spm_status = getNestedValue(evaData, "spm.status");
@@ -286,6 +292,24 @@ async function fetchData() {
 			    }
 			}
       }
+      else if (path === "eva.ssu.launch_lock_pressed") {
+		// LAUNCH LOCK button - enabled when both sensors are deployed and keep-out zone is not armed already
+			if (keepout === "inactive" && sp_state == "deployed" && bb_state == "deployed"){
+				setButtonEnabled(el, true);
+		    }
+		    else {
+				setButtonEnabled(el, false);
+		    }
+      }
+      else if (path === "eva.ssu.keepout_clear") {
+		// LAUNCH LOCK button - enabled when both sensors are deployed and keep-out zone is not armed already
+			if (keepout === "active" || keepout === "breached"){
+				setButtonEnabled(el, true);
+		    }
+		    else {
+				setButtonEnabled(el, false);
+		    }
+      }
       else if (path === "eva.spm.unlock_pressed") {
 		// UNLOCK button - enabled when platform is level and truss needs to be unlocked or orientation needs to be unlocked
 			if(spm_mode === 0) {
@@ -304,7 +328,7 @@ async function fetchData() {
 					setButtonEnabled(el, false);
 				}
 			}
-      }
+      } 
       else if (path === "eva.spm.raise_pressed") {
 		// RAISE button - enabled when spm is in deploying status and truss is unlocked
 			if(spm_mode === 0) {
@@ -457,7 +481,6 @@ async function setupEventListeners() {
 		}
 		return;
 	  }
-
       updateServerData(path, value);
     });
   }

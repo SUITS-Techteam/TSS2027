@@ -27,15 +27,6 @@ int main(int argc, char *argv[]) {
         signal(SIGPIPE, SIG_IGN);
     #endif
 
-    // Windows specific initialization
-    #if defined(_WIN32)
-        WSADATA d;
-        if (WSAStartup(MAKEWORD(2, 2), &d)) {
-            printf("Failed to initialize WSA\n");
-            return -1;
-        }
-    #endif
-
     // Fetch server hostname and port to bind to
     char hostname[16];
     char port[6] = "14141";

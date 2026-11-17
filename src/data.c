@@ -41,10 +41,11 @@ struct backend_data_t *init_backend(int instanceIndex) {
     backend->time_since_last_ping = 0;
 
 	// ssu sim variables
-	backend->ssu_ctx.team = instanceIndex;
 	backend->ssu_ctx.last_mode = -1;
 	backend->deploy_latch = false;
 	backend->retract_latch = false;
+	backend->launch_lock_latch = false;
+	backend->keepout_clear = true;
 
 	// spm sim variables
 	backend->unlock_latch = false;
@@ -1019,6 +1020,8 @@ void update_ssu(struct backend_data_t* backend) {
 			.rpm = json_num(ssu, mode == 0 ? "sp_rpm" : "bb_rpm"),
 			.deploy_pressed  = backend->deploy_latch,
 			.retract_pressed = backend->retract_latch,
+			.launch_lock_pressed = backend->launch_lock_latch,
+			.keepout_clear = backend->keepout_clear,
 		};
 		ssu_sim_tick(ssu, &backend->ssu_ctx, &in);
 		cjson_set(ssu, "link", cJSON_CreateString("none"));
@@ -1026,6 +1029,7 @@ void update_ssu(struct backend_data_t* backend) {
 
 	backend->deploy_latch = false;
 	backend->retract_latch = false;
+	backend->launch_lock_latch = false;
 
 	save_eva_json(backend, eva_json);
 	cJSON_Delete(eva_json);
@@ -1192,6 +1196,8 @@ void release_peripherals(struct backend_data_t* backend) {
 		backend->ssu_ctx.last_mode = -1;
 		backend->deploy_latch = false;
 		backend->retract_latch = false;
+		backend->launch_lock_latch = false;
+		backend->keepout_clear = true;
 		printf("SSU back on TSS simulation (team %d)\n", backend->instance_index);
 	}
 
@@ -1278,15 +1284,19 @@ void cleanup_backend(struct backend_data_t *backend) {
 // Momentary SSU buttons latch for the next tick instead of writing to the JSON.
 // Returns true if the route was a button (handled here), false otherwise.
 bool handle_ssu_button(struct backend_data_t* backend, const char* route, const char* value) {
-    bool is_deploy  = strcmp(route, "eva.ssu.deploy_pressed") == 0;
-    bool is_retract = strcmp(route, "eva.ssu.retract_pressed") == 0;
-    if (!is_deploy && !is_retract) return false;
+	if (strcmp(route, "eva.ssu.deploy_pressed") == 0) {
+		backend->deploy_latch = true;
+	} else if (strcmp(route, "eva.ssu.retract_pressed") == 0) {
+		backend->retract_latch = true;
+	} else if (strcmp(route, "eva.ssu.launch_lock_pressed") == 0) {
+		backend->launch_lock_latch = true;
+	} else if (strcmp(route, "eva.ssu.keepout_clear") == 0) {
+		backend->keepout_clear = !backend->keepout_clear;
+	}
+	else {
+		return false;
+	}
 
-    if (strcmp(value, "true") == 0) {
-        if (is_deploy) backend->deploy_latch = true;
-        else           backend->retract_latch = true;
-        printf("SSU %s pressed (team %d)\n", is_deploy ? "deploy" : "retract", backend->instance_index);
-    }
     return true;
 }
 

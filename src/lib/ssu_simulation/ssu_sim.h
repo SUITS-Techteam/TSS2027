@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include "cJSON.h"
 
-typedef enum { SSU_OFF, SSU_BOOTING, SSU_READY } ssu_state_t;
+typedef enum { SSU_OFF, SSU_BOOTING, SSU_READY, SSU_COMPLETE } ssu_state_t;
 typedef enum { STOWED, SENSOR_PRIMED, SENSOR_DEPLOYED } sensor_t;
 typedef enum { IDLE, DRILLING, OVERHEATED, RETRACTING, RETRACTED, DEPLOYED } state_t;
 typedef enum { THERMAL_NOMINAL, THERMAL_WARNING, THERMAL_CRITICAL } thermal_t;
@@ -23,7 +23,6 @@ typedef struct {
 typedef struct {
     int boot_ticks;
     int last_mode;
-    int team;              // only used in log messages
 } ssu_ctx_t;
 
 cJSON* ssu_sim_create(void);
