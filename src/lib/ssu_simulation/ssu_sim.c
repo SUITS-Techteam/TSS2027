@@ -83,8 +83,7 @@ static void set_state(cJSON* ssu, const drill_cfg_t* d, state_t s) {
 }
 
 static float random_ambient(void) {
-	return -6000.0f;
-	// return AMBIENT_MIN + rand() % (AMBIENT_MAX - AMBIENT_MIN + 1);
+	return AMBIENT_MIN + rand() % (AMBIENT_MAX - AMBIENT_MIN + 1);
 }
 
 
@@ -145,7 +144,7 @@ static void drill_tick(cJSON* ssu, const drill_cfg_t* d, const ssu_inputs_t* in)
 
         // retracting: depth decreases until back to 0
         case RETRACTING: {
-            float new_depth = depth - 50.0f;
+            float new_depth = depth - 15.0f;
             if (new_depth <= 0.0f) {
                 new_depth = 0.0f;
                 set_state(ssu, d, RETRACTED);
