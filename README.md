@@ -103,7 +103,7 @@ The display and control unit (DCU) used for this challenge is a component that a
 
 ### SPM
 
-The solar power module (SSU) is one of the planned peripheral hardware devices that the user will setup as one of the POIs during an EVA. The SPM will send telemetry data to the TSS indicating its operational state, deployment status, and any active readings returned from the device.
+See [SPM](src/lib/spm_simulation/README.md)
 
 ### SSU
 
@@ -111,7 +111,7 @@ See [SSU](src/lib/ssu_simulation/README.md)
 
 ### CTS
 
-The comms tower station (SSU) is one of the planned peripheral hardware devices that the user will setup as one of the POIs during an EVA. The SPM will send telemetry data to the TSS indicating its operational state, deployment status, and any active readings returned from the device.
+The comms tower station (CTS) is one of the planned peripheral hardware devices that the user will setup as one of the POIs during an EVA. The CTS will send telemetry data to the TSS indicating its operational state, deployment status, and any active readings returned from the device.
 
 ## Development
 
