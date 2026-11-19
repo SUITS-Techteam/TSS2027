@@ -211,9 +211,9 @@ Each Telemetry packet's data is the current state of one device, in the byte ord
 | 0       | Power      | 0 = OFF, 1 = ON               |
 | 1       | Status     | 0 = OFF, 1 = BOOT, 2 = READY  |
 | 2       | Mode       | 0 = SP, 1 = BB                |
-| 3 - 17  | SP Drill      | 15 bytes, see drill layout below                         |
-| 18 - 32 | BB Drill      | 15 bytes, see drill layout below                         |
-| 33      | Keepout    | 0 = INACTIVE, 1 = "ARMING", 2 = "ACTIVE", 3 = "BREACHED" |
+| 3 - 17  | SP Drill   | 15 bytes, see drill layout below |
+| 18 - 32 | BB Drill   | 15 bytes, see drill layout below |
+| 33      | Keepout    | 0 = INACTIVE, 1 = ARMING, 2 = ACTIVE, 3 = BREACHED |
 
 Each drill (byte offsets within its 15 bytes):
 
