@@ -204,37 +204,7 @@ Each Telemetry packet's data is the current state of one device, in the byte ord
 | 4                | O2 Vent      | 0 = CLOSED, 1 = OPEN   |
 | 5                | Depress      | 0 = OFF, 1 = ON        |
 
-**SSU (device ID 4):** 34 bytes
-
-| Byte(s) | Field      | Value                         |
-| ------- | ---------- | ----------------------------- |
-| 0       | Power      | 0 = OFF, 1 = ON               |
-| 1       | Status     | 0 = OFF, 1 = BOOT, 2 = READY  |
-| 2       | Mode       | 0 = SP, 1 = BB                |
-| 3 - 17  | SP Drill   | 15 bytes, see drill layout below |
-| 18 - 32 | BB Drill   | 15 bytes, see drill layout below |
-| 33      | Keepout    | 0 = INACTIVE, 1 = ARMING, 2 = ACTIVE, 3 = BREACHED |
-
-Each drill (byte offsets within its 15 bytes):
-
-| Byte    | Field      | Value |
-| ------- | ---------- | ----- |
-| 0       | Sensor     | 0 = NOT READY, 1 = PRIMED, 2 = DEPLOYED |
-| 1       | State      | 0 = IDLE, 1 = DRILLING, 2 = OVERHEATED, 3 = RETRACTING, 4 = RETRACTED, 5 = DEPLOYED |
-| 2       | Thermal    | 0 = NOMINAL, 1 = WARNING, 2 = CRITICAL |
-| 3 - 6   | Depth      | float |
-| 7 - 10  | Drill Temp | float |
-| 11 - 14 | RPM        | float |
-
-**SPM (device ID 3):** 11 bytes
-
-| Byte(s)| Field  | Value                         |
-| ------ | ------ | ----------------------------- |
-| 0      | Power  | 0 = OFF, 1 = ON               |
-| 1      | Status | 0 = OFF, 1 = BOOT, 2 = READY  |
-| 2      | Mode   | 0 = LEVEL, 1 = ORIENT         |
-| 3 - 6  | Tilt X | float                         |
-| 7 - 10 | Tilt Y | float                         |
+The data for other POI asset devices can be found in their respective sections.
 
 #### Example Packets
 
@@ -256,7 +226,7 @@ Here is an example packet you can could send to subscribe to the SSU telemetry d
 
 Then, every second, a Telemetry packet with the SSU's data:
 
-> Response bytes: 691b90a7002d0004000301020001010041480000c04000004316000000000000000000c1c800000000000000b8
+> Response bytes: 691b90a7002d0004000301020001010041480000c04000004316000000000000000000c1c800000000000000b9
 >
 > Timestamp: 1763414183 -> bytes: 69 1b 90 a7\
 > Packet length 45 -> bytes: 00 2d \
