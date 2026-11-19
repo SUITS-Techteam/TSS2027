@@ -256,10 +256,10 @@ Here is an example packet you can could send to subscribe to the SSU telemetry d
 
 Then, every second, a Telemetry packet with the SSU's data:
 
-> Response bytes: 691b90a7002c0004000301020001010041480000c04000004316000000000000000000c1c800000000000000b8
+> Response bytes: 691b90a7002d0004000301020001010041480000c04000004316000000000000000000c1c800000000000000b8
 >
 > Timestamp: 1763414183 -> bytes: 69 1b 90 a7\
-> Packet length 44 -> bytes: 00 2c \
+> Packet length 45 -> bytes: 00 2d \
 > Device ID: SSU (4) -> bytes: 00 04 \
 > Message Code: Telemetry (3) -> bytes: 00 03 \
 > Data: SSU Data (33 bytes) -> bytes: \
@@ -268,7 +268,7 @@ Then, every second, a Telemetry packet with the SSU's data:
 > &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depth: 41 48 00 00 (12.5), drill temp: c0 40 00 00 (-3.0), RPM: 43 16 00 00 (150.0) \
 > BB drill: sensor: 00 (NOT READY), state:00 (IDLE), thermal: 00 (NOMINAL), \
 > &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depth: 00 00 00 00 (0.0), Drill Temp c1 c8 00 00 (-25.0), RPM 00 00 00 00 (0.0) \
-> Keepout: 00 (INACTIVE)
+> Keepout: 00 (INACTIVE) \
 > Checksum: 185 -> bytes: b9 
 
 
