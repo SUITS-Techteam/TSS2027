@@ -1,4 +1,4 @@
-# 🚨 **Note:** This is not the final version of TSS 2027 but has most functional capabilities of the final version. All information in this repository is subject to change. More information can be found under [documents/updates/](./documents/updates/). 🚨
+# 🚨 **Note:** This is not the final version of TSS 2027 but has most functional capabilities of the final version. All information in this repository is subject to change. 🚨
 
 
 # TSS 2027
@@ -211,17 +211,18 @@ The data for other POI asset devices can be found in their respective sections.
 Here is an example packet you can could send to subscribe to the SSU telemetry data feed. The TSS responds back with a packet with the Ack message code for if your packet was successful. It will respond with Device ID 15 when sending the Ack packet.
 
 > Timestamp: 1763414183 -> bytes: 69 1b 90 a7 \
-> Packet Length: 13 -> bytes: 00 0a \
+> Packet Length: 13 -> bytes: 00 0d \
 > Device ID: University Device (15) -> bytes: 00 0f \
 > Message Code: Subscribe (1) -> bytes: 00 01 \
 > Data: SSU (4) -> bytes: 00 04 \
-> Checksum: 45 -> bytes: 45 
+> Checksum: 66 -> bytes: 42
 
-> Full packet bytes: 691b90a7000a000f0001000445 \
-> Response bytes: 691b90a7000a000f0004000044 \
+> Full packet bytes: 691b90a7000c000f0001000442 \
+> Response bytes: 691b90a7000a000f00040042 \
+> Packet Length: 12 -> bytes: 00 0c
 > Message Code: Ack (4) -> bytes: 00 04 \
-> Data: Success (0) -> bytes: 00 00 \
-> Checksum: 44 -> bytes: 44 
+> Data: Success (0) -> bytes: 00 \
+> Checksum: 66 -> bytes: 42
 
 
 Then, every second, a Telemetry packet with the SSU's data:
