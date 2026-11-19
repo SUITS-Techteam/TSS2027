@@ -314,9 +314,9 @@ void ssu_sim_tick(cJSON* ssu, ssu_ctx_t* ctx, const ssu_inputs_t* in) {
                     cjson_set(ssu, "launch_lock", cJSON_CreateString("released"));
                     cjson_set(ssu, "keepout", cJSON_CreateString("arming"));
                     cjson_set(ssu, "keepout_timer", cJSON_CreateNumber(5));
+					cjson_set(ssu, "status", cJSON_CreateString("complete"));
                     printf("Launch lock released, keep-out zone arms in %d s\n", 5);
                 }
-                cjson_set(ssu, "status", cJSON_CreateString("complete"));
             }
             break;
         case SSU_COMPLETE:

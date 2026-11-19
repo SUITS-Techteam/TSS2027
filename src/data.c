@@ -1404,6 +1404,7 @@ static const char* const SSU_STATUSES[]     = { "off", "booting", "ready" };
 static const char* const SSU_SENSOR_STATES[] = { "stowed", "primed", "deployed" };
 static const char* const SSU_DRILL_STATES[]  = { "idle", "drilling", "overheated", "retracting", "retracted", "deployed" };
 static const char* const SSU_THERMAL_STATES[] = { "nominal", "warning", "critical" };
+static const char* const SSU_KEEPOUT[] = {"inactive", "arming", "active", "breached"};
 static const char* const SPM_STATUSES[]     = { "off", "booting", "leveling", "deploying", "orienting", "complete" };
 static const char* const SPM_TRUSS_STATES[] = { "stowed", "unlocked", "raising", "deployed", "locked" };
 #define NAME_COUNT(names) ((int)(sizeof(names) / sizeof(names[0])))
@@ -1501,7 +1502,8 @@ int build_telemetry_payload(uint16_t device_id, cJSON* eva, uint8_t* payload_out
 			snprintf(field_name, sizeof(field_name), "%s_rpm", drill_prefixes[drill]);
 			payload_float(drill_out + 11, ssu, field_name);
 		}
-		return 33;
+		payload_out[33] = payload_enum(ssu, "keepout", SSU_KEEPOUT, NAME_COUNT(SSU_KEEPOUT));
+		return 34;
 	}
 	return -1;   // CTS and XRF: layouts still to define
 }
