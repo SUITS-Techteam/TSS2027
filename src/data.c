@@ -1473,7 +1473,8 @@ int build_telemetry_payload(uint16_t device_id, cJSON* eva, uint8_t* payload_out
 		payload_float(payload_out + 16, spm,  "truss_height");    // 0.0 to 1.0
 		payload_float(payload_out + 20, spm,  "azimuth");
 		payload_float(payload_out + 24, spm,  "voltage");
-		return 28;
+		payload_float(payload_out + 28, spm,  "sun_azimuth_approx");
+		return 31;
 	}
 	if (device_id == 4) {
 		cJSON* ssu = cJSON_GetObjectItemCaseSensitive(eva, "ssu");
