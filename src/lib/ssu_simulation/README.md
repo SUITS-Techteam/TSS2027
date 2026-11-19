@@ -18,7 +18,7 @@ All SSU telemetry is received in the packet structure outlined on the TSS reposi
 | 2       | Mode       | 0 = SP, 1 = BB                |
 | 3 - 17  | SP Drill   | 15 bytes, see drill layout below |
 | 18 - 32 | BB Drill   | 15 bytes, see drill layout below |
-| 33      | Keepout    | 0 = INACTIVE, 1 = "ARMING", 2 = "ACTIVE", 3 = "BREACHED" |
+| 33      | Keepout    | 0 = INACTIVE, 1 = ARMING, 2 = ACTIVE, 3 = BREACHED |
 
 Each drill (byte offsets within its 15 bytes):
 
@@ -76,3 +76,7 @@ When a press is ignored, TSS does not report why. Your interface or assistant ca
 - **Max drill speed** is 600 rpm.
 - **Each second while drilling,** depth increases by rpm ÷ 150 cm, and temperature rises by 6 × (rpm ÷ 600)³ °C. Broadband heats 2× faster past 50 cm.
 - Temperature never drops below the ambient temperature, which is **randomized to anywhere between -25 °C and -10 °C** each time the SSU is started up. Both drills will start at this temperature.
+
+#### Keep-out Zone
+
+Once both sensors have been deployed, the launch-lock button can be uncovered. Pressing this button with disengage the launch-lock and begin the keep-out zone timer. After 5 seconds, the keep-out zone will engage in a 3-meter radius around the SSU. Your UI should mark this zone as an area to avoid.
