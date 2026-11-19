@@ -9,20 +9,27 @@ During the challenge, the SSU is a physical device with switches, buttons, and i
 
 #### Where the data lives
 
-All SSU telemetry is in the `ssu` section of `EVA.json`, alongside the rest of the EVA telemetry. **It updates once per second.**
+All SSU telemetry is received in the packet structure outlined on the TSS repository. Below is how each byte is structured in the data field in the payload. **It updates once per second.**
 
-| Field | Values | Meaning |
-|---|---|---|
-| `power` | true / false | Whether the SSU's power switch is on |
-| `status` | `"off"`, `"booting"`, `"ready"` | Overall SSU state |
-| `mode` | 0 or 1 | Which sensor is selected: 0 = short period, 1 = broadband |
-| `link` | `"none"`, `"connected"`, `"lost"` | Connection to the physical SSU (see below) |
-| `sp_sensor` / `bb_sensor` | `"not ready"`, `"primed"`, `"deployed"` | Status of each sensor |
-| `sp_state` / `bb_state` | see Drill states | What each drill is doing |
-| `sp_depth` / `bb_depth` | number (cm) | Current drill depth |
-| `sp_temp` / `bb_temp` | number (°C) | Current drill temperature |
-| `sp_thermal` / `bb_thermal` | `"nominal"`, `"warning"`, `"critical"` | Drill temperature level |
-| `sp_rpm` / `bb_rpm` | number | Current drill speed. This is 0 whenever the drill can't spin, even if the operator has set a speed. |
+| Byte(s) | Field      | Value                         |
+| ------- | ---------- | ----------------------------- |
+| 0       | Power      | 0 = OFF, 1 = ON               |
+| 1       | Status     | 0 = OFF, 1 = BOOT, 2 = READY  |
+| 2       | Mode       | 0 = SP, 1 = BB                |
+| 3 - 17  | SP Drill   | 15 bytes, see drill layout below |
+| 18 - 32 | BB Drill   | 15 bytes, see drill layout below |
+| 33      | Keepout    | 0 = INACTIVE, 1 = "ARMING", 2 = "ACTIVE", 3 = "BREACHED" |
+
+Each drill (byte offsets within its 15 bytes):
+
+| Byte    | Field      | Value |
+| ------- | ---------- | ----- |
+| 0       | Sensor     | 0 = NOT READY, 1 = PRIMED, 2 = DEPLOYED |
+| 1       | State      | 0 = IDLE, 1 = DRILLING, 2 = OVERHEATED, 3 = RETRACTING, 4 = RETRACTED, 5 = DEPLOYED |
+| 2       | Thermal    | 0 = NOMINAL, 1 = WARNING, 2 = CRITICAL |
+| 3 - 6   | Depth      | float |
+| 7 - 10  | Drill Temp | float |
+| 11 - 14 | RPM        | float |
 
 #### Drill states
 
@@ -47,7 +54,7 @@ Only the drill for the **selected mode** is active. Switching modes pauses the o
 
 #### Retracting and deploying
 
-- **Retracting** only works when the drill is **stopped** (`idle`) **and** has reached the target depth. A retract press while the drill is spinning, locked, or short of the target depth is ignored. Once started, retracting finishes on its own at 10 cm per second.
+- **Retracting** only works when the drill is **stopped** (`idle`) **and** has reached the target depth. A retract press while the drill is spinning, locked, or short of the target depth is ignored. Once started, retracting finishes on its own at 10 cm per second.,
 - **Deploying** only works once the drill is fully `retracted`. A deploy press at any other time is ignored.
 
 When a press is ignored, TSS does not report why. Your interface or assistant can work it out from the current state and the rules above. For example, a retract that does nothing while `sp_state` is `"drilling"` means the drill needs to be stopped first.
