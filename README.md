@@ -204,15 +204,16 @@ Each Telemetry packet's data is the current state of one device, in the byte ord
 | 4                | O2 Vent      | 0 = CLOSED, 1 = OPEN   |
 | 5                | Depress      | 0 = OFF, 1 = ON        |
 
-**SSU (device ID 4):** 33 bytes
+**SSU (device ID 4):** 34 bytes
 
 | Byte(s) | Field      | Value                         |
 | ------- | ---------- | ----------------------------- |
 | 0       | Power      | 0 = OFF, 1 = ON               |
 | 1       | Status     | 0 = OFF, 1 = BOOT, 2 = READY  |
 | 2       | Mode       | 0 = SP, 1 = BB                |
-| 3 - 17   | SP Drill      | 15 bytes, see drill layout below                         |
-| 18 - 32   | BB Drill      | 15 bytes, see drill layout below                         |
+| 3 - 17  | SP Drill      | 15 bytes, see drill layout below                         |
+| 18 - 32 | BB Drill      | 15 bytes, see drill layout below                         |
+| 33      | Keepout    | 0 = INACTIVE, 1 = "ARMING", 2 = "ACTIVE", 3 = "BREACHED" |
 
 Each drill (byte offsets within its 15 bytes):
 
@@ -255,7 +256,7 @@ Here is an example packet you can could send to subscribe to the SSU telemetry d
 
 Then, every second, a Telemetry packet with the SSU's data:
 
-> Response bytes: 691b90a7002c0004000301020001010041480000c04000004316000000000000000000c1c8000000000000b8
+> Response bytes: 691b90a7002c0004000301020001010041480000c04000004316000000000000000000c1c800000000000000b8
 >
 > Timestamp: 1763414183 -> bytes: 69 1b 90 a7\
 > Packet length 44 -> bytes: 00 2c \
@@ -267,7 +268,8 @@ Then, every second, a Telemetry packet with the SSU's data:
 > &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depth: 41 48 00 00 (12.5), drill temp: c0 40 00 00 (-3.0), RPM: 43 16 00 00 (150.0) \
 > BB drill: sensor: 00 (NOT READY), state:00 (IDLE), thermal: 00 (NOMINAL), \
 > &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depth: 00 00 00 00 (0.0), Drill Temp c1 c8 00 00 (-25.0), RPM 00 00 00 00 (0.0) \
-> Checksum: 184 -> bytes: b8 
+> Keepout: 00 (INACTIVE)
+> Checksum: 185 -> bytes: b9 
 
 
 ## Testing
