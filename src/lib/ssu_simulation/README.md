@@ -43,6 +43,8 @@ Each sensor has its own drill, and each drill is always in one of these states:
 | `retracting` | The drill is pulling itself out of the hole automatically. |
 | `retracted` | The drill is fully out, and the sensor can be deployed. |
 | `deployed` | The sensor is in place. This sensor is finished. |
+| `complete` | Both sensors have been deployed and the launch-lock has been disengaged |
+
 
 Only the drill for the **selected mode** is active. Switching modes pauses the other drill exactly where it is. It does not continue cooling while paused.
 
