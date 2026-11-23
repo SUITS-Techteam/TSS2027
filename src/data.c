@@ -1459,7 +1459,6 @@ int build_telemetry_payload(uint16_t device_id, cJSON* eva, uint8_t* payload_out
 	if (device_id == 3) {
 		cJSON* spm = cJSON_GetObjectItemCaseSensitive(eva, "spm");
 		if (!spm) return -1;
-		cJSON* tilt = cJSON_GetObjectItemCaseSensitive(spm, "tilt");
 		payload_out[0] = payload_flag(spm, "power");
 		payload_out[1] = payload_enum(spm, "status", SPM_STATUSES, NAME_COUNT(SPM_STATUSES));
 		payload_out[2] = payload_flag(spm, "mode"); // 0 = LEVEL, 1 = ORIENT
@@ -1474,7 +1473,7 @@ int build_telemetry_payload(uint16_t device_id, cJSON* eva, uint8_t* payload_out
 		payload_float(payload_out + 20, spm,  "azimuth");
 		payload_float(payload_out + 24, spm,  "voltage");
 		payload_float(payload_out + 28, spm,  "sun_azimuth_approx");
-		return 31;
+		return 32;
 	}
 	if (device_id == 4) {
 		cJSON* ssu = cJSON_GetObjectItemCaseSensitive(eva, "ssu");
