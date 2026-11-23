@@ -115,21 +115,17 @@ void update_spec(struct backend_data_t* backend, const char* eva, int rock_id);
 // NOTE: most of these commands have been reused from the TSS 2025 project to help support backwards compatibility. In the future, it may be recommended to standardize these.
 static const udp_command_mapping_t udp_command_mappings[] = {
     // UIA commands (sent from the peripheral device over UDP)
-    {2001, "eva.uia.eva1_power", "bool"},
-    {2002, "eva.uia.eva1_oxy", "bool"},
-    {2003, "eva.uia.eva1_water_supply", "bool"},
-    {2004, "eva.uia.eva1_water_waste", "bool"},
-    {2005, "eva.uia.eva2_power", "bool"},
-    {2006, "eva.uia.eva2_oxy", "bool"},
-    {2007, "eva.uia.eva2_water_supply", "bool"},
-    {2008, "eva.uia.eva2_water_waste", "bool"},
+    {2001, "eva.uia.eva_power", "bool"},
+    {2002, "eva.uia.eva_oxy", "bool"},
+    {2003, "eva.uia.eva_water_supply", "bool"},
+    {2004, "eva.uia.eva_water_waste", "bool"},
     {2009, "eva.uia.oxy_vent", "bool"},
     {2010, "eva.uia.depress", "bool"},
 
     // DCU commands (sent from the peripheral device over UDP)
-    {2011, "eva.dcu.batt.lu", "bool"},
+    {2011, "eva.dcu.batt", "bool"},
     {2012, "eva.dcu.oxy", "bool"},
-    {2013, "eva.dcu.batt.ps", "bool"},
+    {2013, "eva.dcu.comm", "bool"},
     {2014, "eva.dcu.fan", "bool"},
     {2015, "eva.dcu.pump", "bool"},
     {2016, "eva.dcu.co2", "bool"},
