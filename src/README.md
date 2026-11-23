@@ -20,6 +20,8 @@ The NASA SUITS project has taken on several iterations since its start in 2018. 
 
 TSS was developed for the NASA SUITS challenge with the goal of providing a reliable stream of data to participating teams to use within their interfaces and hardware designs. This started out with several basic linear decay and growth algorithms to model basic resource consumption, but has since been expanded to accommodate complex relationships between multiple telemetry values (e.g. EVA location values calculating speed, increasing heart rate). These complex telemetry relationships help to create a more realistic scenario for students to develop with.
 
+For the 2027 challenge, TSS gained three things: grouping system, a binary packet protocol that student devices use to subscribe to telemetry, and simulations for the new POI peripherals (SSU and SPM, with the CTS in progress).
+
 ### Structure
 
 The project is separated into several folders:
@@ -54,16 +56,22 @@ The primary color scheme is:
 
 Throughout the infrastructure, you'll note that we primarily use UDP sockets to communicate back and forth to make data changes and issue commands. The frontend is the one section of the tech stack that we have opted to still use HTTPS for data fetching. The server still serves the JSON files over HTTPS, and can be fetched with a relative URL such as: `/data/EVA.json`.
 
-The frontend JavaScript fetches the JSON file `EVA.json` every second. A snippet of that code is referenced here:
-
+The frontend JavaScript fetches `EVA.json` every second and `groups.json` every three seconds (groups change rarely). A snippet of that code is referenced here:
 ```js
 // Fetch fresh data from the backend every one second
 setInterval(() => {
-  fetchData();
+  pollData();
   updateClock();
-  updateConnectionStatus();
+  updateTelemetryStatus();
 }, 1000);
+
+// groups fetch every 3 seconds
+setInterval(() => {
+  pollGroups();
+}, 3000);
 ```
+
+`pollData()` and `pollGroups()` skip a fetch if the previous one hasn't finished yet. Without this guard, a slow server response lets requests pile up in the browser, and each fetch takes longer the longer the page is open. Keep this pattern for any new polling you add.
 
 After fetching the data from the backend, we still need to take the fresh data and display it on the interface. This is done with a nifty setup that allows us to add new telemetry values and elements to the HTML without creating repetitive code in JavaScript. You'll note that every value being updated has a HTML attribute labeled `data-path`, here is an example below:
 
@@ -115,12 +123,72 @@ _Image Credit: <a href="https://www.cs.dartmouth.edu/~campbell/cs60/socketprogra
 ### Server structure
 
 - `data.c`: Majority of the data handling, processing UDP requests, routing to JSON files, other data helpers, etc
+- `groups.c`: Peripheral and team device registration, Group A/B assignments, subscriptions, and sending telemetry to student devices. Reads and writes `data/groups.json`
 - `network.c`: Core networking functionality, creating socket connections, etc
 - `server.c`: Sets up the frontend HTTP server, UDP sockets, sim engine, and other helper functions to communicate with peripherals.
 
 ### Data handling
 
 Requests to change a value can be done over HTTP (from the frontend) or via UDP (peripherals, student devices, etc). In both cases, they are eventually converted into a string format that represents a file name and field path to update the resulting JSON field with a new value. For example, if someone flips the EVA 1 power switch on the physical UIA, it will send a UDP packet to the server with the command number `2003`, this command number will be converted to a data path based on the hard coded table found in <a href="/src/data.h">data.h: udp_command_mappings</a>, in this case that would be `eva.uia.eva1_power`. This is a very similar mechanism done in reverse to the frontend data update code highlighted above.
+
+### Groups
+
+`groups.c` writes `data/groups.json` for the frontend. It's only rewritten when something changes: an assignment, a subscription, or a device going online/offline.
+
+- `groups`: each group's `name`, `assigned_team` (`-1` = none), and subscriptions (`dcu`, `uia`, `poi`)
+- `devices`: each device's `address`, `type`, `group`, `online`, and `last_seen`
+
+A device counts as online if it has sent something in the last 3 seconds. This is only relevant for devices that stream constantly (SSU, SPM, CTS). The UIA, DCU and team devices only send when something happens, so while the TSS might not show its actual connection status.
+
+Assignments are loaded on startup (`load_group_assignments`), so a server restart keeps the groups and device list. Subscriptions are not saved so student devices need to subscribe again after a restart.
+
+
+### Frontend requests
+
+The Groups card sends `POST /groups` with a form body, handled by `handle_group_request`:
+
+| Body | Effect |
+| ---- | ------ |
+| `group=0&team=3` | Assign Group A to team 3 (`team=-1` clears it) |
+| `device=2&group=1` | Put device 2 in Group B (`group=-1` removes it) |
+| `device=2&forget=1` | Remove device 2 from the list |
+| `group=0&dcu=1&uia=0&poi=4` | Set Group A's subscriptions (`poi=0` clears the POI) |
+
+## Packet Protocol
+
+TSS sends and receives telemetry as binary packets instead of JSON. The student-facing description (packet layout, device IDs, message codes, payload tables, example packets) is in the <a href="../README.md#development">main README</a>. This section covers the server side.
+
+### Design
+
+- Peripherals and the backend keep using cJSON and `EVA.json`. TSS only translates to binary when it sends to students.
+- Subscriptions belong to **groups**, not teams. A team device is put in a group, the group is assigned a team, and anything the device subscribes to is stored on the group (`struct group_t`: `dcu`, `uia`, `poi`).
+- UIA and DCU subscriptions are on/off. There's one POI slot (device IDs 3 to 6), and subscribing to a new POI replaces the old one. Unsubscribe clears only the current POI. For now, UIA and DCU subscriptions can only be toggled through TSS. If it hasn't been implemented, add a way for students to unsubscribe from them (could be as simple as an unsubscribe packet with their device id).
+
+### Packet flow
+
+```
+team device  --Subscribe/Unsubscribe-->  14141  -> read_header_packet (network.c)
+                                                 -> handle_team_packet (groups.c): update the group, send an Ack
+every second:  send_group_telemetry (groups.c)
+                 -> reads each assigned group's team EVA.json once
+                 -> build_telemetry_payload (data.c) for each subscribed device
+                 -> build_header_packet (network.c) -> sendto the team device's reply address
+```
+
+A packet is only treated as the new format if `read_header_packet` accepts it (its length field and checksum match) and its device ID is `15`. 
+
+Ack results: `0` success, `1` the device isn't in a group or its group has no team, `2` unknown device ID or message.
+
+### Adding telemetry for a device
+
+CTS and XRF don't have payloads yet (`build_telemetry_payload` returns `-1`, so nothing is sent). To add one:
+
+1. Decide the byte layout. Only send what a team's UI or assistant needs: flags and states as 1-byte values, numbers as 4-byte floats.
+2. Add a block for the device ID in `build_telemetry_payload` (`data.c`). Use the helpers: `payload_flag` (bool to 0/1), `payload_enum` (string state to its index in a name array, `255` if unknown) and `payload_float` (big-endian float). Return the exact number of bytes written.
+3. Keep the payload under `TELEMETRY_PAYLOAD_MAX_SIZE` (`data.h`).
+4. Add the byte table to the device's README (e.g. `src/lib/ssu_simulation/README.md`), and make sure the state names match the sim's strings.
+
+You can test this implementation with any way of sending byte packets. You can use Python to create small scripts that automatically send built packets and decode received packets.
 
 ## Telemetry Simulation Development
 
