@@ -218,7 +218,7 @@ Here is an example packet you can could send to subscribe to the SSU telemetry d
 > Checksum: 66 -> bytes: 42
 
 > Full packet bytes: 691b90a7000c000f0001000442 \
-> Response bytes: 691b90a7000a000f00040042 \
+> Response bytes: 691b90a7000c000f00040042 \
 > Packet Length: 12 -> bytes: 00 0c
 > Message Code: Ack (4) -> bytes: 00 04 \
 > Data: Success (0) -> bytes: 00 \
