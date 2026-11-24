@@ -138,9 +138,9 @@ Requests to change a value can be done over HTTP (from the frontend) or via UDP 
 - `groups`: each group's `name`, `assigned_team` (`-1` = none), and subscriptions (`dcu`, `uia`, `poi`)
 - `devices`: each device's `address`, `type`, `group`, `online`, and `last_seen`
 
-A device counts as online if it has sent something in the last 3 seconds. This is only relevant for devices that stream constantly (SSU, SPM, CTS). The UIA, DCU and team devices only send when something happens, so while the TSS might not show its actual connection status.
+A device counts as online if it has sent something in the last 3 seconds. This is only relevant for devices that stream constantly (SSU, SPM, CTS). The UIA, DCU and team devices only send when something happens, so the TSS might not show its actual connection status.
 
-Assignments are loaded on startup (`load_group_assignments`), so a server restart keeps the groups and device list. Subscriptions are not saved so student devices need to subscribe again after a restart.
+Assignments are constantly saved in case of a shutdown (`save_group_assignments`) and they are loaded on startup (`load_group_assignments`). Subscriptions are not saved so student devices need to subscribe again after a restart.
 
 
 ### Frontend requests
