@@ -661,3 +661,9 @@ input:checked + .slider:before {
   color: var(--light-grey);
   min-width: 6rem;
 }
+
+.slider-row {
+  display: flex;
+  align-items: center;
+  margin-left: 1rem;
+}

@@ -316,29 +316,18 @@
 			                                    <svg style="pointer-events: none;" data-testid="geist-icon" height="16" stroke-linejoin="round" viewBox="0 0 16 16" width="16" style="color: currentcolor;"><path fill-rule="evenodd" clip-rule="evenodd" d="M14.5528 7.77638C14.737 7.86851 14.737 8.13147 14.5528 8.2236L1.3618 14.8191C1.19558 14.9022 1 14.7813 1 14.5955L1 1.4045C1 1.21865 1.19558 1.09778 1.3618 1.18089L14.5528 7.77638Z" fill="currentColor"></path></svg>
 			                                    TOGGLE KEEPOUT
 			                                </button>
-                                            
-                                            <label style="color:var(--white);" id="mock-sp-rpm-label" for="mock-sp-rpm-slider">RPM</label>
-                                            <span style="color: white;">0</span>
-                                                <input
-                                                  type="range"
-                                                  id="mock-sp-rpm-slider"
-                                                  min="0"
-                                                  max="600"
-                                                  value="0"
-                                                  step="1"
-                                                  data-path="eva.ssu.sp_rpm"
-                                                />
-                                            <label style="color:var(--white);" id="mock-bb-rpm-label" for="mock-bb-rpm-slider">RPM</label>
-                                                <input
-                                                  type="range"
-                                                  id="mock-bb-rpm-slider"
-                                                  min="0"
-                                                  max="600"
-                                                  value="0"
-                                                  step="1"
-                                                  data-path="eva.ssu.bb_rpm"
-                                                />
-                                      		<span style="color: white;">600</span>
+
+			                                <div class="slider-row" id="sp-slider" data-path="">
+			                                	<span style="color:white;">0</span>
+											    <input type="range" min="0" max="600" value="0">
+    											<span style="color:white;">600</span>
+											</div>
+											<div class="slider-row" id="bb-slider" data-path="">
+												<span style="color:white;">0</span>
+											    <input type="range" min="0" max="600" value="0">
+    											<span style="color:white;">600</span>
+	                                      	</div>
+  
                                         </div>			                                    
 										<div class="card-body">
 											<div class="card-content">	

@@ -388,24 +388,17 @@ async function fetchData() {
     }
 
 	// change slider input for drills
-	if((el.id != "ssu-sp_rpm" && el.id != "ssu-bb_rpm") && (path === "eva.ssu.sp_rpm" || path === "eva.ssu.bb_rpm")){
+	if(el.id === "sp-slider" || el.id === "bb-slider"){
 		const mode = getNestedValue(evaData, "ssu.mode");
-		const spSlider = document.getElementById("mock-sp-rpm-slider");
-		const spLabel = document.getElementById("mock-sp-rpm-label");
-		const bbSlider = document.getElementById("mock-bb-rpm-slider");
-		const bbLabel = document.getElementById("mock-bb-rpm-label");
+		const spSlider = document.getElementById("sp-slider");
+		const bbSlider = document.getElementById("bb-slider");
 		if(mode === 0 || mode === -1) {
 			bbSlider.style.display = "none";
-			bbLabel.style.display = "none";
-			spSlider.style.display = "inline";
-			spLabel.style.display = "inline";
-
+			spSlider.style.display = "flex";
 		}
 		else {
-			bbSlider.style.display = "inline";
-			bbLabel.style.display = "inline";
+			bbSlider.style.display = "flex";
 			spSlider.style.display = "none";
-			spLabel.style.display = "none";
 		}
 		return;
 	}

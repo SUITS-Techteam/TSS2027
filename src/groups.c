@@ -365,11 +365,11 @@ void handle_team_packet(SOCKET udp_socket, const struct sockaddr_in* sender, uin
 
     if (!device) return;
     device->last_seen = time(NULL);
-    device->reply_address = *sender;   // the port can change when a team restarts its app
+    device->reply_address = *sender;
 
 	// not sub or unsub
     if (message_code != 1 && message_code != 2) {
-        return;   // not a message teams send; ignore it
+        return;
     }
 
 	// unassigned teams cannot sub or unsub
@@ -393,20 +393,20 @@ void handle_team_packet(SOCKET udp_socket, const struct sockaddr_in* sender, uin
         send_ack(udp_socket, sender, 2);
         return;
     }
-    uint16_t subscribe_to = (data[0] << 8) | data[1];
+    uint16_t poi_id = (data[0] << 8) | data[1];
 
 	//
-    if (subscribe_to == 1) {
+    if (poi_id == 1) {
         group->dcu = true;
-    } else if (subscribe_to == 2) {
+    } else if (poi_id == 2) {
         group->uia = true;
-    } else if (subscribe_to >= 3 && subscribe_to <= 6) {
-        group->poi = subscribe_to;   // one POI at a time: replaces the previous one
+    } else if (poi_id >= 3 && poi_id <= 6) {
+        group->poi = poi_id;
     } else {
         send_ack(udp_socket, sender, 2);
         return;
     }
-    printf("Group %s subscribed to device %u\n", group_names[device->group_index], subscribe_to);
+    printf("Group %s subscribed to device %u\n", group_names[device->group_index], poi_id);
     send_ack(udp_socket, sender, 0);
     save_group_assignments();
 }
