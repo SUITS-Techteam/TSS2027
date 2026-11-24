@@ -249,10 +249,10 @@ async function fetchData() {
 
       if (action === "start") {
         // START button: enabled when NOT running
-		setButtonEnabled(el, is_running);
+		setButtonEnabled(el, !is_running);
       }
       else if (action === "reset") {
-		setButtonEnabled(el, !is_running);
+		setButtonEnabled(el, is_running);
       }
       else if (path === "eva.ssu.deploy_pressed") {
 		// DEPLOY button - enabled when NOT deployed and state is retracted and depth is 0.0 for respective mode
