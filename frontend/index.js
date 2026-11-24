@@ -1,11 +1,11 @@
 // GLOBAL VARIABLES
 let connectionFails = 0; // number of consecutive connection failures, resets on successful fetch
+let fetchDataWaiting = false;
+let fetchGroupsWaiting = false;
 const pendingSwitchChanges = {};
 const GROUP_NAMES = ["A", "B"];
 const POI_OPTIONS = [[0, "No POI"], [3, "SPM"], [4, "SSU"], [5, "CTS"], [6, "XRF"]];
 const NUMBER_OF_TEAMS = 10;
-let fetchDataWaiting = false;
-let fetchGroupsWaiting = false;
 
 const SSU_STATUS = { off: ["OFF", "off"], booting: ["BOOTING", "booting"], ready: ["READY", "ready"], complete: ["COMPLETE", "ready"], };
 const SSU_SENSOR = { stowed: ["STOWED", "off"], primed: ["PRIMED", "ready"], deployed: ["DEPLOYED", "ready"],};
@@ -56,7 +56,7 @@ function onload() {
     updateTelemetryStatus();
   }, 1000);
 
-  // groups don't update often, fetch every 3 seconds
+  // fetch group data every 3 seconds
   setInterval(() => {
   	pollGroups();
   }, 3000);
@@ -600,39 +600,6 @@ function formatTime(seconds) {
   ).padStart(2, "0")}`;
 }
 
-/**
- * Sets a cookie in the browser
- *
- * @param cname Cookie name
- * @param cvalue Cookie value
- */
-function setCookie(cname, cvalue) {
-  document.cookie = `${cname}=${cvalue};path=/`;
-}
-
-/**
- * Retrieves a cookie from the browser
- *
- * @param cname Cookie name
- * @returns Cookie value or null if not found
- */
-function getCookie(cname) {
-  const name = `${cname}=`;
-  const decodedCookie = decodeURIComponent(document.cookie);
-  const ca = decodedCookie.split(";");
-
-  for (let i = 0; i < ca.length; i++) {
-    let c = ca[i];
-    while (c.charAt(0) === " ") {
-      c = c.substring(1);
-    }
-    if (c.indexOf(name) === 0) {
-      return c.substring(name.length, c.length);
-    }
-  }
-
-  return null;
-}
 
 /**
  * Updates the clock in the navigation bar based on military time format
